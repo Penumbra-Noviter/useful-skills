@@ -1,0 +1,5 @@
+interface:
+  display_name: "Improve Python Architecture"
+  short_description: "Find and grill architecture improvements in Python codebases"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "context-monitor": {
+      "command": "python",
+      "args": [
+        "D:/Desktop/cc/.claude/skills/context-monitor/mcp/context_monitor_server.py"
+      ],
+      "description": "精确 token 计数与上下文监控服务",
+      "env": {}
+    }
+  }
+}

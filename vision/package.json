@@ -1,0 +1,16 @@
+{
+  "name": "vision",
+  "version": "1.0.0",
+  "description": "让没有识图能力的模型获得识图能力——把图片发给有 vision 的模型，用文字描述回来。",
+  "main": "vision.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
+}

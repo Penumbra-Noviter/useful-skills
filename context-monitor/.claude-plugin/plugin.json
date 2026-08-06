@@ -1,0 +1,9 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "context-monitor",
+  "version": "1.0.0",
+  "description": "实时显示当前上下文占用（token 用量），辅助根据上下文长度上限调度不同模型",
+  "skills": [
+    "./"
+  ]
+}
