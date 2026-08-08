@@ -151,6 +151,7 @@ MODEL_ALIASES: dict[str, str] = {
     "deepseek-v4-flash": "deepseek-v4-flash",
     "v4-flash": "deepseek-v4-flash",
     "deepseek-v4-flash-200k": "deepseek-v4-flash-200k",
+    "deepseek-v4-flash-200k[1m]": "deepseek-v4-flash-200k",
     "deepseek-v4-flash[1m]": "deepseek-v4-flash",
     "deepseek-v4-pro": "deepseek-v4-pro",
     "v4-pro": "deepseek-v4-pro",
