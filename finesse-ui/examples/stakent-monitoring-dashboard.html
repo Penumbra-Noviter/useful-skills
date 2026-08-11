@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pulsegrid — Infrastructure Monitoring</title>
+<title>Pulsegrid · Infrastructure Monitoring</title>
 <style>
 :root{
   --bg:#0a0a10; --panel:#13131c; --panel-2:#1a1a26; --line:rgba(255,255,255,.07);
@@ -30,19 +30,19 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .brand small{display:block;font-size:10.5px;color:var(--ink-3);font-weight:500;margin-top:1px}
 .toggle{display:flex;background:var(--panel);border-radius:11px;padding:4px;margin-bottom:14px}
 .toggle button{flex:1;border:0;background:transparent;color:var(--ink-3);font-size:12.5px;font-weight:600;padding:8px;border-radius:8px;cursor:pointer}
-.toggle button.on{background:var(--panel-2);color:#fff}
+.toggle button.on{background:var(--panel-2);color:#f3f3f7}
 .nav{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
 .nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--ink-3);font-size:13.5px;font-weight:500;text-decoration:none;transition:.18s}
 .nav a svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7}
 .nav a .badge{margin-left:auto;font-size:10px;background:var(--panel-2);color:var(--violet-3);padding:2px 8px;border-radius:20px;font-weight:600}
 .nav a:hover{color:var(--ink);background:var(--panel)}
-.nav a.on{color:#fff;background:linear-gradient(100deg,rgba(139,92,246,.25),rgba(139,92,246,.05))}
+.nav a.on{color:#f3f3f7;background:linear-gradient(100deg,rgba(139,92,246,.25),rgba(139,92,246,.05))}
 .divider{height:1px;background:var(--line);margin:8px 0}
 .sec-lab{font-size:11px;color:var(--ink-3);padding:6px 12px;display:flex;justify-content:space-between;align-items:center}
 .sec-lab .badge{font-size:10px;background:var(--panel-2);color:var(--violet-3);padding:2px 8px;border-radius:20px;font-weight:600}
 .asset{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:10px;cursor:pointer}
 .asset:hover{background:var(--panel)}
-.coin{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.coin{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;color:#f3f3f7;flex-shrink:0}
 .asset .nm{font-size:12.5px;font-weight:600}.asset .am{font-size:11px;color:var(--ink-3)}
 .asset.dim{opacity:.5}
 .spacer{flex:1}
@@ -56,13 +56,13 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .user{display:flex;align-items:center;gap:10px}
 .user img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--violet)}
 .user .nm{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px}
-.user .pro-tag{font-size:9px;background:var(--violet-2);color:#fff;padding:2px 6px;border-radius:5px;font-weight:700}
+.user .pro-tag{font-size:9px;background:var(--violet-2);color:#f3f3f7;padding:2px 6px;border-radius:5px;font-weight:700}
 .user .role{font-size:11px;color:var(--ink-3)}
-.deposit{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--violet-2),var(--violet));border:0;color:#fff;font-weight:600;font-size:13px;padding:11px 20px;border-radius:12px;cursor:pointer;box-shadow:0 8px 22px rgba(139,92,246,.4)}
+.deposit{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--violet-2),var(--violet));border:0;color:#f3f3f7;font-weight:600;font-size:13px;padding:11px 20px;border-radius:12px;cursor:pointer;box-shadow:0 8px 22px rgba(139,92,246,.4)}
 .grow{flex:1}
 .ibtn{width:40px;height:40px;border-radius:11px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;position:relative}
 .ibtn svg{width:17px;height:17px;stroke:var(--ink-2);fill:none;stroke-width:1.7}
-.ibtn .d{position:absolute;top:-3px;right:-3px;width:15px;height:15px;border-radius:50%;background:var(--violet);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
+.ibtn .d{position:absolute;top:-3px;right:-3px;width:15px;height:15px;border-radius:50%;background:var(--violet);color:#f3f3f7;font-size:9px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
 .searchbox{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 14px;color:var(--ink-3);font-size:12.5px;min-width:150px}
 .searchbox svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
 
@@ -99,7 +99,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .portfolio .btns{display:flex;flex-direction:column;gap:9px;margin-top:18px;position:relative}
 .portfolio .btns button{padding:12px;border-radius:11px;font-size:12.5px;font-weight:600;cursor:pointer;border:0}
 .portfolio .btns .primary{background:linear-gradient(120deg,#c4b5fd,#a78bfa);color:#2a1a5c}
-.portfolio .btns .ghost{background:rgba(255,255,255,.09);color:#fff;border:1px solid rgba(255,255,255,.14)}
+.portfolio .btns .ghost{background:rgba(255,255,255,.09);color:#f3f3f7;border:1px solid rgba(255,255,255,.14)}
 
 /* active deployment */
 .active{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px}
@@ -111,14 +111,14 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .upd{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px;margin-bottom:10px}
 .stk-title{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .stk-title h2{font-size:23px;font-weight:700;letter-spacing:-.02em}
-.stk-title .avax{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#e84142,#ff6b6b);display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff}
+.stk-title .avax{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#e84142,#ff6b6b);display:grid;place-items:center;font-size:13px;font-weight:800;color:#f3f3f7}
 .stk-title .mini{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);display:grid;place-items:center;cursor:pointer}
 .stk-title .mini svg{width:13px;height:13px;stroke:var(--ink-2);fill:none;stroke-width:1.8}
 .rewbal{font-size:11.5px;color:var(--ink-3);margin-bottom:6px}
 .bigbal{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1;margin-bottom:16px}
 .bigbal small{color:var(--violet-3)}
 .act-btns{display:flex;gap:10px}
-.act-btns .up{background:linear-gradient(135deg,var(--violet-2),var(--violet));border:0;color:#fff}
+.act-btns .up{background:linear-gradient(135deg,var(--violet-2),var(--violet));border:0;color:#f3f3f7}
 .act-btns button{padding:9px 18px;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;background:var(--panel-2);border:1px solid var(--line);color:var(--ink)}
 .period{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:18px}
 .period .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
@@ -128,7 +128,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 .prange input{-webkit-appearance:none;width:100%;height:4px;border-radius:4px;background:var(--panel);outline:none;cursor:pointer}
 .prange input::-webkit-slider-thumb{-webkit-appearance:none;width:0;height:0}
 .prange .fill{position:absolute;top:0;left:0;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--violet-2),var(--violet-3));pointer-events:none}
-.prange .knob{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:#fff;border:4px solid var(--violet);transform:translate(-50%,-50%);display:grid;place-items:center;pointer-events:none}
+.prange .knob{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:#f3f3f7;border:4px solid var(--violet);transform:translate(-50%,-50%);display:grid;place-items:center;pointer-events:none}
 .prange .knob::before{content:'❚❚';font-size:7px;color:var(--violet)}
 .prange .tag{position:absolute;top:-30px;transform:translateX(-50%);font-size:10.5px;background:var(--panel);border:1px solid var(--line);padding:3px 9px;border-radius:8px}
 
@@ -153,7 +153,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
 <div class="app">
   <aside class="side">
     <div class="brand">
-      <span class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L3 7l9 5 9-5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5"/></svg></span>
+      <span class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="#f3f3f7"><path d="M12 2L3 7l9 5 9-5-9-5zM3 12l9 5 9-5M3 17l9 5 9-5"/></svg></span>
       <div><b>Pulsegrid<sup>®</sup></b><small>Global Fleet Status</small></div>
     </div>
     <div class="toggle"><button class="on">Production</button><button>Staging</button></div>
@@ -170,15 +170,15 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
     <div class="asset"><span class="coin" style="background:#627eea">US</span><div><div class="nm">Region US-East</div><div class="am num">Latency 42ms</div></div></div>
     <div class="asset"><span class="coin" style="background:#e84142">EU</span><div><div class="nm">Region EU-West</div><div class="am num">Latency 58ms</div></div></div>
     <div class="asset"><span class="coin" style="background:#8247e5">AP</span><div><div class="nm">Region AP-South</div><div class="am num">Latency 121ms</div></div></div>
-    <div class="asset dim"><span class="coin" style="background:#14f195;color:#000">SA</span><div><div class="nm">Region SA-East</div><div class="am num">Latency 189ms</div></div></div>
+    <div class="asset dim"><span class="coin" style="background:#14f195;color:#17171c">SA</span><div><div class="nm">Region SA-East</div><div class="am num">Latency 189ms</div></div></div>
     <div class="spacer"></div>
-    <div class="super"><span class="b"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg></span><div><b>Activate Priority Support</b><p>Unlock all features on Pulsegrid</p></div></div>
+    <div class="super"><span class="b"><svg width="16" height="16" viewBox="0 0 24 24" fill="#f3f3f7"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg></span><div><b>Activate Priority Support</b><p>Unlock all features on Pulsegrid</p></div></div>
   </aside>
 
   <main class="main">
     <div class="topbar">
       <div class="user"><img alt="user" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%238b5cf6'/%3E%3Ctext x='40' y='52' font-family='sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle'%3ERY%3C/text%3E%3C/svg%3E"><div><div class="nm">Ryan Crawford <span class="pro-tag">PRO</span></div><div class="role">@ryan997</div></div></div>
-      <button class="deposit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>New Deployment</button>
+      <button class="deposit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f3f3f7" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>New Deployment</button>
       <div class="grow"></div>
       <div class="ibtn"><span class="d">2</span><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></div>
       <div class="searchbox"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search…</div>
@@ -206,7 +206,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
       </div>
       <!-- EU-West -->
       <div class="coin-card reveal">
-        <div class="ch"><div class="who"><span class="coin" style="background:#f3ba2f;color:#000">EU</span><div><div class="lab">Status: Healthy</div><div class="nm">EU-West</div></div></div><span class="arrow"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M7 7h10v10"/></svg></span></div>
+        <div class="ch"><div class="who"><span class="coin" style="background:#f3ba2f;color:#17171c">EU</span><div><div class="lab">Status: Healthy</div><div class="nm">EU-West</div></div></div><span class="arrow"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M7 7h10v10"/></svg></span></div>
         <div class="rr">Uptime</div><div class="rate num">99.87<small>%</small></div><div class="delta up">▲ 0.08%</div>
         <div class="spark"><svg data-line viewBox="0 0 240 70" preserveAspectRatio="none" data-color="#a78bfa" data-pts="8,48 32,52 58,42 82,46 108,36 132,40 160,26 188,30 215,16"></svg><span class="tagpill" style="right:6px;top:2px;color:var(--up)">−9ms</span></div>
       </div>
@@ -218,7 +218,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opac
       </div>
       <!-- Fleet Console CTA -->
       <div class="portfolio reveal">
-        <div class="pl"><span class="coin" style="background:rgba(255,255,255,.14)"><svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L3 7l9 5 9-5-9-5z"/></svg></span><span class="new">New</span></div>
+        <div class="pl"><span class="coin" style="background:rgba(255,255,255,.14)"><svg width="15" height="15" viewBox="0 0 24 24" fill="#f3f3f7"><path d="M12 2L3 7l9 5 9-5-9-5z"/></svg></span><span class="new">New</span></div>
         <h2>Unified Fleet Console</h2>
         <p>An all-in-one console that helps you monitor and manage your infrastructure fleet in real time.</p>
         <div class="btns"><button class="primary">Connect Environment 🔌</button><button class="ghost">Enter Cluster ID 🖥️</button></div>

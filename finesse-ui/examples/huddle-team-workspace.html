@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skillhub — Course Learning Console</title>
+<title>Skillhub · Course Learning Console</title>
 <style>
 :root{
-  --bg:#eef1fb; --card:#ffffff; --ink:#1c1d2b; --ink-2:#63647a; --ink-3:#9797ac;
+  --bg:#eef1fb; --card:#fdfdff; --ink:#1c1d2b; --ink-2:#63647a; --ink-3:#9797ac;
   --line:#e7e9f6; --line-2:#f0f1fa;
   --accent:#6c5ce7; --accent-2:#ff8b6b; --accent-soft:#efeaff;
   --blue:#5b8def; --blue-soft:#e4edff;
@@ -33,11 +33,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .pills{display:flex;align-items:center;gap:4px;background:var(--bg);border-radius:14px;padding:4px;margin:0 auto}
 .pills a{display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;color:var(--ink-2);font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap;transition:.16s}
 .pills a:hover:not(.on){color:var(--ink)}
-.pills a.on{background:var(--ink);color:#fff;box-shadow:0 6px 16px rgba(28,29,43,.25)}
+.pills a.on{background:var(--ink);color:#fdfdff;box-shadow:0 6px 16px rgba(28,29,43,.25)}
 .nav-right{display:flex;align-items:center;gap:10px}
 .icon-btn{position:relative;width:40px;height:40px;border-radius:12px;background:var(--bg);display:grid;place-items:center;cursor:pointer;flex-shrink:0}
 .icon-btn svg{width:17px;height:17px;stroke:var(--ink-2);fill:none;stroke-width:1.8}
-.icon-btn .dot{position:absolute;top:-3px;right:-3px;width:15px;height:15px;border-radius:50%;background:var(--accent-2);color:#fff;font-size:8.5px;font-weight:700;display:grid;place-items:center;border:2px solid var(--card)}
+.icon-btn .dot{position:absolute;top:-3px;right:-3px;width:15px;height:15px;border-radius:50%;background:var(--accent-2);color:#fdfdff;font-size:8.5px;font-weight:700;display:grid;place-items:center;border:2px solid var(--card)}
 .acct{display:flex;align-items:center;gap:10px;padding:5px 12px 5px 5px;border-radius:14px;background:var(--bg)}
 .acct img{width:34px;height:34px;border-radius:10px;object-fit:cover}
 .acct .nm{font-size:12.5px;font-weight:700}
@@ -52,10 +52,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .stack{display:flex;align-items:center}
 .stack img{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2.5px solid var(--bg);margin-left:-10px}
 .stack img:first-child{margin-left:0}
-.stack .more{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;margin-left:-10px;border:2.5px solid var(--bg)}
+.stack .more{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fdfdff;font-size:11px;font-weight:700;display:grid;place-items:center;margin-left:-10px;border:2.5px solid var(--bg)}
 .btn{display:inline-flex;align-items:center;gap:7px;border-radius:12px;padding:11px 17px;font-size:13.5px;font-weight:700;cursor:pointer;border:0;white-space:nowrap}
 .btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
-.btn.pri{background:var(--ink);color:#fff;box-shadow:0 8px 20px rgba(28,29,43,.22)}
+.btn.pri{background:var(--ink);color:#fdfdff;box-shadow:0 8px 20px rgba(28,29,43,.22)}
 
 /* grid */
 .grid-2{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px}
@@ -128,7 +128,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .bubbles{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
 .bub{max-width:82%;font-size:12.5px;line-height:1.4;padding:10px 13px;border-radius:14px}
 .bub.in{background:var(--bg);color:var(--ink);border-bottom-left-radius:4px;align-self:flex-start}
-.bub.out{background:var(--accent);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.bub.out{background:var(--accent);color:#fdfdff;border-bottom-right-radius:4px;align-self:flex-end}
 .bub-time{font-size:10px;color:var(--ink-3);align-self:flex-end;margin-top:-4px}
 .voice{display:flex;align-items:center;gap:10px;background:var(--coral-soft);border-radius:16px;padding:10px 12px;align-self:flex-start;max-width:88%}
 .voice .play{width:28px;height:28px;border-radius:50%;background:var(--accent-2);display:grid;place-items:center;flex-shrink:0;cursor:pointer}
@@ -160,7 +160,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <body>
 <div class="wrap">
   <div class="navbar reveal">
-    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="8" cy="9" r="3"/><circle cx="17" cy="8" r="2.4"/><path d="M3 20v-1a5 5 0 015-5h0a5 5 0 015 5v1"/><path d="M14.5 14.2A4.2 4.2 0 0121 18v1"/></svg></span><b>Skillhub</b></div>
+    <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fdfdff" stroke-width="2"><circle cx="8" cy="9" r="3"/><circle cx="17" cy="8" r="2.4"/><path d="M3 20v-1a5 5 0 015-5h0a5 5 0 015 5v1"/><path d="M14.5 14.2A4.2 4.2 0 0121 18v1"/></svg></span><b>Skillhub</b></div>
     <nav class="pills">
       <a class="on" href="#">Dashboard</a>
       <a href="#">Courses</a>
@@ -255,10 +255,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div class="chat-head"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%235b8def'/%3E%3Ctext x='40' y='52' font-family='sans-serif' font-size='30' font-weight='700' fill='white' text-anchor='middle'%3EMC%3C/text%3E%3C/svg%3E" alt=""><div><b>Mira Chen</b><span>● Online</span></div></div>
       <div class="bubbles">
         <div class="bub in">Hey, did you finish the React Hooks assignment?</div>
-        <div class="bub out">Almost — just the useEffect section left 👍</div>
+        <div class="bub out">Almost, just the useEffect section left 👍</div>
         <div class="bub-time">12:24</div>
         <div class="voice">
-          <span class="play"><svg viewBox="0 0 24 24" fill="#fff"><path d="M6 4l14 8-14 8z"/></svg></span>
+          <span class="play"><svg viewBox="0 0 24 24" fill="#fdfdff"><path d="M6 4l14 8-14 8z"/></svg></span>
           <span class="wave" id="wave"></span>
           <span class="dur">0:38</span>
         </div>

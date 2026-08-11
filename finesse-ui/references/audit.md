@@ -25,6 +25,8 @@ node skills/finesse-ui/scripts/detect.mjs --json <target ...>
 
 It reports findings grouped P0/P1/P2 with `file:line` and the fixing command in `files[]`, a `p0` count, and a `notCovered[]` list of the tells the regex layer **cannot** see. It **always exits 0** — findings are data in the JSON, not a tool failure; read `p0` to know the count (a non-zero exit is reserved for the `--strict` CI/git-hook mode). If the script can't be found (the skill was dropped into a project without it), don't treat that as a blocker — scan by hand against `anti-cheap.md` below. **A clean run means "no regex-detectable slop", not "this page is good"** — the `notCovered[]` items are exactly why Scan 1 always continues into the by-eye pass. Fold its hits into your report, then load `references/anti-cheap.md` and check the offenders the regex can't see (taste-level: default-category aesthetic, fake screenshots, generic card grids):
 
+> **Impeccable-ported rules (Apache-2.0, see the script header) are part of Scan 1's automation:** em-dash *density* (≥8 dashes AND ≥1/500 chars), overused Google Fonts, the codex hairline grid, dark-page chromatic glow / radial halo, CSS-drawn side-tab stripes (pseudo-element + inset-shadow), marquee / pulse loops, "X theater" framing copy, emoji-only text nodes. The `[impeccable·runtime]` entries in `notCovered[]` (48 rules — contrast, computed sizes, layout metrics, live-browser checks) are inventoried, not forgotten: they need the Playwright pass, `preflight.md` §C.
+
 - [ ] em-dashes / `--` used as a flourish in copy
 - [ ] gradient text (`background-clip:text` + gradient)
 - [ ] default/decorative glassmorphism
@@ -52,6 +54,25 @@ The check impeccable doesn't have. **This is finesse's signature audit.**
 - [ ] Motion motivated? Every ScrollTrigger / marquee / pin needs a one-sentence reason. > 1 marquee → flag.
 
 > When the browser-verification step (P2-B, `preflight.md`) is available, don't just grep — open the page and confirm the engine renders real pixels (not white / not flat background). A page that greps clean but ships a white hero still fails this scan.
+
+## Scan 2.B — Micro-Motion (the interaction layer, `motion.md`)
+
+Load `references/motion.md` and check every animation against its gate and values. The condensed block list — motion that "works" but is sluggish, comes from the wrong origin, or fires too often is a finding, not a pass:
+
+- [ ] Animation on a keyboard-initiated / 100+ per day action (command palette, shortcuts, ⌘K) → **P0**
+- [ ] `ease-in` on an entrance, or built-in weak easing where a strong custom curve belongs → **P0**
+- [ ] `scale(0)` entrance / pure fade with no initial transform → **P0**
+- [ ] `transition: all` → **P0**
+- [ ] Layout-property animation (`width`/`height`/`top`/`left`) instead of `transform`/`opacity` → **P0**
+- [ ] Movement with no reduced-motion handling; un-gated `:hover` motion → **P0**
+- [ ] UI duration > 300ms with no stated reason → P1
+- [ ] Popover/dropdown/tooltip scaling from center, not the trigger origin → P1
+- [ ] Keyframes on rapidly-triggered elements (toasts, toggles) → P1
+- [ ] Exit path ≠ entry path; everything entering at once where a 30–80ms stagger belongs → P2
+
+> Exact values live in `motion.md` — cite the curve / duration / origin from it, don't approximate.
+>
+> **Automated subset:** the first three rows (`ease-in`, `scale(0)`, `transition: all`) are regex-detectable — `detect.mjs` (Scan 1) already flags them as P0. Fold its motion hits in here; keep the by-eye pass for the rows regex can't judge (durations, keyframes-on-rapid-triggers, origin, exit symmetry).
 
 ## Scan 3 — Pre-Flight Gates (`preflight.md`)
 

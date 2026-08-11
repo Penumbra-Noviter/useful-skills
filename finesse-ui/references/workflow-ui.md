@@ -19,7 +19,11 @@ Yes, if the page's job is any of:
 
 The tell: the primary action is a **commit** (发布 / 保存 / 提交 / 上线), it's **consequential**, and the user needed to think before pressing it.
 
+**Route check — the reverse also fails:** if the page's job turns out to be **reading** — monitoring, analytics, tables, a dashboard, no commit path anywhere — you're in the wrong file; go to `product-ui.md`. A monitor page built in a workflow shell is as wrong as a settings page built as a dashboard. See SKILL.md §0.F.
+
 If the page is a form but the commit is trivial (a login, a search filter, a profile name), you don't need this file — `product-ui.md` §4 is enough.
+
+**Manage, not commit?** A page whose primary loop is *find a row → act on it → find the next row* — a CRUD data grid, a settings suite, an auth/error family — is **manage**, not workflow. Add `admin-console.md` on top of this file: the data-table system, CRUD page morphology, settings family, config drawer. (The two morphologies share an app shell and both inherit `product-ui.md`; the routing split is per page — §0 of `admin-console.md`.)
 
 ---
 

@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>AETHER — 空间智能引擎</title>
+<title>AETHER · 空间智能引擎</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,300;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,300;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root { --ink: #ECECF2; --muted: #9A9AAB; --dim: #6C6C7C; --cyan: #22e3ff; --mag:#ff2d8e; }
   html { scroll-behavior: smooth; }
   body {
     background: #050507; color: var(--ink);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
   .mono { font-family: 'JetBrains Mono', monospace; }
@@ -130,7 +130,7 @@
         <button class="access">REQUEST ACCESS →</button>
       </header>
       <div class="title">
-        <div class="kicker"><i></i>001 — SPATIAL INTELLIGENCE ENGINE</div>
+        <div class="kicker"><i></i>001 · SPATIAL INTELLIGENCE ENGINE</div>
         <h1>Compute<br>the <em>unseen.</em></h1>
         <p class="sub">一个把物理空间实时解算为可计算场域的神经引擎。在毫秒之间，让机器看见人眼之外的维度。</p>
       </div>
@@ -150,7 +150,7 @@
 
     <!-- MANIFESTO -->
     <section class="manifesto">
-      <div class="sec-no mono">002 — MANIFESTO <i></i></div>
+      <div class="sec-no mono">002 · MANIFESTO <i></i></div>
       <h2>世界不是像素的集合，而是一片连续的、可被解算的 <b>场</b>。<br>我们造的不是相机，是一种新的<em> 感知 </em>。</h2>
     </section>
 
@@ -229,7 +229,7 @@ function makeColorEnv() {
   panel('#22e3ff', 6, 3, 3, 7, 2.4);   // 青
   panel('#ff2d8e', -6, -2, 4, 7, 2.4); // 品红
   panel('#4d6bff', 0, 5, -5, 7, 2.0);  // 电蓝
-  panel('#ffffff', -3, -5, 2, 4, 1.6); // 白高光
+  panel('#f1f1f6', -3, -5, 2, 4, 1.6); // 白高光
   return es;
 }
 scene.environment = pmrem.fromScene(makeColorEnv(), 0.35).texture;
@@ -290,7 +290,7 @@ const addLight = (color, x, y, z, intensity) => {
 addLight('#22e3ff', 5, 3, 2, 95);
 addLight('#ff2d8e', -5, -2, 3, 95);
 addLight('#4d6bff', 0, 4, -4, 70);
-addLight('#ffffff', -2, -4, 2, 32);
+addLight('#f1f1f6', -2, -4, 2, 32);
 scene.add(new THREE.AmbientLight('#1a1a22', 1.0));
 
 let composer;

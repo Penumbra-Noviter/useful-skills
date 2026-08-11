@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>OFFSCREEN — 影像季刊 · Issue 07</title>
+<title>OFFSCREEN · 影像季刊 · Issue 07</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500&family=Spectral:ital,wght@0,300;0,400;1,300&family=Inter:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500&family=Spectral:ital,wght@0,300;0,400;1,300&family=Source+Sans+3:wght@400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root { --paper:#F4F1E9; --ink:#1A1714; --dim:#857F73; --line:#cdc6b7; --accent:#A8331F; }
-  body { background: var(--paper); color: var(--ink); font-family: 'Spectral', Georgia, serif;
+  :root { --base:#F4F1E9; --ink:#1A1714; --dim:#857F73; --line:#cdc6b7; --accent:#A8331F; }
+  body { background: var(--base); color: var(--ink); font-family: 'Spectral', Georgia, serif;
     -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   .pf { font-family: 'Playfair Display', Georgia, serif; }
-  .label { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; }
+  .label { font-family: 'Source Sans 3', sans-serif; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; }
   img { display: block; filter: grayscale(1) contrast(1.06) brightness(.98); }
   .rule { height: 1px; background: var(--ink); }
   .reveal { opacity: 0; transform: translateY(34px); }
@@ -23,7 +23,7 @@
   }
 
   /* top folio bar */
-  .folio { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: var(--paper);
+  .folio { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: var(--base);
     border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: 1fr 1fr 1fr;
     align-items: center; padding: 12px 32px; }
   .folio .l { text-align: left; } .folio .c { text-align: center; } .folio .r { text-align: right; }
@@ -41,8 +41,8 @@
   .coverlines .ci .t i { color: var(--dim); font-size: 13px; }
   .cover .right { position: relative; height: 80vh; overflow: hidden; }
   .cover .right img { width: 100%; height: 100%; object-fit: cover; }
-  .cover .right .cap { position: absolute; bottom: 14px; left: 14px; color: #fff; }
-  .cover .right .feat { position: absolute; top: 22px; left: 22px; right: 22px; color: #fff; }
+  .cover .right .cap { position: absolute; bottom: 14px; left: 14px; color: #faf8f2; }
+  .cover .right .feat { position: absolute; top: 22px; left: 22px; right: 22px; color: #faf8f2; }
   .cover .right .feat h2 { font-size: clamp(30px, 4.4vw, 64px); font-weight: 700; line-height: 1.02;
     text-shadow: 0 2px 24px rgba(0,0,0,.5); }
 
@@ -72,7 +72,7 @@
   /* FULL BLEED PLATE */
   .plate { position: relative; height: 118vh; overflow: hidden; margin-top: 0; }
   .plate img { width: 100%; height: 130%; object-fit: cover; will-change: transform; }
-  .plate .meta { position: absolute; bottom: 30px; left: 32px; right: 32px; color: #fff;
+  .plate .meta { position: absolute; bottom: 30px; left: 32px; right: 32px; color: #faf8f2;
     display: flex; justify-content: space-between; align-items: flex-end; }
   .plate .meta h3 { font-size: clamp(28px, 4vw, 56px); font-weight: 700; max-width: 16ch; text-shadow: 0 2px 20px rgba(0,0,0,.5); }
 
@@ -84,7 +84,7 @@
     padding: 22px 0; border-bottom: 1px solid var(--line); }
   .index .row .no { color: var(--accent); font-size: 14px; }
   .index .row .ti { font-size: clamp(22px, 3vw, 40px); font-weight: 500; }
-  .index .row .pg { font-family: 'Inter', sans-serif; font-size: 13px; color: var(--dim); }
+  .index .row .pg { font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: var(--dim); }
 
   /* COLOPHON */
   .colophon { padding: 130px 32px 70px; text-align: center; }
@@ -106,14 +106,14 @@
     <div class="left">
       <div class="masthead pf">OFF<br>SCREEN</div>
       <div class="coverlines">
-        <div class="ci"><span class="n">01</span><span class="t">胶片为什么还没有死 <i>— 论颗粒的温度</i></span></div>
-        <div class="ci"><span class="n">02</span><span class="t">慢镜头里的时间政治 <i>— 专访导演 K.</i></span></div>
+        <div class="ci"><span class="n">01</span><span class="t">胶片为什么还没有死 <i>· 论颗粒的温度</i></span></div>
+        <div class="ci"><span class="n">02</span><span class="t">慢镜头里的时间政治 <i>· 专访导演 K.</i></span></div>
         <div class="ci"><span class="n">03</span><span class="t">当画面学会了凝视你</span></div>
       </div>
     </div>
     <div class="right">
       <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1100&h=1500&fit=crop&q=80" alt="cover" />
-      <div class="feat"><div class="label" style="opacity:.85">封面影像 — COVER STORY</div><h2 class="pf">看不见的<br>那一帧</h2></div>
+      <div class="feat"><div class="label" style="opacity:.85">封面影像 · COVER STORY</div><h2 class="pf">看不见的<br>那一帧</h2></div>
       <div class="cap label">ISSUE 07 · WINTER 2026</div>
     </div>
   </section>
@@ -122,19 +122,19 @@
   <section class="opener">
     <div class="kick label reveal">封面故事 · Feature</div>
     <h1 class="pf reveal">影像不记录<br>世界，它<em>重写</em>世界。</h1>
-    <div class="byline label reveal"><span>文 — 林深</span><span>摄影 — ATELIER N.</span><span>P. 24</span></div>
+    <div class="byline label reveal"><span>文 · 林深</span><span>摄影 · ATELIER N.</span><span>P. 24</span></div>
   </section>
 
   <!-- BODY -->
   <section class="body2">
-    <p class="drop reveal">每一次按下快门，我们都以为自己在捕捉真实。可真正发生的，是一次悄无声息的改写——光被驯服，时间被切片，混乱的世界被压进一个矩形里，从此有了边界、有了立场。</p>
-    <p class="reveal">于是画面不再是世界的镜子，而是它的作者。它决定什么被看见、什么被留在框外。那些被裁掉的部分，并没有消失，只是退到了「画面之外」——OFFSCREEN——继续沉默地存在着，等待某一天被重新看见。</p>
+    <p class="drop reveal">每一次按下快门，我们都以为自己在捕捉真实。可真正发生的，是一次悄无声息的改写：光被驯服，时间被切片，混乱的世界被压进一个矩形里，从此有了边界、有了立场。</p>
+    <p class="reveal">于是画面不再是世界的镜子，而是它的作者。它决定什么被看见、什么被留在框外。那些被裁掉的部分，并没有消失，只是退到了「画面之外」：OFFSCREEN：继续沉默地存在着，等待某一天被重新看见。</p>
   </section>
 
   <!-- PULL QUOTE -->
   <section class="pull">
     <blockquote class="pf reveal">真正的电影，发生在画面之外。</blockquote>
-    <cite class="label reveal">— 导演 K.，第 03 篇</cite>
+    <cite class="label reveal">· 导演 K.，第 03 篇</cite>
   </section>
 
   <!-- FULL BLEED PLATE -->
@@ -142,7 +142,7 @@
     <img id="plateImg" src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1600&h=1100&fit=crop&q=80" alt="plate" />
     <div class="meta">
       <h3 class="pf">一颗星划过的时间，<br>刚好是一格胶片。</h3>
-      <div class="label">PLATE I — NIGHT · 2026</div>
+      <div class="label">PLATE I · NIGHT · 2026</div>
     </div>
   </section>
 
@@ -159,7 +159,7 @@
   <section class="colophon">
     <div class="big pf reveal">FIN.</div>
     <div class="sub label reveal">OFFSCREEN 影像季刊 · ISSUE 07 · WINTER 2026</div>
-    <div class="foot label"><span>EDITED IN SHANGHAI</span><span>© 2026 OFFSCREEN</span><span>NEXT — ISSUE 08</span></div>
+    <div class="foot label"><span>EDITED IN SHANGHAI</span><span>© 2026 OFFSCREEN</span><span>NEXT · ISSUE 08</span></div>
   </section>
 
 <script src="./lib/gsap.min.js"></script>

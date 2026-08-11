@@ -98,6 +98,7 @@ A page that *claims* SPECTACLE 8 but ships a white hero is broken, not plain. Ve
 - [ ] **Button text fits one line at desktop**; no wrapped CTAs. If a label wraps to 2+ lines, shorten the label or widen the button.
 - [ ] **No duplicate CTA intent** — "Get in touch" + "Contact us" + "Let's talk" on one page = fail. One label per intent everywhere.
 - [ ] Touch targets ≥44px. Form labels above inputs (never placeholder-as-label).
+- [ ] **Reduced motion on every movement, micro-interactions included** (press scale, toasts, drawers, reveals) — gentler variant or static terminal state, never zero-motion for comprehension aids; hover motion gated behind `(hover:hover) and (pointer:fine)`. Micro-interaction values/recipes: `motion.md`.
 
 ## H. Performance (soft)
 
@@ -157,3 +158,15 @@ Generate 5 sharp questions about your specific output, then answer each with con
 - [ ] **No photo-credit captions as decoration** — `Field study no. 12 · Ines Caetano`, `Plate 03 · House archive` under stock/Picsum images are banned. Photo credit only for a real photographer with permission.
 - [ ] **Real company logos for social proof** — plain text wordmarks or `<span>Acme Co</span>` styled in a row are not acceptable. Generate a simple SVG monogram for invented brands.
 - [ ] **Logos render in both light and dark mode** — white-on-dark, black-on-light, or single-color theme variable.
+
+---
+
+## L. Register Fit (hard) — last-line route backstop
+
+The route was verified early (SKILL.md §0.F), but check it one final time before "done":
+
+- [ ] **Job matches the reference it was built with:** a **read** page (monitor / analytics / tables — no commit path) was built with `product-ui.md`; an **operate** page (a primary action that commits — 保存 / 发布 / 提交 / 配置 / 上线) was built with `workflow-ui.md`. A settings page wearing a dashboard shell is a route failure, not a style preference.
+- [ ] **Commerce pages routed per page job** (PDP leans brand / PLP leans product) per SKILL.md §0.A.
+- [ ] **Zine pages picked a path and kept it** — 实景拼贴 has the real photo anchored; 影像蒸馏 has no stray photographic pixels (SKILL.md §11).
+- [ ] **No cross-register masquerade** — no dashboard shell on a landing page, no hero engine on a product page, no workflow shell on a monitor page.
+- [ ] Mismatch found? **Re-route now and rebuild the shell** — shipping a wrong-morphology page because the content is "almost right" is a hard fail.

@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Postline — Email Delivery Console</title>
+<title>Postline · Email Delivery Console</title>
 <style>
 :root{
-  --page:#e9e6dd; --bg:#f6f4ef; --card:#ffffff; --ink:#191a19; --ink-2:#5f6660; --ink-3:#94998f;
+  --page:#e9e6dd; --bg:#f6f4ef; --card:#fcfbf7; --ink:#191a19; --ink-2:#5f6660; --ink-3:#94998f;
   --line:#eae7de; --line-2:#f1efe7;
   --accent:#0d9488; --accent-d:#0b7a70; --accent-l:#ccfbf1;
   --accent-2:#f59e0b; --accent-2-l:#fef3c7;
@@ -46,10 +46,10 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 .datebadge b{font-size:19px;font-weight:800;line-height:1}
 .datebadge span{font-size:9px;color:var(--ink-3);font-weight:600;margin-top:2px}
 .hairline{width:1px;height:36px;background:var(--line);flex-shrink:0}
-.pill-cta{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border:0;
+.pill-cta{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fcfbf7;border:0;
   border-radius:30px;padding:13px 20px;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;
   box-shadow:0 10px 24px -8px rgba(13,148,136,.55)}
-.pill-cta svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2.2}
+.pill-cta svg{width:15px;height:15px;stroke:#fcfbf7;fill:none;stroke-width:2.2}
 .grow{flex:1}
 .headline{text-align:right}
 .headline h1{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
@@ -69,19 +69,19 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 /* ---- bento row 1 ---- */
 .bento-1{display:grid;grid-template-columns:2.15fr 1.7fr 1fr 1fr 1fr;gap:16px;margin-bottom:16px}
 
-.keycard{background:linear-gradient(150deg,#12312e,#0a1f1d 65%);color:#fff;position:relative;overflow:hidden}
+.keycard{background:linear-gradient(150deg,#12312e,#0a1f1d 65%);color:#fcfbf7;position:relative;overflow:hidden}
 .keycard::before{content:'';position:absolute;inset:0;background:
   radial-gradient(280px 200px at 90% -10%,rgba(13,148,136,.45),transparent 60%);pointer-events:none}
 .keycard .kh{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
 .keycard .proj{font-size:13px;font-weight:700}
 .keycard .env{font-size:10.5px;color:rgba(255,255,255,.55);margin-top:2px}
-.keycard .kdd{background:rgba(255,255,255,.1);color:#fff}
+.keycard .kdd{background:rgba(255,255,255,.1);color:#fcfbf7}
 .keycard .token{font-size:16px;letter-spacing:1.5px;margin:26px 0 22px;position:relative;z-index:1;color:#dff5f2}
 .keycard .krow{display:flex;gap:10px;position:relative;z-index:1}
 .kbtn{border:0;border-radius:11px;padding:10px 16px;font-size:12.5px;font-weight:700;cursor:pointer;
   display:inline-flex;align-items:center;gap:6px}
-.kbtn.on{background:#fff;color:#0b1f1c}
-.kbtn.ghost{background:rgba(255,255,255,.12);color:#fff}
+.kbtn.on{background:#fcfbf7;color:#0b1f1c}
+.kbtn.ghost{background:rgba(255,255,255,.12);color:#fcfbf7}
 .kbtn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
 
 .statstack{display:flex;flex-direction:column;justify-content:space-between;gap:0}
@@ -92,16 +92,16 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 .stat-row .val.err{color:var(--accent-2)}
 
 .sq-card{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px}
-.lockcard{background:var(--black);color:#fff}
+.lockcard{background:var(--black);color:#fcfbf7}
 .lockcard .licon{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center}
-.lockcard .licon svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:1.8}
+.lockcard .licon svg{width:16px;height:16px;stroke:#fcfbf7;fill:none;stroke-width:1.8}
 .lockcard b{font-size:13px;font-weight:700}
 .lockcard span{font-size:10.5px;color:rgba(255,255,255,.55)}
 
 .streakcard b.big{font-size:26px;font-weight:800;line-height:1}
 .streakcard .lab-sm{margin-top:2px}
 .dots{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:10px;max-width:110px}
-.dots i{width:7px;height:7px;border-radius:50%;background:var(--line);display:inline-block;transform:scale(0)}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line);display:inline-block;opacity:0;transform:scale(.85)}
 .dots i.on{background:var(--accent-2)}
 
 .sparkcard{align-items:flex-start;text-align:left}
@@ -117,13 +117,13 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 .costcard{display:flex;flex-direction:column;align-items:center;justify-content:center}
 .circles{position:relative;width:190px;height:190px;margin:6px auto 4px}
 .circles .ring{position:absolute;border-radius:50%;top:50%;left:50%;display:grid;place-items:center;
-  transform:translate(-50%,-50%) scale(0)}
+  transform:translate(-50%,-50%) scale(.85)}
 .circles .ring b{font-size:11px;font-weight:800}
 .circles .ring span{display:block;font-size:8.5px;color:var(--ink-3);font-weight:600}
 .ring.r1{width:190px;height:190px;background:rgba(13,148,136,.08)}
 .ring.r2{width:148px;height:148px;background:rgba(13,148,136,.16)}
 .ring.r3{width:106px;height:106px;background:rgba(13,148,136,.28)}
-.ring.r4{width:64px;height:64px;background:var(--accent);color:#fff}
+.ring.r4{width:64px;height:64px;background:var(--accent);color:#fcfbf7}
 .ring.r4 span{color:rgba(255,255,255,.75)}
 .costcard .ch-top{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
 
@@ -134,7 +134,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 .asearch svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
 .fpill{font-size:11px;font-weight:700;padding:7px 12px;border-radius:20px;background:var(--bg);color:var(--ink-2);
   display:inline-flex;align-items:center;gap:5px;cursor:pointer}
-.fpill.on{background:var(--black);color:#fff}
+.fpill.on{background:var(--black);color:#fcfbf7}
 .subgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .subwidget{background:var(--bg);border-radius:14px;padding:14px}
 .waveform{display:flex;align-items:flex-end;gap:3px;height:52px;margin-top:8px}
@@ -151,7 +151,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 .promo .pico svg{width:15px;height:15px;stroke:#b45309;fill:none;stroke-width:1.8}
 .promo b{font-size:12.5px;font-weight:700}
 .promo p{font-size:11px;color:var(--ink-2);margin:4px 0 10px;line-height:1.35}
-.promo button{margin-top:auto;border:0;background:var(--black);color:#fff;border-radius:9px;padding:8px;
+.promo button{margin-top:auto;border:0;background:var(--black);color:#fcfbf7;border-radius:9px;padding:8px;
   font-size:11.5px;font-weight:700;cursor:pointer}
 
 .latcard{display:flex;flex-direction:column}
@@ -168,7 +168,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
   display:grid;place-items:center;cursor:pointer}
 .ratingrow button svg{width:17px;height:17px;stroke:var(--ink-2);fill:none;stroke-width:1.8}
 .ratingrow button.pick{background:var(--accent);border-color:var(--accent)}
-.ratingrow button.pick svg{stroke:#fff}
+.ratingrow button.pick svg{stroke:#fcfbf7}
 
 .footnote{margin-top:26px;font-size:11px;color:var(--ink-3);text-align:center}
 
@@ -203,7 +203,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 
   <div class="topbar">
     <div class="icon-circle"><svg viewBox="0 0 24 24" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
-    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="12" cy="18" r="2.4"/><path d="M8 7.2L11 16M16 7.2L13 16M8.4 6H15.6"/></svg></div>
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fcfbf7" stroke-width="1.8"><circle cx="6" cy="6" r="2.4"/><circle cx="18" cy="6" r="2.4"/><circle cx="12" cy="18" r="2.4"/><path d="M8 7.2L11 16M16 7.2L13 16M8.4 6H15.6"/></svg></div>
     <div class="brandline"><div class="lab">Postline</div><div class="word">Email Delivery</div></div>
     <div class="icon-circle"><svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg></div>
     <div class="acct"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' rx='40' fill='%230d9488'/%3E%3Ctext x='40' y='53' font-family='sans-serif' font-size='32' font-weight='700' fill='white' text-anchor='middle'%3EAR%3C/text%3E%3C/svg%3E" alt="user"><div><div class="nm">Alex Rivera</div><div class="role">Delivery Lead</div></div></div>
@@ -331,8 +331,8 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   for(let i=0;i<20;i++){h+='<i class="'+(i<13?'on':'')+'"></i>';}
   wrap.innerHTML=h;
   const dots=wrap.querySelectorAll('i');
-  if(reduce){dots.forEach(d=>d.style.transform='scale(1)');}
-  else{gsap.to(dots,{scale:1,duration:.4,ease:'back.out(2)',stagger:.03,delay:.5});}
+  if(reduce){dots.forEach(d=>{d.style.opacity=1;d.style.transform='scale(1)';});}
+  else{gsap.to(dots,{opacity:1,scale:1,duration:.4,ease:'back.out(2)',stagger:.03,delay:.5});}
 })();
 
 /* sparkline helper */
@@ -371,7 +371,7 @@ drawSpark('sparkLat',[220,235,210,225,195,205,180,190,170,184],'#0d9488');
   const rings=document.querySelectorAll('.ring');
   rings.forEach((r,i)=>{
     if(reduce){r.style.transform='translate(-50%,-50%) scale(1)';return;}
-    const o={s:0};
+    const o={s:.85};
     gsap.to(o,{s:1,duration:.8,ease:'back.out(1.6)',delay:.3+i*.12,
       onUpdate:()=>{r.style.transform='translate(-50%,-50%) scale('+o.s+')';}});
   });

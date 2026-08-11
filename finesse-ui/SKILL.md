@@ -1,37 +1,38 @@
 ---
 name: finesse-ui
-description: 'Build never-cheap, high-craft web interfaces — brand surfaces (landing pages, brand sites, launches, portfolios, hero pages with real WebGL/Three.js/Canvas/GSAP engines), product UI (dashboards, admin panels, analytics, data tables, app shells), workflow UI (merchant/admin consoles, publish & create wizards, config and settings pages, review queues), and commerce pages (product detail pages, listing/category pages, cart, checkout). Routes by register: brand → soul + spectacle engine; product → palette + component system + density (split further into pages you READ = dashboards, and pages you OPERATE = consoles/wizards); commerce → PDP/PLP skeletons + anti-dark-pattern rules. Ships a product color library (tinted neutral ramps + 16 accents + 12 paste-ready sets) so dashboards stop defaulting to blue. Always reads the brief first and audits against an anti-slop cheapness blacklist. Supports verb commands (audit · bolder · quieter · soul · animate · densify · redesign) for targeted iteration. Triggers on "make this look premium", "landing page", "dashboard", "admin panel", "商家后台", "工作台", "back-office", "console", "publish flow", "发布流程", "wizard", "settings page", "analytics UI", "data table", "app UI", "product page", "PDP", "listing page", "checkout", "dashboard colors", "give it a soul / a vibe", "anti-slop", "hero animation", "make it look like X", "looks like Linear", "X 风格", "/finesse match <brand>", "/finesse".'
-version: 0.13.0
+description: 'High-craft, never-cheap web interfaces: brand surfaces, product UI, workflow UI, commerce, paper-zine (拾景/拼贴). Routes by register; anti-slop. Triggers: landing page, dashboard, admin panel, 商家后台, 工作台, looks like Linear, X 风格, make this look premium, 动效, 纸刊, zine, 拾景, 拼贴, 抽象记忆面板, 把这张照片做成页面, /finesse.'
+when_to_use: >
+  Full trigger vocabulary: make this look premium · landing page · launches · portfolios · hero page · dashboard · admin panel · analytics · data tables · app shell · 商家后台 · 工作台 · back-office · console · wizard · settings page · review queue · PDP · PLP · cart · checkout · dashboard colors · give it a soul · anti-slop · X 风格 · looks like Linear/Stripe/Supabase/Grafana · micro-interaction · button press · tooltip · toast · drawer · 动效 · /finesse.
+  Routes by register: brand → soul + spectacle (design-dna substrate, hero engine, style personas); product → palette first (product-palettes), then split READ pages (dashboards/analytics → product-ui) vs OPERATE pages (wizards/consoles/settings/review queues → workflow-ui on top); commerce → PDP/PLP + anti-dark-pattern rules; photographic/poetic briefs (a real photo, 纸刊/zine/拼贴/poster) → routed to the standalone **zine-ui skill** (photo-as-anchor 实景拼贴 · distillation 影像蒸馏 · hybrid photo-abstract 抽象记忆面板 + paper material language).
+  Verb commands: craft · audit · bolder · quieter · soul · animate · depth · densify · redesign · match <brand> · init · document.
+  Locked design systems: brief names a real brand, "looks like X", or a DESIGN.md exists → that file overrides soul/palette picks; everything else (register, dials, engine, skeleton, blacklist, a11y, pre-flight) still runs.
+version: 0.19.0
 user-invocable: true
-argument-hint: "[craft · audit · bolder|quieter|soul · animate|depth|densify · redesign · match <brand> · init|document] [target]"
+argument-hint: "[craft · audit · bolder|quieter|soul · animate|depth|densify · redesign · match <brand> · zine · init|document] [target]"
 license: MIT
 ---
 
 # finesse — Technically Spectacular · Soul-Distinct · Never Cheap
 
-> **finesse builds two kinds of interface and routes by register (§0):**
-> - **brand** — design IS the product: landing pages, brand sites, launches, portfolios, hero pages. Optimize for **spectacle + soul + first impression** — a real visual engine, an opinionated personality.
-> - **product** — design SERVES the product: dashboards, admin panels, analytics, data tables, app shells, settings. Optimize for **clarity + density + usability** — and still never cheap.
+> **finesse routes by register (§0):** **brand** — design IS the product (spectacle + soul; §5 substrate `design-dna.md`, hero engine §6) · **product** — design SERVES the product (clarity + density; `product-ui.md` §0 substrate, component system + data viz) · **zine** — design MEMORIALIZES the real (photo-led 纸刊/zine/拼贴 briefs; routed to the standalone `zine-ui` skill). **No cross-inheritance:** a dashboard is not a brand page with charts; a zine page gets no hero engine.
 >
-> The through-line is identical: **high craft, zero AI-slop.** What applies to **both** is the **universal craft floor** (tinted neutrals, no `#fff`/`#000`, translucent/hairline borders, tinted shadows, contrast floors), the cheapness blacklist (§8), and the pre-flight (§10). What **forks** is the *substrate above that floor* and the middle: **brand** lays the §5 brand substrate (`design-dna.md` — grain, vignette, display type) and reaches for a hero engine (§6); **product** lays its **own** substrate (`product-ui.md` §0 — surfaces, cards, KPI tiles, density) and reaches for a component system + data viz. A dashboard is a **different design language**, not a brand page with charts — it does **not** inherit grain / vignette / giant hero type / dark-default / a hero engine.
->
-> Every rule below is **contextual**. Nothing fires automatically. Read the brief, set the register, then pull only what fits. A skill that produces the same page for every brief has failed.
+> The through-line is identical: **high craft, zero AI-slop** — the universal craft floor (tinted neutrals, no `#fff`/`#000`, translucent borders, tinted shadows), the cheapness blacklist (§8), the pre-flight (§10). Every rule below is **contextual** — read the brief, set the register, pull only what fits. A skill that produces the same page for every brief has failed.
 
 ---
 
 ## How to use this skill
 
 1. Run **§0 Brand Read** — infer **register** (brand vs product) + soul before touching code. Output a one-line Design Read.
-2. Set the **§1 Three Dials** (SOUL · SPECTACLE · DENSITY). Product register pins SPECTACLE low, DENSITY high.
+2. Set the **§1 Three Dials** (SOUL · SPECTACLE · DENSITY) — declared in the Design Read **before** any code; a silent dial pick is how flat pages ship. Product register pins SPECTACLE low, DENSITY high.
 3. **Lay the substrate — the right one for the register.** Both share the **universal craft floor** (tinted neutrals, no `#fff`/`#000`, translucent/hairline borders, tinted shadows, contrast floors — `references/design-dna.md` §1). Above that floor the substrate forks:
    - **brand** → the **§5 brand substrate** (`references/design-dna.md`): grain, vignette, `clamp()` display type, dark-default, layered hero depth.
    - **product** → the **product substrate** (`references/product-ui.md` §0): premium surfaces/cards, KPI tiles, floating panels, fixed type scale, feedback-only motion. **Never** pour grain / vignette / giant hero type / dark-default / a hero engine into a dashboard — that's brand grammar, not product grammar.
 4. **Then the paths fork further:**
-   - **brand** → pick a **§4 Soul** (`references/style-personas.md`) and build **one §6 Hero Engine** (`references/hero-engines.md`).
+   - **brand** → pick a **§4 Soul** (`references/style-personas.md`) and build **one §6 Hero Engine** (`references/hero-engines.md`). Brief is photographic/poetic (a real photo, 纸刊/zine/拼贴/poster)? **Route to the standalone `zine-ui` skill instead** — the anchored photo + paper material language replaces the persona + engine pair.
    - **product** → **pick a palette from `references/product-palettes.md` first** (the neutral ramp is 80% of the pixels; skipping this step is how every dashboard comes out blue). Then split by the page's job:
      - **pages you read** — dashboards, analytics, monitoring → `references/product-ui.md` (density, tables, charts, interaction states). **Before writing, open the closest dashboard in `examples/`** (index: `examples/EXAMPLES.md`) to see `product-ui.md` §0 applied in shipped code — lift patterns, not whole files.
-     - **pages you operate** — publish/create wizards, merchant & admin consoles, config, settings, review queues → `references/workflow-ui.md` **on top of** `product-ui.md` (workflow shell, numbered sections, radio-card choices, live preview, pre-submit check, derived totals, draft/commit). There is **no form-workflow page in `examples/`** — build from the reference, and do **not** force-fit a dashboard example onto a form.
-5. Assemble the **§7 page skeleton**, motion-motivated only.
+     - **pages you operate** — publish/create wizards, merchant & admin consoles, config, settings, review queues → `references/workflow-ui.md` **on top of** `product-ui.md` (workflow shell, numbered sections, radio-card choices, live preview, pre-submit check, derived totals, draft/commit). **Pages you manage** — data-grid-heavy consoles, CRUD lists, settings suites, auth/error screens → add `references/admin-console.md` on top (the data-table system, CRUD page morphology, settings family, config drawer). There is **no form-workflow page in `examples/`** — build from the reference, and do **not** force-fit a dashboard example onto a form. **Verify the read/operate route at both §0.F checkpoints** — the §0.A call is made once and can be wrong; a misroute costs a full rebuild.
+5. Assemble the **§7 page skeleton** per `references/page-skeleton.md`, motion-motivated only. When writing components, load `references/stack-defaults.md` first — its hard rules (§3: RSC safety, no `useState` for continuous input, icon family lock, verify every import) are mandatory.
 6. Run the **§8 Cheapness Blacklist** (`references/anti-cheap.md`) and **§10 Pre-Flight** (`references/preflight.md`) before shipping.
 
 **Locked design systems (the brand library).** If the brief names a real product/brand ("looks like Linear", "Airbnb 风格") or the user drops a `DESIGN.md` into the project, that file becomes the **locked design source**: it overrides the §4 soul and §5 palette/type picks with its own colors / type / spacing / radius / components. Everything else (register, dials, engine, skeleton, blacklist, a11y, pre-flight) still runs. Route via `design-md/INDEX.md`; merge contract in `references/design-md.md`; `match <brand>` is the explicit entry point.
@@ -43,14 +44,16 @@ The `references/*.md` files are the deep material. Load the one you need for the
 | `design-dna.md` | Laying the **brand** substrate (grain, vignette, display type, color tokens, palette families). Product/dashboard inherits only its **universal craft floor** (§1: tinted neutrals, translucent borders, contrast floors) — the surfaces/cards/type/motion of a dashboard come from `product-ui.md` §0, not here |
 | `theming.md` | Brief asks for a light/dark toggle or multiple swappable named themes — the token-role and hardcoded-color pitfalls of a runtime palette switch (not the single-locked-palette default) |
 | `hero-engines.md` | Building the hero engine (brand register); also covers a secondary motion vocabulary (split-char reveal, magnetic buttons, curtain wipe, scan-line, per-card fly-in) for non-hero moments elsewhere on the page |
+| `motion.md` | Any interactive UI — buttons, dropdowns, tooltips, toasts, drawers, modals, tabs, drag. The **micro-interaction motion layer**: the should-it-animate gate, purpose naming, tool choice (transition / `@starting-style` / WAAPI / Motion), easing/duration/spring value tables, vanilla recipes, interruption/exit rules, reduced-motion + hover gating. Product register: the values under `product-ui.md` §0.4's "feedback only"; brand register: everything that isn't the hero engine. Never loaded for the hero itself (that's `hero-engines.md`) |
 | `3d-effects.md` | Adding a 3D moment — CSS tilt/flip/coverflow/depth-parallax or Three.js model/displacement |
 | `style-personas.md` | Picking a soul (brand register) |
 | `inspiration-catalog.md` | Persona picked but you want a wider menu of proven techniques for that soul, or the brief doesn't fit any of the 10 personas cleanly |
 | `anti-cheap.md` | Before any delivery — cheapness scan |
 | `product-ui.md` | Dashboard / admin / data app — pages you **read** (product register) |
 | `workflow-ui.md` | Pages you **operate** (product register): publish/create wizards, merchant & admin consoles, config, settings, review queues — the workflow shell, numbered section cards, radio-card choices, live-preview aside, pre-submit check, derived budget panels, draft/commit |
+| `admin-console.md` | Pages you **manage** (product register): data-grid-heavy consoles, CRUD list pages, settings suites, auth + error screens — the data-table system (toolbar / faceted filters / column menus / pagination / view options / bulk actions), CRUD page morphology, settings family, config drawer. Load **on top of** `workflow-ui.md`; distilled from the `shadcn-admin` corpus |
 | `product-palettes.md` | **Any product-register page** — the color layer `design-dna.md` §8 doesn't cover: 5 tinted neutral ramps, 16 accents with light/dark + text-on-accent contrast, 12 paste-ready sets, the known-SaaS palettes (Linear/Stripe/Supabase/Grafana…). Load it **before** picking a color, or you will reach for blue |
-| `examples/EXAMPLES.md` | The positive-reference corpus — real shipped pages (5 brand + 4 dashboards) with a per-file "what to study" table. **Open the closest one before building**, especially for dashboards (lift patterns, not whole files) |
+| `examples/EXAMPLES.md` | The positive-reference corpus — real shipped pages (5 brand + 8 dashboards) with a per-file "what to study" table. **Open the closest one before building**, especially for dashboards (lift patterns, not whole files) |
 | `dataviz.md` | Chart-heavy product UI beyond the starter table — full 25-type selection matrix, a11y grade + mandatory fallback, library picks (the **decision** layer) |
 | `chart-crafting.md` | **Any** hand-built dashboard chart in a single self-contained file (mandatory for bars — the barcode-chart trap) — the no-library **implementation** layer: the value→height rule, `div height:value/max%` bar recipe, SVG coordinate normalization, line/area draw-in, donut/gauge grow, stacked bars, sparklines, the three animations × reduced-motion pairing, slider-driven live update |
 | `commerce-ui.md` | Product detail page (PDP), listing/category page (PLP), cart, checkout — commerce register |
@@ -61,7 +64,13 @@ The `references/*.md` files are the deep material. Load the one you need for the
 | `audit.md` | Read-only diagnostic — cheapness + spectacle + preflight scan |
 | `init.md` | New project — write `PRODUCT.md` (the persistent brief) |
 | `document.md` | Existing codebase — extract `design-model.yaml` from real code |
+| `domain-integration.md` | A design repo / corpus is dropped in and the user asks to integrate it into finesse — the classify → **overlap gate** (is it already covered? reject / merge / add) → locate → distill → wire → guard protocol for adding (or rejecting) new domain material |
 | `design-md.md` | Brief names a known brand ("looks like X" / "X 风格") or a `DESIGN.md` is provided — the `design-md/` brand library; the file is the **locked design source** (palette/type/spacing/components); finesse still owns register, engine, dials, audit |
+| `stack-defaults.md` | Implementation phase — §3 default architecture: RSC safety, Tailwind v4 + Motion, state rules (never `useState` for continuous input), icon families, responsiveness, dependency verification. Load before writing components |
+| `dials.md` | Setting or adjusting the §1 dials — what each level 1–10 means in concrete CSS/motion/layout terms, plus dial-contradiction cross-checks |
+| `page-skeleton.md` | Assembly phase — §7 canonical section sequence + layout-diversification / eyebrow / theme-lock rules |
+| `iteration.md` | Post-delivery — §10.A the "user says → command → action" feedback table |
+| `design-systems.md` | A §2.A system is chosen (need its install command) or a canonical source URL needs verifying — the Appendix A+B material |
 
 ---
 
@@ -79,15 +88,16 @@ finesse runs as a full build by default, but supports **verb commands** for targ
 | `bolder [target]` | Refine | Raise SPECTACLE +2, upgrade the engine (e.g. Canvas → Three.js) | `hero-engines.md` |
 | `quieter [target]` | Refine | Lower SPECTACLE −2, step down to GSAP / CSS-only; calm an overloaded page | `hero-engines.md` |
 | `soul [target]` | Refine | Re-pick the persona / soul when a page "feels generic" or wrong-vibe | `style-personas.md` |
-| `animate [target]` | Enhance | Add or swap the hero engine in isolation; motion only | `hero-engines.md` |
+| `animate [target]` | Enhance | Add or swap motion in isolation; motion only. Routes by target: the hero / spectacle moment → the engine (`hero-engines.md`); an interactive element's *interaction feedback* (button press, dropdown, tooltip, toast, drawer, drag) → the micro-interaction layer (`motion.md`). Decorative spectacle on an interactive element (magnetic buttons, cursor followers) stays with `hero-engines.md` | `hero-engines.md` · `motion.md` |
 | `depth [target]` | Enhance | Add **one** 3D moment — CSS pseudo-3D (tilt · flip · coverflow · depth-parallax) or Three.js (model viewer · image displacement) | `3d-effects.md` |
 | `densify [target]` | Enhance | Adjust DENSITY ± — add/remove content, tune information-per-viewport | `product-ui.md` |
 | `redesign [target]` | Iterate | Upgrade an existing page, audit-first; never full-rebuild for one complaint | `redesign-mode.md` |
+| `zine [target]` | Build/Refine | Apply the paper-zine treatment to a photo-led page — decide 实景拼贴 (keep the photo as anchor) vs 影像蒸馏 (distill it away) vs photo-abstract (photo + derived abstract panel), lay the paper material language. **Routes to the standalone `zine-ui` skill** | `zine-ui` skill |
 
 ### Routing rules
 
 1. **First word matches a command** → load that command's reference and follow it. Everything after the command name is the target. Lay the **§5 substrate** and run the relevant **§8/§10 checks**, but skip the parts of §0–§7 that don't apply to that single action (e.g. `quieter` doesn't re-pick a soul).
-2. **First word doesn't match, but intent clearly maps to one command** ("too plain / boring" → `bolder`; "too flashy" → `quieter`; "feels generic" → `soul`; "make it pop" → `animate`; "add depth / make it 3D / tilt / parallax" → `depth`; "too sparse / too dense" → `densify`; "improve / fix this page" → `redesign`; "make it look like X / X 风格 / in the style of X" → `match`) → route to that command and proceed as if invoked. If two fit, ask once which.
+2. **First word doesn't match, but intent clearly maps to one command** ("too plain / boring" → `bolder`; "too flashy" → `quieter`; "feels generic" → `soul`; "make it pop" → `animate`; "add depth / make it 3D / tilt / parallax" → `depth`; "too sparse / too dense" → `densify`; "improve / fix this page" → `redesign`; "make it look like X / X 风格 / in the style of X" → `match`; "make it a zine / 纸刊 / 拾景 / 拼贴 / 抽象记忆面板 / photo-abstract / 把这张照片做成页面 / this photo" → `zine`) → route to that command and proceed as if invoked. If two fit, ask once which.
 2a. **`match` / a brief naming a known brand** ("looks like Linear", "Airbnb 风格") → look the brand up in `design-md/INDEX.md`, read its DESIGN.md, and build with it as the **locked design source** per `references/design-md.md`. Register still follows the page's job (§0.A), not the brand.
 3. **No argument at all** (bare `/finesse`) → the user is asking *"what should I do here?"* Don't dump the static menu. Read a few cheap signals and **lead with the 2-3 highest-value commands**, each with a one-line reason, then offer the full table as fallback. Never auto-run — recommend, the user confirms. Signal → pick:
    - **no `PRODUCT.md`** and there's real code/pages → lead with `document` (capture what's built) and/or `init` (write the brief). Brand-new empty project → `init` then `craft`.
@@ -113,25 +123,26 @@ Most AI design output is bad because the model jumps to a default aesthetic inst
 
 Read these signals before deciding the register. Do not jump to a default:
 
-1. **Page kind** — landing (SaaS / consumer / agency / event), portfolio (dev / designer / creative studio), product (dashboard / admin / analytics / settings / console), commerce (PDP / PLP / cart / checkout), editorial / blog.
+1. **Page kind** — landing, portfolio, product (dashboard / admin / analytics / settings / console), commerce (PDP / PLP / cart / checkout), editorial.
 2. **Vibe words** — "minimalist", "calm", "Linear-style", "Awwwards", "brutalist", "premium consumer", "Apple-y", "playful", "serious B2B", "editorial", "agency-y", "glassy", "dark tech".
 3. **Reference signals** — URLs linked, screenshots pasted, products named, brands competing with.
-4. **Audience** — B2B procurement panel vs. design-conscious consumer vs. recruiter scanning a portfolio. The audience picks the aesthetic, not your taste.
-5. **Brand assets that already exist** — logo, color, type, photography. For redesigns, these are starting material, not optional input.
-6. **Quiet constraints** — accessibility-first audiences, public-sector, regulated industries, trust-first commerce, kids' products. These constraints **OVERRIDE** aesthetic preference.
+4. **Audience** — the audience picks the aesthetic, not your taste.
+5. **Brand assets that already exist** — logo, color, type, photography. For redesigns these are starting material, not optional input.
+6. **Quiet constraints** — accessibility-first audiences, public-sector, regulated industries, trust-first commerce, kids' products. These **OVERRIDE** aesthetic preference.
 
 Then determine the register:
 
 - **brand** — design IS the product: landing page, brand site, launch, portfolio, campaign, hero page. Be bold, opinionated, spectacular. Goes the soul + hero-engine route (§4, §6).
-- **product** — design SERVES the product: dashboard, admin, analytics, data table, app shell, settings, tool. Optimize for clarity, density, usability. Goes the component-system route (`references/product-ui.md`). Still never cheap — it inherits the **universal craft floor** (§5's last three bullets) + the cheapness blacklist (§8), and builds on the **product substrate** (`product-ui.md` §0), **not** the brand substrate's grain/vignette/hero-type/dark-default.
-  - **Split it once more by the page's job — read vs. operate.** A dashboard you *read* fails by being unreadable; a console you *operate* fails by being **unfinishable** (abandoned at step 3, or submitted wrong). If the primary action is a **consequential commit** (发布 / 上线 / 提交 / 保存配置) — a merchant publishing a campaign, an admin configuring a rule, a long form that produces a real thing — it's a **workflow page**: load `references/workflow-ui.md` on top of `product-ui.md`. Login forms and search filters don't count; `product-ui.md` §4 covers those.
+  - **Zine register.** A **photographic / poetic brief** — the user supplies or names a real photo, or asks for 纸刊 / zine / 拼贴 / poster / 抽象记忆面板 / "把这张照片做成页面" — **routes out of finesse to the standalone `zine-ui` skill** (the paper-material register: 实景拼贴 photo-as-anchor / 影像蒸馏 distillation / photo-abstract 抽象记忆面板). It inherits finesse's craft floor + blacklist + a11y gates and carries its own compact rules, depth files, and pre-flight (§11).
+- **product** — design SERVES the product: dashboard, admin, analytics, data table, app shell, settings, tool. Optimize for clarity, density, usability. Goes the component-system route (`references/product-ui.md`), inherits the **universal craft floor** (§5's last three bullets) + the cheapness blacklist (§8), and builds on the **product substrate** (`product-ui.md` §0) — not the brand substrate's grain/vignette/hero-type/dark-default.
+  - **Split once more by the page's job — read vs. operate.** A dashboard you *read* fails by being unreadable; a console you *operate* fails by being **unfinishable** (abandoned at step 3, or submitted wrong). If the primary action is a **consequential commit** (发布 / 上线 / 提交 / 保存配置) — a merchant publishing a campaign, an admin configuring a rule, a long form that produces a real thing — it's a **workflow page**: load `references/workflow-ui.md` on top of `product-ui.md`. Login forms and search filters don't count; `product-ui.md` §4 covers those.
   - **Color is not optional here.** Pick from `references/product-palettes.md` before writing CSS. "Dashboard" predicts blue; the *product* predicts a color.
-- **commerce** — a third, hybrid case: product detail pages (PDP), category/listing pages (PLP), cart, checkout. It doesn't cleanly fit either bucket above, so don't force it — route by which job the specific page is doing:
-  - A **PDP selling one hero item** (a single SKU, a launch, a flagship product) leans **brand**: pick a soul (§4), but keep DENSITY up for specs/reviews/trust signals — see `references/commerce-ui.md` for the PDP skeleton.
-  - A **PLP / marketplace with many SKUs** (filters, sort, grid of many products) leans **product**: DENSITY high, SPECTACLE low, same as a dashboard — see `references/product-ui.md` for grid/filter patterns plus `references/commerce-ui.md` for commerce-specific rules (price/CTA placement, cart, checkout, dark-pattern bans).
-  - When unsure which it is, ask: *"is this page trying to sell the vibe of one product, or help someone compare/filter many?"*
+- **commerce** — the hybrid case: PDP / PLP / cart / checkout. Doesn't fit either bucket cleanly — route by the specific page's job:
+  - A **PDP selling one hero item** (a single SKU, a launch, a flagship product) leans **brand**: pick a soul (§4), but keep DENSITY up for specs/reviews/trust signals — see `references/commerce-ui.md`.
+  - A **PLP / marketplace with many SKUs** (filters, sort, grid of many products) leans **product**: DENSITY high, SPECTACLE low, same as a dashboard — `references/product-ui.md` grid/filter patterns + `references/commerce-ui.md` commerce rules (price/CTA placement, cart, checkout, dark-pattern bans).
+  - When unsure, ask: *"is this page trying to sell the vibe of one product, or help someone compare/filter many?"*
 
-**Read project memory first.** If a `PRODUCT.md` exists at the project root, read it (register, users, brand personality, locked dials, anti-references) — it **overrides your guesses**. If a `design-model.yaml` exists, read it too for the locked palette/type/substrate so this page matches existing ones. These are written by `init` / `document` (see Commands).
+**Read project memory first.** If a `PRODUCT.md` exists at the project root, read it (register, users, brand personality, locked dials, anti-references) — it **overrides your guesses**. If a `design-model.yaml` exists, read it for the locked palette/type/substrate so this page matches existing ones. Written by `init` / `document` (see Commands).
 
 - **Brand library.** If the brief names a known design system (see `design-md/INDEX.md`), read its DESIGN.md before picking a soul/palette — it overrides the §4/§5 defaults. Proceed per `references/design-md.md`.
 - **No `PRODUCT.md`, multi-page or repeat project, thin brief** → offer to run `init` first (one `PRODUCT.md` keeps every later page consistent). Don't force it on a one-off page.
@@ -140,15 +151,17 @@ Then determine the register:
 
 ### 0.B Output a one-line "Design Read" before generating
 
-Format: `Design Read: {industry} · {soul in 2-3 words} · register={brand|product} · SPECTACLE={n} · hero-engine={type}`
+Format: `Design Read: {industry} · {soul in 2-3 words} · register={brand|product|zine} · job={read|operate} (product only) · SPECTACLE={n} · hero-engine={type}` — for product/zine, `hero-engine` becomes `none` + the substrate/material system (e.g. `component-system`, `paper-zine`).
 
 Example: `Design Read: deep-space astronomy · cinematic + reverent · register=brand · SPECTACLE=8 · hero-engine=Three.js particle galaxy`
 
-**STOP after the Design Read. Do not generate any code yet.** Wait for the user to confirm the direction or redirect. Only proceed to §1 once the user says "go ahead", "looks good", "yes", or provides additional guidance.
+**Interactive session (a user is present and will respond): STOP after the Design Read. Do not generate any code yet.** Wait for the user to confirm the direction or redirect. Only proceed to §1 once the user says "go ahead", "looks good", "yes", or provides additional guidance.
+
+**Autonomous execution (no user at the other end — a sub-agent, a batch/one-shot task, or the brief says "end to end" / "不用确认"): skip the wait.** State the Design Read as a **decision record** in the output (register, dials, engine or material system, one-line reason), then proceed straight into §1 and complete the build; the human can still redirect by reviewing the result. When unsure which mode this is and asking is possible, ask once — if asking is impossible, default to autonomous.
 
 ### 0.C If the brief is ambiguous, ask ONE question — do not guess blind
 
-One sharp question beats five rounds of wrong defaults. Ask the thing that most changes the output: *"Is this meant to feel restrained-editorial or maximal-spectacle?"* / *"What should a visitor remember 10 seconds after leaving?"* / *"Should this feel closer to Linear-clean or Awwwards-experimental?"* Then commit. **Wait for the answer before proceeding.**
+One sharp question beats five rounds of wrong defaults. Ask the thing that most changes the output: *"Is this meant to feel restrained-editorial or maximal-spectacle?"* / *"What should a visitor remember 10 seconds after leaving?"* / *"Should this feel closer to Linear-clean or Awwwards-experimental?"* Then commit. **Wait for the answer before proceeding.** *(Autonomous mode — see §0.B: skip the question, commit to the best inference, and record it in the decision record.)*
 
 **Never ask a multi-question dump.** If you can confidently infer from context, do not ask — just declare the Design Read and proceed.
 
@@ -162,12 +175,12 @@ If the brief contains these cues, use these presets as a starting point before r
 
 | User says | SOUL | SPECTACLE | DENSITY |
 |-----------|------|-----------|---------|
-| "premium", "luxury", "high-end" | 8 | 5 | 3 |
+| "premium", "luxury", "high-end" | 8 | 6 | 3 |
 | "minimal", "clean", "understated" | 6 | 3 | 3 |
 | "bold", "striking", "impactful" | 7 | 7 | 4 |
-| "editorial", "magazine", "publication" | 8 | 4 | 6 |
+| "editorial", "magazine", "publication" | 8 | 6 | 6 |
 | "tech", "AI", "SaaS" marketing | 6 | 7 | 5 |
-| "corporate", "B2B", "enterprise" | 4 | 3 | 6 |
+| "corporate", "B2B", "enterprise" | 4 | 5 | 6 |
 | "playful", "vibrant", "creative" | 7 | 6 | 5 |
 | "data-heavy", "dashboard", "analytics" | 4 | 2 | 9 |
 | "商家后台", "工作台", "admin console", "back-office" | 5 | 2 | 7 |
@@ -179,11 +192,20 @@ If the brief contains these cues, use these presets as a starting point before r
 
 Override these immediately if the brief provides stronger or contradicting signals.
 
+### 0.F Route Verification — catch a misroute before it costs a page
+
+The §0.A route is a first call, not a lock. Verify it at two points — a wrong route costs a full rebuild, and the check is cheaper than the fix:
+
+1. **Right after the Design Read is confirmed (§0.B):** re-run §0.A's read-vs-operate test against the confirmed direction (the `job` field in the Design Read). A page whose primary action **commits** (保存 / 发布 / 提交 / 配置 / 上线) belongs in `workflow-ui.md`; one that **presents** (monitor / analytics / tables) belongs in `product-ui.md`. Contradiction → **re-route now**: swap the reference before laying the shell, and record the change in the decision record.
+2. **At assembly time (§7), before the shell is committed:** if the page under construction starts reading like the other job — a dashboard shell gaining a dominant save/config form, or a workflow shell with no commit path — stop and re-route. Do not finish in the wrong morphology; by §10 the rebuild is the whole page.
+
+The references self-check too: `product-ui.md` and `workflow-ui.md` open with the job test, and `preflight.md` §L re-gates the fit at the end.
+
 ---
 
 ## 1. THE THREE DIALS
 
-Set these explicitly from the Design Read. They drive everything downstream.
+Set these explicitly from the Design Read. They drive everything downstream. Concrete level definitions (1–10 in CSS/motion/layout terms) and dial-contradiction cross-checks: `references/dials.md`.
 
 | Dial | 1–3 | 4–6 | 7–10 |
 |------|-----|-----|------|
@@ -201,6 +223,15 @@ Set these explicitly from the Design Read. They drive everything downstream.
 ### 1.B "Spectacle claimed, spectacle shown" (mandatory)
 
 If `SPECTACLE ≥ 7`, the page MUST actually contain a working visual engine (a real Three.js/Canvas/GLSL/scroll-pinned moment), degrade gracefully, and hold 60fps on a mid-range device. A page that claims SPECTACLE 8 but ships a gradient blob is **broken**. If you cannot ship working spectacle in scope, drop the dial to 4 and ship an impeccably-crafted static page instead. Never half-build an engine that janks or cuts off.
+
+### 1.C Dials must be declared — and plain is a failure
+
+Dials are fixed in the Design Read (§0.B) **before any code**: interactive mode stops there for confirmation, autonomous mode records them as a decision record. A Design Read without an explicit dials line is incomplete — restate it before building. The failure mode this section kills: a dial picked at the **bottom of a range** because the model played it safe.
+
+- **Take the upper end.** §1.A inference bands and §0.E cue rows are starting points, not ceilings. When the brief doesn't pin a dial, pick the **upper** end of the applicable range — law/finance/B2B is SPECTACLE 5 (one restrained motion moment, not static), heritage/editorial is 6, never the band floor.
+- **Brand register floor: SPECTACLE ≥ 6.** A brand page without a quiet cue starts at **6**. Only the brief's own quiet words ("minimal", "clean", "understated", "restrained", "静态", "不动效") license going lower. A static brand page with no such cue is a dial-3 output — wrong. Quiet constraints (§0.A #6 — a11y-first, public-sector, regulated, trust-first) still override this floor, and §1.B's honest fallback (can't ship the engine → 4 + impeccably crafted static) stands.
+- **Product register: pins stand, plainness is diagnosed — not dial-raised.** SPECTACLE 1–4 / DENSITY 6–9 is a clarity pin, not a license for boring. A product page that reads *plain* is a **palette or density failure**: re-check `references/product-palettes.md` (tinted neutral ramp + a real accent, never the default blue) and raise DENSITY before anything else. Raising SPECTACLE to fix a plain dashboard is a misroute.
+- **Silent pick = flat page.** If a delivered page reads plain, the first suspect is a dial never declared, or declared at the band bottom without a brief cue. Re-run §0.B and state all three dials with a one-line reason before touching the code again.
 
 ---
 
@@ -225,7 +256,7 @@ Once you have the Design Read (Section 0) and dials (Section 1), pick the right 
 | Modern SaaS where you own the components | shadcn/ui (`npx shadcn@latest add ...`) | You own the code, easy to customise; never ship default state |
 | Tailwind-based modern SaaS / AI marketing | Tailwind v4 utilities + `dark:` variant | Default for indie + small team builds |
 
-**Honesty rule:** if the brief reads as one of the systems above, install and use the **official** package. Do not recreate its CSS by hand. Do not import a system's tokens but then override 90% of them.
+**Honesty rule:** if the brief reads as one of the systems above, install and use the **official** package. Do not recreate its CSS by hand. Do not import a system's tokens but then override 90% of them. Exact install commands per system: `references/design-systems.md`.
 
 **One system per project.** Do not mix Fluent React with Carbon in the same tree. Do not import shadcn/ui components into a Material 3 app.
 
@@ -248,40 +279,9 @@ For these directions, there is **no single official package**. Build with native
 
 ## 3. DEFAULT ARCHITECTURE & CONVENTIONS
 
-Unless the Design Read picks a real design system (Section 2.A), or the build target is a non-React stack (vanilla HTML, Vue, Svelte — adjust accordingly), these are the defaults for React/Next.js builds:
-
-### 3.A Stack
-- **Framework:** React or Next.js. Default to Server Components (RSC).
-  - **RSC SAFETY:** Global state works ONLY in Client Components. In Next.js, wrap providers in a `"use client"` component.
-  - **INTERACTIVITY ISOLATION:** Any component using Motion, scroll listeners, or pointer physics MUST be an isolated leaf with `'use client'` at the top. Server Components render static layouts only.
-- **Styling:** **Tailwind v4** (default). Tailwind v3 only if the existing project demands it.
-  - For v4: do NOT use `tailwindcss` plugin in `postcss.config.js`. Use `@tailwindcss/postcss` or the Vite plugin.
-- **Animation:** **Motion** (the library formerly known as Framer Motion). Import from `motion/react` (`import { motion } from "motion/react"`). The `framer-motion` package still works as a legacy alias — prefer `motion/react` in new code.
-- **Fonts:** Always use `next/font` (Next.js) or self-host with `@font-face` + `font-display: swap`. Never link Google Fonts via `<link>` in production.
-
-### 3.B State
-- Local `useState` / `useReducer` for isolated UI.
-- Global state ONLY for deep prop-drilling avoidance — Zustand, Jotai, or React context.
-- **NEVER** use `useState` to track continuous values driven by user input (mouse position, scroll progress, pointer physics, magnetic hover). Use Motion's `useMotionValue` / `useTransform` / `useScroll`. `useState` re-renders the React tree on every change and collapses on mobile.
-
-### 3.C Icons
-- **Allowed libraries (priority order):** `@phosphor-icons/react`, `hugeicons-react`, `@radix-ui/react-icons`, `@tabler/icons-react`.
-- **Discouraged:** `lucide-react`. Acceptable only when the user explicitly asks for it or the project already depends on it.
-- **NEVER hand-roll SVG icons.** If a glyph is missing, install a second library or compose from primitives — do not draw icon paths from scratch.
-- **One family per project.** Do not mix Phosphor with Lucide in the same component tree.
-- **Standardize `strokeWidth` globally** (e.g. `1.5` or `2.0`).
-
-### 3.D Emoji Policy
-Discouraged by default in code, markup, and visible text. Replace symbols with icon-library glyphs. **Override:** allow emojis only when the user explicitly asks for a playful / chat-style / social-native vibe — and even then use them sparingly with intent.
-
-### 3.E Responsiveness & Layout Mechanics
-- Standardize breakpoints (`sm 640`, `md 768`, `lg 1024`, `xl 1280`, `2xl 1536`).
-- Contain page layouts using `max-w-[1400px] mx-auto` or `max-w-7xl`.
-- **Viewport Stability:** NEVER use `h-screen` for full-height Hero sections. ALWAYS use `min-h-[100dvh]` to prevent layout jumping on mobile (iOS Safari address bar).
-- **Grid over Flex-Math:** NEVER use complex flexbox percentage math (`w-[calc(33%-1rem)]`). ALWAYS use CSS Grid (`grid grid-cols-1 md:grid-cols-3 gap-6`).
-
-### 3.F Dependency Verification (mandatory)
-Before importing ANY 3rd-party library, check `package.json`. If the package is missing, output the install command first. **Never** assume a library exists.
+> **Load `references/stack-defaults.md` before writing components — its hard rules are mandatory:** RSC safety (global state only in Client Components; interactivity isolated to `'use client'` leaves) · **NEVER `useState` for continuous input-driven values** (`useMotionValue` / `useScroll` instead) · icon families locked (Phosphor / HugeIcons / Radix / Tabler; never hand-roll SVG; one family per project) · Tailwind v4 · every import verified against `package.json`.
+>
+> Unless the Design Read picks a real design system (§2.A) or a non-React stack (vanilla HTML, Vue, Svelte — adjust accordingly), the defaults are React/Next.js + Tailwind v4 + Motion + `next/font`.
 
 ---
 
@@ -291,20 +291,11 @@ Before importing ANY 3rd-party library, check `package.json`. If the package is 
 >
 > **Locked design system?** If the brief named a brand (routed via `match`), skip persona picking — the DESIGN.md's own voice *is* the soul. Jump to §5 with its tokens locked in.
 
-finesse's job is **soul diversity**: the same method must yield visually unrelated pages for different briefs. Reach into `references/style-personas.md` for the industry→persona map (palette family, type pairing, hero-engine fit, signature effect). Examples of the *range* you must be able to hit:
-
-- **Cinematic tech** (cyan/magenta, Inter + JetBrains Mono, Three.js particles) — astronomy, AI, crypto.
-- **Phosphor terminal** (single neon-green, mono-forward, Canvas data viz) — quant/fintech, security.
-- **Editorial publication** (cream/ink, Playfair + Spectral, GSAP scroll-reveal, grayscale photography) — magazines, film, journals.
-- **Warm heritage** (amber/copper/ember, Fraunces/EB Garamond, Canvas fire/particles) — whisky, coffee, craft.
-- **Brutal typographic** (bone/black + one hot accent, Anton/Bebas, mix-blend-mode) — fashion week, music, culture.
-- **Quiet luxury minimal** (off-white/forest, Raleway 100–900, CSS-only mask/parallax) — architecture, hotels, fragrance.
+finesse's job is **soul diversity**: the same method must yield visually unrelated pages for different briefs. Reach into `references/style-personas.md` for the industry→persona map — 10 personas with palette family, type pairing, hero-engine fit, and signature effect — then the wider technique bench in `references/inspiration-catalog.md` when the brief fits none cleanly.
 
 Rules:
 - **One soul per page.** Don't fluctuate warm and cool greys, or swap accent colors mid-scroll. Lock it (see §5, color lock).
 - **Rotate, don't repeat.** If the last brief used editorial-serif, this one must not. Saturated aesthetic lanes (editorial-typographic, beige-brass craft, AI-purple-glow) are banned as *defaults* — earn them or avoid them (`references/anti-cheap.md`).
-
-> Once a persona is picked, `references/inspiration-catalog.md` has a wider bench of real pages per persona (48 beyond the 5 in `examples/`) — technique notes, not files, for when you want a second reference point beyond the persona table's single description.
 
 ---
 
@@ -344,28 +335,13 @@ A finesse page earns its name with **one** technically-spectacular moment — us
 
 > **Component-level 3D ≠ hero engine.** The table above is for the one full-bleed hero moment. For *reusable, in-page* 3D — pointer-tilt cards, flip cards, coverflow, depth-parallax layers, or a Three.js product/model viewer — reach for `references/3d-effects.md` (the `depth` command). Default to its CSS tier; it ships in any page at zero cost and rarely janks. One 3D moment per page still applies: don't stack a hero engine *and* a tilt grid *and* a coverflow.
 
-**Engine discipline (mandatory):**
-- **Progressive enhancement.** The page must be readable and complete with the engine removed. The engine is a fixed background or a hero accent, never load-bearing for content.
-- **60fps or simplify.** Animate only `transform` / `opacity`. Test on a mid-range device, not your machine. Below ~50fps, cut particle count or resolution.
-- **`prefers-reduced-motion` is mandatory** — freeze the engine to a still frame (or hide it and show a composed static hero). Never ship motion with no fallback.
-- **Motivated motion only.** Every ScrollTrigger / marquee / pinned section needs a one-sentence reason (hierarchy, storytelling, feedback, state). "It looked cool" is not a reason. Max **one** marquee per page.
+**Engine discipline (mandatory):** progressive enhancement (the page is readable and complete with the engine removed — it's never load-bearing) · 60fps or simplify (animate `transform`/`opacity` only; test on a mid-range device) · `prefers-reduced-motion` mandatory (freeze to a still frame; never ship motion with no fallback) · motivated motion only (one-sentence reason per effect — hierarchy, storytelling, feedback, state; max **one** marquee per page).
 
 ---
 
 ## 7. PAGE SKELETON
 
-Canonical section sequence (adapt to the soul, never ship all of it by rote):
-
-```
-HERO (100vh, the engine moment)  →  MARQUEE/TICKER (≤1 per page)  →
-STATEMENT / MANIFESTO (word-reveal)  →  CORE CONTENT (specs grid · horizontal-pan · collection)  →
-INDUSTRY SECTION (process · parallax imagery · pull-quote)  →  CTA / FINALE (oversized type)  →  FOOTER (mono, hairline top border)
-```
-
-- **Nav:** single line, ≤80px tall, `mix-blend-mode: difference` works beautifully over imagery. Backdrop-blur on scroll.
-- **Layout diversification:** once a layout family is used (3-col cards, full-width quote, split image+text), it appears **at most once more**. Max 2 consecutive image+text zigzags. A page with 8 sections uses ≥4 layout families.
-- **Eyebrow restraint:** the tiny-uppercase-tracked label above every headline is the #1 AI tell. Max **1 eyebrow per 3 sections**. Usually the headline alone is enough.
-- **Theme lock:** one theme for the whole page. No warm-paper section dropped into a dark page (unless a deliberate one-time scroll theme-switch).
+Assemble per `references/page-skeleton.md` — the canonical sequence (HERO → ≤1 MARQUEE → STATEMENT/MANIFESTO → CORE CONTENT → INDUSTRY SECTION → CTA/FINALE → FOOTER) plus the hard rules: ≥4 layout families on an 8-section page (max 2 consecutive image+text zigzags) · max 1 eyebrow per 3 sections · one theme locked per page.
 
 ---
 
@@ -388,7 +364,7 @@ Before declaring done, scan against `references/anti-cheap.md` — the merged an
 
 ## 9. PERFORMANCE & ACCESSIBILITY GUARDRAILS
 
-- Animate `transform`/`opacity` only; never `top/left/width/height`. `will-change` sparingly.
+- Animate `transform`/`opacity` only; never `top/left/width/height`. `will-change` sparingly. Micro-interaction values and recipes (curves, durations, springs, origins, the should-it-animate gate): `references/motion.md`.
 - `prefers-reduced-motion`: stop canvas loops, freeze grain, swap to static. **Mandatory on every animated page — no exceptions, decorative motion included.** A page that animates without a reduced-motion terminal state is shipping broken.
   - **Capability-probe pattern (the ship-ready shape):** read the probes once at the top — `const RM = matchMedia('(prefers-reduced-motion:reduce)').matches; const FINE = matchMedia('(hover:hover) and (pointer:fine)').matches;` — then branch **per effect**: `if (RM) <set final state> else <animate>`. Gate pointer-dependent motion (magnetic buttons, cursor followers, hover accordions) behind `FINE` so it never fires on touch. Pair with the CSS backstop `@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}`. Every hand-built chart draw-in ships its terminal state the same way (`chart-crafting.md` §6).
 - Color contrast WCAG AA: body ≥ 4.5:1, large text ≥ 3:1. Includes buttons over photos (add scrim/stroke), placeholders, focus rings.
@@ -400,101 +376,30 @@ Before declaring done, scan against `references/anti-cheap.md` — the merged an
 
 ## 10. PRE-FLIGHT CHECK
 
-Run the full checklist in `references/preflight.md` before saying "done." It merges the substrate check, the cheapness scan, the spectacle-claimed verification, and the a11y gates. If any hard rule fails, it is shipping broken work — fix before delivery.
+Run the full checklist in `references/preflight.md` before saying "done." It merges the substrate check, the cheapness scan, the spectacle-claimed verification, the register-fit gate (§L), and the a11y gates. If any hard rule fails, it is shipping broken work — fix before delivery.
+
+**Verify in bounded passes, not a loop** (from impeccable's QA discipline, Apache-2.0): build fully → inspect **once** with a batched round (desktop + mobile together — screenshot, `detect.mjs`, by-eye) → fix everything it shows in **one batch** → confirm with **at most one more round** → stop. Open-ended self-QA burns budget re-checking what the finish handoffs already covered; the pre-flight gates run inside that bounded loop, not instead of it.
 
 ---
 
 ## 10.A POST-DELIVERY ITERATION GUIDE
 
-After the user receives the initial output, map their feedback to the correct targeted fix. **Never rebuild from scratch for a single complaint** — identify the dial or module responsible and adjust only that. The **Command** column is the verb to route through (see `## Commands`); if the user typed the command, you're already there.
-
-| User says | Command | Action |
-|-----------|---------|--------|
-| "too plain / boring" | `bolder` | Raise SPECTACLE +2; consider upgrading the engine type (e.g. Canvas → Three.js) |
-| "too flashy / overwhelming" | `quieter` | Lower SPECTACLE −2; simplify or swap to Engine D (GSAP) or E (CSS-only) |
-| "wrong vibe / feels off" | `soul` | Re-run §4 with a different persona from `references/style-personas.md` |
-| "too much whitespace" | `densify` | Raise DENSITY +2; add one content section |
-| "too cluttered" | `densify` | Lower DENSITY −2; cut a section, increase section padding |
-| "more personality / bolder" | `bolder` | Raise SOUL +2; push color commitment level up one step in `references/design-dna.md` |
-| "feels generic / like every other AI site" | `soul` | Trigger §0.D anti-default: name and reject the current soul, pick a non-obvious persona |
-| "change the colors" | `soul` | Re-run color strategy in `references/design-dna.md`; maintain the accent lock rule |
-| "different animation" | `animate` | Swap engine type in §6; re-run `references/hero-engines.md` for that engine's skeleton |
-| "add depth / make it 3D / tilt / parallax" | `depth` | Add **one** 3D moment from `references/3d-effects.md` — default to the CSS tier (tilt/flip/coverflow/depth-parallax); Three.js only for a real rendered object |
-| "remove a section" | `redesign` | Remove it, then re-audit §7 layout families (ensure ≥4 families remain) |
-| "feels slow / heavy" | `quieter` | Lower SPECTACLE; switch to Engine E (CSS-only) or reduce particle count/FBO resolution |
-| "needs to work on mobile" | `redesign` | Declare mobile layout per multi-column section; `min-h-dvh`, touch targets ≥44px |
-| "is this any good? / review it" | `audit` | Read-only: run the blacklist + spectacle-shown + pre-flight, report findings |
+After the user receives the output, map feedback to the correct targeted fix via `references/iteration.md` — the full "user says → command → action" table. **Never rebuild from scratch for a single complaint** — identify the dial or module responsible and adjust only that; if the user typed the command, you're already there.
 
 ---
 
-## 11. OUT OF SCOPE
+## 11. THE ZINE REGISTER → routed to the zine-ui skill
+
+Photographic / poetic briefs (a real photo, 纸刊 / zine / 拼贴 / poster / "把这张照片做成页面") are **routed out of finesse** to the standalone **`zine-ui` skill**: the paper-material register with its own substrate, five principles, three paths (实景拼贴 / 影像蒸馏 / photo-abstract), output contract, and pre-flight. Route at §0.A; the compact rules and trigger vocabulary live in zine-ui's SKILL.md. zine-ui **inherits** finesse's universal craft floor, cheapness blacklist, and a11y gates (declared in its SKILL.md; the full lists live in `references/design-dna.md` §1 and `references/anti-cheap.md` when finesse is also loaded).
+
+---
+
+## 12. OUT OF SCOPE
 
 finesse covers **both** brand and product UI, so its scope is wide. Hand off only when the work is a **pure backend / API / data task with no interface**, or a brief that explicitly wants a **generic, conventional, zero-craft page** (finesse always brings craft — if the user truly wants bland, that's a different tool). Everything from a spectacle landing page to a dense admin dashboard is in scope: set the register in §0 and route accordingly.
 
 ---
 
-# APPENDICES — Install Commands & Canonical Sources
+## Appendix — Install Commands & Canonical Sources
 
-## Appendix A — Install Commands per Design System
-
-```bash
-# Material Web (Material 3)
-npm install @material/web
-
-# Fluent UI React (v9)
-npm install @fluentui/react-components
-
-# Fluent UI Web Components (framework-free)
-npm install @fluentui/web-components @fluentui/tokens
-
-# IBM Carbon
-npm install @carbon/react @carbon/styles
-
-# Radix Themes
-npm install @radix-ui/themes
-
-# shadcn/ui (open code, owned components)
-npx shadcn@latest init
-npx shadcn@latest add button card badge separator input
-
-# Primer CSS (GitHub product/devtool UI)
-npm install --save @primer/css
-
-# Primer Brand (GitHub marketing UI)
-npm install @primer/react-brand
-
-# GOV.UK Frontend
-npm install govuk-frontend
-
-# USWDS (US Web Design System)
-npm install uswds
-
-# Atlassian Design System (Atlaskit)
-yarn add @atlaskit/css-reset @atlaskit/tokens @atlaskit/button @atlaskit/badge @atlaskit/section-message @atlaskit/card
-
-# Bootstrap 5.3
-npm install bootstrap
-
-# Shopify Polaris (Shopify apps only)
-npm install @shopify/polaris
-```
-
-## Appendix B — Canonical Sources
-
-- **Material Web:** https://github.com/material-components/material-web · https://material-web.dev/theming/material-theming/
-- **Fluent UI:** https://fluent2.microsoft.design/get-started/develop · https://github.com/microsoft/fluentui
-- **Carbon:** https://carbondesignsystem.com/ · https://github.com/carbon-design-system/carbon
-- **Shopify Polaris:** https://shopify.dev/docs/api/app-home/web-components · https://github.com/Shopify/polaris-react
-- **Atlassian:** https://atlassian.design/get-started/develop · https://atlassian.design/tokens/design-tokens
-- **Primer:** https://primer.style/ · https://github.com/primer/css
-- **GOV.UK:** https://design-system.service.gov.uk/ · https://github.com/alphagov/govuk-frontend
-- **USWDS:** https://designsystem.digital.gov/ · https://github.com/uswds/uswds
-- **Bootstrap:** https://getbootstrap.com/docs/5.3/layout/grid/
-- **Tailwind:** https://tailwindcss.com/docs/dark-mode · https://tailwindcss.com/blog/tailwindcss-v4
-- **Radix:** https://www.radix-ui.com/themes/docs/components/theme · https://github.com/radix-ui/themes
-- **shadcn/ui:** https://ui.shadcn.com/docs · https://github.com/shadcn-ui/ui
-- **Motion:** https://motion.dev/docs/react-quick-start
-- **GSAP:** https://gsap.com/docs/ · https://gsap.com/community/
-- **Three.js:** https://threejs.org/docs/
-- **Native CSS / W3C:** https://developer.mozilla.org/en-US/docs/Web/CSS
-- **Apple Human Interface:** https://developer.apple.com/design/human-interface-guidelines
+Install commands per design system and the canonical source URLs now live in `references/design-systems.md`. Load it when a §2.A system is chosen (exact command needed) or a source URL needs verifying.

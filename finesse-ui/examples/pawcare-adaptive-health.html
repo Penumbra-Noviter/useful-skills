@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PawCare+ — Pet Health Companion</title>
+<title>PawCare+ · Pet Health Companion</title>
 <style>
 :root{
-  --page:#e6e9df; --bg:#f5f6f0; --card:#ffffff; --ink:#181a10; --ink-2:#6a6f5f; --ink-3:#a0a492;
+  --page:#e6e9df; --bg:#f5f6f0; --card:#fcfdf9; --ink:#181a10; --ink-2:#6a6f5f; --ink-3:#a0a492;
   --line:#eceee3; --line-2:#f2f3ea;
   --accent:#1f8a86; --accent-l:#d7f0ee; --accent-d:#0f5f5c;
   --coral:#ef6b4d; --coral-l:#fde3da; --coral-d:#a5451f;
@@ -37,7 +37,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;transition:backgr
 .tabs{display:flex;align-items:center;gap:6px;margin-right:auto;background:var(--card);border-radius:30px;padding:5px;
   box-shadow:var(--shadow-card)}
 .tabs a{text-decoration:none;font-size:12.5px;font-weight:700;color:var(--ink-2);padding:9px 16px;border-radius:24px}
-.tabs a.on{background:var(--accent);color:#fff}
+.tabs a.on{background:var(--accent);color:#fcfdf9}
 .search{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:11px 16px;
   color:var(--ink-3);font-size:13px;min-width:200px;box-shadow:var(--shadow-card)}
 .search svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
@@ -45,7 +45,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;transition:backgr
   box-shadow:var(--shadow-card);cursor:pointer;flex-shrink:0;position:relative}
 .icon-circle svg{width:16px;height:16px;stroke:var(--ink-2);fill:none;stroke-width:1.8}
 .icon-circle .bad{position:absolute;top:-2px;right:-2px;width:15px;height:15px;border-radius:50%;background:var(--coral);
-  color:#fff;font-size:9px;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
+  color:#fcfdf9;font-size:9px;font-weight:800;display:grid;place-items:center;border:2px solid var(--bg)}
 .acct img{width:40px;height:40px;border-radius:50%;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 
 /* theme color picker */
@@ -64,9 +64,9 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;transition:backgr
 .hero h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:3px}
 .hero .sub{font-size:13.5px;color:var(--ink-3)}
 .grow{flex:1}
-.pill-cta{display:inline-flex;align-items:center;gap:8px;background:var(--black);color:#fff;border:0;
+.pill-cta{display:inline-flex;align-items:center;gap:8px;background:var(--black);color:#fcfdf9;border:0;
   border-radius:30px;padding:12px 18px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
-.pill-cta svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.2}
+.pill-cta svg{width:14px;height:14px;stroke:#fcfdf9;fill:none;stroke-width:2.2}
 
 /* generic */
 .card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow-card);transition:background .25s ease}
@@ -118,7 +118,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;transition:backgr
 .hero-img{position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:16/11;background:var(--line-2)}
 .hero-img img{width:100%;height:100%;object-fit:cover;display:block}
 .hotspot{position:absolute;display:inline-flex;align-items:center;gap:7px;background:rgba(21,23,14,.62);
-  backdrop-filter:blur(6px);border-radius:20px;padding:6px 12px 6px 8px;font-size:11px;font-weight:650;color:#fff;
+  backdrop-filter:blur(6px);border-radius:20px;padding:6px 12px 6px 8px;font-size:11px;font-weight:650;color:#fcfdf9;
   white-space:nowrap;opacity:0}
 .hotspot i{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .hotspot i.ok{background:#5fe0a0}
@@ -149,12 +149,12 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;transition:backgr
 .datebadge{flex:1;background:var(--card);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;
   box-shadow:var(--shadow-card)}
 .datebadge .dico{width:32px;height:32px;border-radius:9px;background:var(--black);display:grid;place-items:center}
-.datebadge .dico svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:1.8}
+.datebadge .dico svg{width:15px;height:15px;stroke:#fcfdf9;fill:none;stroke-width:1.8}
 .datebadge b{font-size:12.5px;font-weight:750;display:block}
 .datebadge span{font-size:10.5px;color:var(--ink-3)}
-.weekly-dd{background:var(--black);color:#fff;border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:7px;
+.weekly-dd{background:var(--black);color:#fcfdf9;border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:7px;
   font-size:12px;font-weight:700;cursor:pointer}
-.weekly-dd svg{width:10px;height:10px;stroke:#fff;fill:none;stroke-width:2.6}
+.weekly-dd svg{width:10px;height:10px;stroke:#fcfdf9;fill:none;stroke-width:2.6}
 
 /* today's activity */
 .activity-card .ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
@@ -162,15 +162,15 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;transition:backgr
 .activity-card .more{font-size:11.5px;color:var(--ink-3);display:flex;align-items:center;gap:2px}
 .wave-wrap{position:relative;margin:10px 0 4px}
 .wave-wrap svg{width:100%;height:56px;display:block}
-.wave-tip{position:absolute;top:-4px;left:58%;transform:translateX(-50%);background:var(--black);color:#fff;
+.wave-tip{position:absolute;top:-4px;left:58%;transform:translateX(-50%);background:var(--black);color:#fcfdf9;
   font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;opacity:0}
 .week-row{display:flex;justify-content:space-between;margin-top:14px}
 .week-day{display:flex;flex-direction:column;align-items:center;gap:6px}
 .week-day span{font-size:10px;color:var(--ink-3);font-weight:650}
-.week-day i{width:26px;height:26px;border-radius:50%;background:var(--bg);display:grid;place-items:center;transform:scale(0)}
+.week-day i{width:26px;height:26px;border-radius:50%;background:var(--bg);display:grid;place-items:center;opacity:0;transform:scale(.85)}
 .week-day i svg{width:11px;height:11px;stroke:var(--ink-3);fill:none;stroke-width:2.6}
 .week-day.done i{background:var(--accent)}
-.week-day.done i svg{stroke:#fff}
+.week-day.done i svg{stroke:#fcfdf9}
 .week-day.today i{background:var(--accent-l);border:2px solid var(--accent)}
 .week-day.today i svg{stroke:var(--accent-d)}
 
@@ -213,7 +213,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;transition:backgr
 <div class="panel">
 
   <div class="topbar">
-    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="#fff"><circle cx="6.5" cy="10" r="2.1"/><circle cx="10.5" cy="6.2" r="1.9"/><circle cx="15.5" cy="6.2" r="1.9"/><circle cx="19" cy="10.4" r="1.9"/><path d="M12.5 12c-2.9 0-6 2.7-6 5.6a2.6 2.6 0 002.6 2.6c1 0 1.7-.8 2.9-.8s2 .8 3 .8a2.6 2.6 0 002.6-2.6c0-3-3.1-5.6-5.1-5.6z"/></svg></div>
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="#fcfdf9"><circle cx="6.5" cy="10" r="2.1"/><circle cx="10.5" cy="6.2" r="1.9"/><circle cx="15.5" cy="6.2" r="1.9"/><circle cx="19" cy="10.4" r="1.9"/><path d="M12.5 12c-2.9 0-6 2.7-6 5.6a2.6 2.6 0 002.6 2.6c1 0 1.7-.8 2.9-.8s2 .8 3 .8a2.6 2.6 0 002.6-2.6c0-3-3.1-5.6-5.1-5.6z"/></svg></div>
     <div class="brandline"><div class="word">PawCare+</div></div>
     <div class="tabs">
       <a class="on" href="#">Overview</a>
@@ -469,8 +469,8 @@ drawSpark('sparkWalk',[0.4,0.9,1.6,2.0,2.5,2.2,2.9,3.2,3.0,3.2],'var(--accent)',
 /* week checkmark dots pop in */
 (function(){
   const dots=document.querySelectorAll('.week-day i');
-  if(reduce){dots.forEach(d=>d.style.transform='scale(1)');}
-  else{gsap.to(dots,{scale:1,duration:.4,ease:'back.out(2)',stagger:.05,delay:.6});}
+  if(reduce){dots.forEach(d=>{d.style.opacity=1;d.style.transform='scale(1)';});}
+  else{gsap.to(dots,{opacity:1,scale:1,duration:.4,ease:'back.out(2)',stagger:.05,delay:.6});}
 })();
 
 /* hotspot pop in */

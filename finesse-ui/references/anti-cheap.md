@@ -21,7 +21,7 @@ Rework until **both** answers are non-obvious. The currently-saturated second-or
 
 Failing any item below is a **shipping blocker**. Fix before delivery.
 
-- `[HARD BAN]` **Em-dashes as a design flourish** in copy (kinetic pauses, em-dash bullets, dramatic asides). The single most-violated tell. Use periods, commas, or restructure the sentence. → ban applies to visible copy, not code.
+- `[HARD BAN]` **Em-dashes as a design flourish** in copy (kinetic pauses, em-dash bullets, dramatic asides). The single most-violated tell. Use periods, commas, or restructure the sentence. → ban applies to visible copy, not code. *(Chinese copy: this bans the English em-dash flourish; the CJK analogs — decorative `——` / `……` — are covered in §2 CJK.)*
 - `[HARD BAN]` **Div-based fake screenshots** — hand-built "product preview" / fake dashboards / fake task lists / fake terminals out of `<div>`s **used to stand in for a real product the page is describing**. → use a real screenshot, generate one, build a real mini-component, or use editorial photography.
   - **Boundary (not a violation):** a CSS/SVG mockup is *legitimate* when it **is the product's own feature**, not a stand-in for an absent one — a CMS's site-preview pane, a design tool's canvas, an on-image hotspot-annotation surface, a chat window with live waveform bars. The test: *does the mock represent real state the UI actually owns, or is it a static prop faking a screenshot the page couldn't produce?* The former is a component; the latter is the ban. When you build one, it must be driven by real geometry/data (see `chart-crafting.md`), respond to interaction, and never carry fake-precise numbers (below).
 - `[HARD BAN]` **Gradient text** via `background-clip: text` as a default flourish. → single color, or weight/size emphasis. *(Exception: a deliberate duotone-soul move with the two locked accents.)*
@@ -134,6 +134,18 @@ Failing any item below is a **shipping blocker**. Fix before delivery.
 - **Generic dashboard status palette** — the reflex blue + green + orange (or red/green) series, no brand hue, on a white card grid. Predictable from the category alone (§0). → series colors derived from the page's own accent + one harmonised secondary; ≤5, never hue-only (`dataviz.md` §5).
 - **Fake charts** — a `<div>` at a hardcoded `width:73%`, numbers that don't flow through the geometry. → real geometry from data (`chart-crafting.md`).
 
+**CJK / 中文语境 — Chinese copy & typography tells**
+
+- **中文破折号 `——` 滥用** — the English em-dash ban's Chinese analog: decorative `——` in headlines/body to fake a dramatic pause, or `……` trailing multiple paragraphs as mood. → `——` ≤1 per page and only for real insertion; `……` never as paragraph decoration; commas / periods / restructure instead.
+- **全角/半角混排** — full-width and half-width punctuation mixed inside one string (half-width comma in Chinese copy, full-width parens in English). → one punctuation system per string: full-width for Chinese, half-width for English/numbers.
+- **中文字体堆栈缺失** — `font-family: sans-serif` with no Chinese fallback, silently resolving to the system default (SimSun body = the "government site" look; font soup when a webfont misses CJK glyphs). → explicit stack: `"PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif`; declare a CJK face whenever a webfont is used (webfonts almost never cover CJK).
+- **中文 900 字重滥用** — CJK glyphs are stroke-dense; weight 900 in body or small headings renders muddy. → display 600–700 cap; 900 only on very large display type; body ≤400.
+- **中文行高不足** — line-height 1.5 (fine for Latin) crowds CJK (no x-height variance). → body ≥1.75 (long-form ≥1.8); headings ≥1.25; `text-wrap: balance` on CJK headings.
+- **伪书法 / 印章装饰** — AI-generated calligraphy strokes or red seal stamps pasted as decoration on Chinese brand pages. → real brand assets only; decorative calligraphy that carries no information gets cut.
+- **中国风默认配色** — 大红 + 金箔 + 墨黑 (`#c8102e`-family red + `#b8860b`-family gold + ink) reached for any "culture / festival / traditional" brief — the beige-brass analog. → run the §0 two-altitude check: first reflex is 中国风; second is "Oriental-but-not-Chinese" (ink-wash greys, rice-paper white, 黛青). Both must be beaten or earned with a stated reason.
+- **拼音缩写 wordmark** — `BJ · ZS · WLC`-style pinyin initials as a logo or decoration strip. → real hanzi or a real English name; pinyin initials read as placeholder.
+- **中文逐字动效** — typewriter / char-by-char reveal as the default motion for Chinese text. → line-by-line or whole-line reveals (single CJK chars carry no per-char information gain; 逐字 reads cheap).
+
 ---
 
 ## 3. Motion Tells
@@ -160,5 +172,6 @@ Before shipping, answer honestly:
 7. **Copy clean?** No em-dashes, no fake numbers, no AI-cute strings?
 8. **Contrast AA?** Buttons, placeholders, focus rings included?
 9. **Charts real?** Every bar/line/arc computed from data (no maxed / uniform / barcode / faked marks), axes labeled, right chart type for the question?
+10. **CJK clean?** (Chinese copy only) No `——` / `……` flourish abuse, one punctuation system per string, explicit CJK font stack, body line-height ≥1.75?
 
 Any "no" is unshipped work.

@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Subhub — Subscription Analytics Console</title>
+<title>Subhub · Subscription Analytics Console</title>
 <style>
 :root{
-  --page:#dee2d4; --bg:#eef1e6; --card:#ffffff; --ink:#161710; --ink-2:#63665a; --ink-3:#9a9c8e;
+  --page:#dee2d4; --bg:#eef1e6; --card:#fbfcf7; --ink:#161710; --ink-2:#63665a; --ink-3:#9a9c8e;
   --line:#e7e9dd; --line-2:#f0f2e7;
   --mint:#b6f6c4; --mint-d:#0f8a3e; --mint-ink:#0c3d1f;
   --lav:#cdc0f7; --lav-d:#5b3fd6; --lav-ink:#2b1c66;
@@ -49,10 +49,10 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 .range{display:inline-flex;background:var(--card);border-radius:30px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .range button{border:0;background:transparent;padding:9px 16px;border-radius:24px;font-size:12.5px;font-weight:700;
   color:var(--ink-2);cursor:pointer;font-family:inherit}
-.range button.on{background:var(--black);color:#fff}
-.pill-cta{display:inline-flex;align-items:center;gap:8px;background:var(--black);color:#fff;border:0;
+.range button.on{background:var(--black);color:#fbfcf7}
+.pill-cta{display:inline-flex;align-items:center;gap:8px;background:var(--black);color:#fbfcf7;border:0;
   border-radius:30px;padding:12px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
-.pill-cta svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2.2}
+.pill-cta svg{width:14px;height:14px;stroke:#fbfcf7;fill:none;stroke-width:2.2}
 
 /* generic */
 .card{background:var(--card);border-radius:var(--r);padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
@@ -69,13 +69,13 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 .price-stack{display:flex;flex-direction:column;gap:20px}
 
 /* pulse (dark) card */
-.pulse{background:linear-gradient(155deg,#1c1d15,var(--black) 65%);color:#fff;position:relative;overflow:hidden}
+.pulse{background:linear-gradient(155deg,#1c1d15,var(--black) 65%);color:#fbfcf7;position:relative;overflow:hidden}
 .pulse::before{content:'';position:absolute;inset:0;background:
   radial-gradient(280px 200px at 92% -10%,rgba(182,246,196,.18),transparent 60%);pointer-events:none}
 .pulse .ph{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;margin-bottom:22px}
 .pulse .ph b{font-size:16px;font-weight:750}
 .pulse .ph .sub{font-size:11.5px;color:rgba(255,255,255,.5);margin-top:2px}
-.pulse .pdd{background:rgba(255,255,255,.1);color:#fff}
+.pulse .pdd{background:rgba(255,255,255,.1);color:#fbfcf7}
 .bars{display:flex;align-items:flex-end;gap:16px;height:150px;position:relative;z-index:1;margin-bottom:8px}
 .barcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;height:100%;justify-content:flex-end}
 .barcol .stack{width:100%;max-width:64px;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
@@ -109,7 +109,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 /* recent transactions */
 .tx .th{display:flex;align-items:center;gap:12px;margin-bottom:18px}
 .tx-icon{width:44px;height:44px;border-radius:50%;background:var(--black);display:grid;place-items:center;flex-shrink:0}
-.tx-icon svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:1.8}
+.tx-icon svg{width:19px;height:19px;stroke:#fbfcf7;fill:none;stroke-width:1.8}
 .tx .th b{font-size:15px;font-weight:750;display:block}
 .tx .th span{font-size:11.5px;color:var(--ink-3)}
 .tx .avatars{display:flex;margin-left:auto}
@@ -168,7 +168,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 .alloc-row:last-child{border-bottom:0}
 .alloc-row.head{color:var(--ink-3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-bottom:10px}
 .asset{display:flex;align-items:center;gap:12px}
-.coin{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-size:14px;font-weight:800;color:#fff}
+.coin{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;font-size:14px;font-weight:800;color:#fbfcf7}
 .asset b{font-weight:750;display:block;font-size:13.5px}
 .asset span{font-size:11px;color:var(--ink-3)}
 .chg-cell{font-weight:750}
@@ -204,7 +204,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
 <div class="panel">
 
   <div class="topbar">
-    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5"/></svg></div>
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fbfcf7" stroke-width="2"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M12 3v18M4 7.5l8 4.5 8-4.5"/></svg></div>
     <div class="brandline"><div class="word">Subhub</div><div class="lab">Subscription Analytics</div></div>
     <div class="nav">
       <a class="on" href="#">Overview</a>
@@ -218,7 +218,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
   </div>
 
   <div class="hero">
-    <h1>Good afternoon, Sasha <span>— your MRR is up 6.2% this week</span></h1>
+    <h1>Good afternoon, Sasha <span>, your MRR is up 6.2% this week</span></h1>
     <div class="range"><button class="on">30D</button><button>90D</button><button>1Y</button></div>
     <button class="pill-cta"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add Plan</button>
   </div>
@@ -304,7 +304,7 @@ body{background:var(--page);color:var(--ink);overflow-x:hidden;
         <div class="price-stack">
           <div class="card pricecard mint-price reveal">
             <div class="pc-top"><span class="lab-sm">Churn Rate</span><span class="arrow-badge"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M7 7h10v10"/></svg></span></div>
-            <div class="pval num" data-to="4.2" data-dec="1" data-suffix="%">0.0%</div>
+            <div class="pval num" data-to="4.2" data-dec="1" data-suffix="%">0%</div>
             <div class="progress-h"><i id="btcBar"></i></div>
             <div class="pchg">−28.2% lower vs past 90 days</div>
           </div>

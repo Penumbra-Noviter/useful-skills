@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NOVA — 数字时装周 2026</title>
+<title>NOVA · 数字时装周 2026</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:ital@1&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&family=Cormorant+Garamond:ital@1&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root { --bone:#ECE7DC; --ink:#14110D; --red:#FF3B1D; --dim:#8A8479; }
-  body { background: var(--bone); color: var(--ink); font-family: 'Inter', system-ui, sans-serif;
+  :root { --base:#ECE7DC; --ink:#14110D; --red:#FF3B1D; --dim:#8A8479; }
+  body { background: var(--base); color: var(--ink); font-family: 'Archivo', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased; overflow-x: hidden; }
   .anton { font-family: 'Anton', sans-serif; font-weight: 400; letter-spacing: .01em; }
   .ital { font-family: 'Cormorant Garamond', serif; font-style: italic; }
@@ -16,7 +16,7 @@
   /* nav */
   .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50;
     display: flex; align-items: center; justify-content: space-between; padding: 22px 40px;
-    mix-blend-mode: difference; color: #fff; }
+    mix-blend-mode: difference; color: #f6f3ec; }
   .nav .logo { font-size: 18px; font-weight: 700; letter-spacing: .22em; }
   .nav .links { display: flex; gap: 34px; font-size: 12px; letter-spacing: .16em; }
   .nav .season { font-size: 12px; letter-spacing: .16em; }
@@ -33,7 +33,7 @@
   .hero-img { position: absolute; right: 40px; top: 90px; bottom: 150px; width: 34vw; max-width: 520px;
     overflow: hidden; z-index: 3; }
   .hero-img img { width: 100%; height: 120%; object-fit: cover; will-change: transform; }
-  .hero-img .cap { position: absolute; left: 14px; bottom: 14px; color: #fff; font-size: 11px;
+  .hero-img .cap { position: absolute; left: 14px; bottom: 14px; color: #f6f3ec; font-size: 11px;
     letter-spacing: .16em; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
   .hero .date { position: absolute; right: 40px; bottom: 56px; z-index: 4; text-align: right; }
   .hero .date .d { font-size: 52px; letter-spacing: -.02em; }
@@ -42,7 +42,7 @@
   /* marquee */
   .mq { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); overflow: hidden;
     padding: 12px 0; background: var(--red); }
-  .mq .t { display: inline-flex; white-space: nowrap; animation: mq 22s linear infinite; color: #fff; }
+  .mq .t { display: inline-flex; white-space: nowrap; animation: mq 22s linear infinite; color: #f6f3ec; }
   .mq .t span { font-size: 22px; font-weight: 700; letter-spacing: .04em; padding: 0 28px; }
   .mq .t span i { font-style: normal; opacity: .55; }
   @keyframes mq { to { transform: translateX(-50%); } }
@@ -62,36 +62,36 @@
 
   /* RUNWAY (pinned horizontal) */
   .runway { height: 100vh; overflow: hidden; position: relative; background: var(--ink); }
-  .runway .head { position: absolute; top: 28px; left: 40px; z-index: 5; color: var(--bone);
+  .runway .head { position: absolute; top: 28px; left: 40px; z-index: 5; color: var(--base);
     font-size: 12px; letter-spacing: .2em; }
-  .runway .count { position: absolute; top: 28px; right: 40px; z-index: 5; color: var(--bone);
+  .runway .count { position: absolute; top: 28px; right: 40px; z-index: 5; color: var(--base);
     font-size: 12px; letter-spacing: .2em; }
   .track { display: flex; height: 100%; align-items: center; padding: 0 40px; gap: 30px; width: max-content; }
   .look { position: relative; height: 74vh; width: 30vw; min-width: 360px; flex: 0 0 auto; overflow: hidden;
     background: #222; }
   .look img { width: 100%; height: 100%; object-fit: cover; }
-  .look .no { position: absolute; top: 16px; left: 16px; color: #fff; font-size: 13px; letter-spacing: .18em; }
-  .look .nm { position: absolute; left: 16px; bottom: 16px; color: #fff; }
+  .look .no { position: absolute; top: 16px; left: 16px; color: #f6f3ec; font-size: 13px; letter-spacing: .18em; }
+  .look .nm { position: absolute; left: 16px; bottom: 16px; color: #f6f3ec; }
   .look .nm .a { font-family:'Anton',sans-serif; font-size: 30px; line-height: 1; }
   .look .nm .b { font-size: 11px; letter-spacing: .18em; opacity: .8; margin-top: 6px; }
   .look.tall { height: 84vh; }
   .look .idx { position: absolute; top: 16px; right: 16px; color: var(--red); font-size: 13px; font-weight: 700; }
 
   /* FEATURE */
-  .feature { position: relative; height: 130vh; background: var(--bone); }
+  .feature { position: relative; height: 130vh; background: var(--base); }
   .feature .stick { position: sticky; top: 0; height: 100vh; display: flex; align-items: center;
     justify-content: center; overflow: hidden; }
   .feature .fimg { width: 64vw; height: 72vh; overflow: hidden; }
   .feature .fimg img { width: 100%; height: 100%; object-fit: cover; }
-  .feature .ftxt { position: absolute; z-index: 3; text-align: center; mix-blend-mode: difference; color:#fff; }
+  .feature .ftxt { position: absolute; z-index: 3; text-align: center; mix-blend-mode: difference; color:#f6f3ec; }
   .feature .ftxt h2 { font-family:'Anton',sans-serif; font-size: clamp(48px, 9vw, 150px); line-height: .9; }
   .feature .ftxt p { font-size: 14px; letter-spacing: .2em; margin-top: 18px; }
 
   /* FINALE */
-  .finale { padding: 160px 40px 80px; text-align: center; background: var(--red); color: #fff; }
+  .finale { padding: 160px 40px 80px; text-align: center; background: var(--red); color: #f6f3ec; }
   .finale .y { font-family:'Anton',sans-serif; font-size: clamp(120px, 26vw, 420px); line-height: .8; }
   .finale .cta { margin-top: 30px; display: inline-flex; gap: 12px; align-items: center;
-    border: 2px solid #fff; border-radius: 999px; padding: 16px 38px; font-size: 14px; letter-spacing: .14em;
+    border: 2px solid #f6f3ec; border-radius: 999px; padding: 16px 38px; font-size: 14px; letter-spacing: .14em;
     font-weight: 600; }
   .finale .foot { margin-top: 100px; display: flex; justify-content: space-between; font-size: 11px;
     letter-spacing: .2em; opacity: .85; }
@@ -107,7 +107,7 @@
   <!-- HERO -->
   <section class="hero">
     <div class="kick">全球首个<b>纯数字</b>时装周。<br>48 间虚拟时装屋，<br>72 小时不落幕的秀场。</div>
-    <div class="hero-img"><img id="heroImg" src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&h=1400&fit=crop&q=80" alt="look" /><div class="cap">LOOK 01 — ATELIER NOVA</div></div>
+    <div class="hero-img"><img id="heroImg" src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1000&h=1400&fit=crop&q=80" alt="look" /><div class="cap">LOOK 01 · ATELIER NOVA</div></div>
     <div class="big">
       <h1 class="anton">DIGITAL<br><span class="out">FASHION</span><br>WEEK<span class="red">®</span></h1>
     </div>
@@ -127,7 +127,7 @@
 
   <!-- RUNWAY -->
   <section class="runway">
-    <div class="head">002 — THE RUNWAY</div>
+    <div class="head">002 · THE RUNWAY</div>
     <div class="count" id="rwCount">01 / 06</div>
     <div class="track" id="track">
       <div class="look tall"><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&h=1300&fit=crop&q=80"><div class="no">LOOK 01</div><div class="idx">SS26</div><div class="nm"><div class="a">VELA</div><div class="b">PARIS · DIGITAL HOUSE</div></div></div>
@@ -143,7 +143,7 @@
   <section class="feature">
     <div class="stick">
       <div class="fimg"><img id="featImg" src="https://images.unsplash.com/photo-1485462537746-965f33f7f6a7?w=1400&h=1000&fit=crop&q=80"></div>
-      <div class="ftxt"><h2 class="anton">SEE THE<br>UNSEEN</h2><p>003 — CLOSING SHOW</p></div>
+      <div class="ftxt"><h2 class="anton">SEE THE<br>UNSEEN</h2><p>003 · CLOSING SHOW</p></div>
     </div>
   </section>
 

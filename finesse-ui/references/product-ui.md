@@ -4,6 +4,8 @@ The **product** register: design SERVES the product. Dashboards, admin panels, a
 
 > A dashboard is a **different design language from a brand page**, not a brand page with charts. It inherits only the **universal craft floor** from `design-dna.md` (tinted neutrals, no pure `#fff`/`#000`, translucent/hairline borders, tinted shadows, contrast floors, OKLCH, dark-mode parity) — and it does **NOT** inherit the brand-page moves: **no grain, no vignette, no `clamp()` hero type, no dark-by-default, no hero engine.** The premium here comes from §0's product substrate, not from brand fireworks. SPECTACLE dial = 1–4; DENSITY = 6–9; motion is feedback only. Still bound by the **cheapness blacklist** (`anti-cheap.md`).
 
+> **Route check — are you in the right file?** This file is for pages you **read**: dashboards, analytics, monitoring, data tables. If the page's primary action **commits** something (保存 / 发布 / 提交 / 配置 / 上线) — a merchant publishing, an admin configuring, a long form producing a real thing — it's an **operate** page and belongs in `workflow-ui.md` (which inherits everything here plus the workflow shell). A settings page wearing a dashboard shell is a route failure, not a style choice. Re-route before laying the shell; see SKILL.md §0.F.
+
 ---
 
 ## 0. The Product Substrate — what actually makes a dashboard look premium
@@ -56,6 +58,8 @@ Three moves cover a dashboard, all **above-the-fold on load** (no ScrollTrigger 
 - **Chart draw-on** — line stroke-dashoffset, bar/ring grow.
 
 No bounce/elastic, no decorative motion that conveys no state. These use **GSAP** — see `chart-crafting.md` §6 for how to actually load it (self-host `./lib/` · CDN · npm) and the CSS-only fallback; a `gsap.*` call with no GSAP on the page silently does nothing.
+
+**The interaction layer under these moves** — button press, tooltip, dropdown, modal, toast, drawer, tab, drag — is `references/motion.md` (the should-it-animate gate, easing/duration/spring value tables, vanilla recipes). "Feedback only" means these three moves plus the micro-interaction recipes, nothing else.
 
 ---
 
