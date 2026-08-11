@@ -1,6 +1,8 @@
 ---
 name: open-kimi-ppt
-description: Create, edit, replicate, read, and export presentations. For every PPT task, the default deliverables are BOTH (1) a self-contained PPTD project folder containing the .pptd manifest plus pages/media dependencies and (2) a locally generated .pptx with embedded fonts and fade slide transitions. Use for any presentation, PowerPoint, PPT/PPTX, slide deck, PPTD, infographic, or poster task unless the user explicitly requests another format. Deliver with normal local file/folder links using absolute paths.
+description: 'Create, edit, replicate, read, and export presentations. Every PPT task delivers a PPTD project folder (.pptd + pages/media) AND a local .pptx (embedded fonts, fade transitions). Triggers: presentation, PowerPoint, PPT/PPTX, slide deck, PPTD.'
+when_to_use: >
+  Use for any presentation, PowerPoint, PPT/PPTX, slide deck, PPTD, infographic, or poster task unless the user explicitly requests another format. Default deliverables for every PPT task: (1) a self-contained PPTD project folder containing the .pptd manifest plus pages/media dependencies; (2) a locally generated .pptx with embedded fonts and fade slide transitions. Deliver with normal local file/folder links using absolute paths.
 ---
 
 # Definition
