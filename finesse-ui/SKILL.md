@@ -1,14 +1,14 @@
 ---
 name: finesse-ui
-description: 'High-craft, never-cheap web interfaces: brand surfaces, product UI, workflow UI, commerce, paper-zine (拾景/拼贴). Routes by register; anti-slop. Triggers: landing page, dashboard, admin panel, 商家后台, 工作台, looks like Linear, X 风格, make this look premium, 动效, 纸刊, zine, 拾景, 拼贴, 抽象记忆面板, 把这张照片做成页面, /finesse.'
+description: 'High-craft, never-cheap web interfaces: brand surfaces, product UI, workflow UI, commerce, paper-zine (拾景/拼贴), diagrams (架构图/流程图/时序图/ER 图 → routed to the standalone diagram-design skill). Routes by register; anti-slop. Triggers: landing page, dashboard, admin panel, 商家后台, 工作台, looks like Linear, X 风格, make this look premium, 动效, 纸刊, zine, 拾景, 拼贴, 抽象记忆面板, 把这张照片做成页面, 架构图, 流程图, ER 图, diagram, /finesse.'
 when_to_use: >
   Full trigger vocabulary: make this look premium · landing page · launches · portfolios · hero page · dashboard · admin panel · analytics · data tables · app shell · 商家后台 · 工作台 · back-office · console · wizard · settings page · review queue · PDP · PLP · cart · checkout · dashboard colors · give it a soul · anti-slop · X 风格 · looks like Linear/Stripe/Supabase/Grafana · micro-interaction · button press · tooltip · toast · drawer · 动效 · /finesse.
-  Routes by register: brand → soul + spectacle (design-dna substrate, hero engine, style personas); product → palette first (product-palettes), then split READ pages (dashboards/analytics → product-ui) vs OPERATE pages (wizards/consoles/settings/review queues → workflow-ui on top); commerce → PDP/PLP + anti-dark-pattern rules; photographic/poetic briefs (a real photo, 纸刊/zine/拼贴/poster) → routed to the standalone **zine-ui skill** (photo-as-anchor 实景拼贴 · distillation 影像蒸馏 · hybrid photo-abstract 抽象记忆面板 + paper material language).
+  Routes by register: brand → soul + spectacle (design-dna substrate, hero engine, style personas); product → palette first (product-palettes), then split READ pages (dashboards/analytics → product-ui) vs OPERATE pages (wizards/consoles/settings/review queues → workflow-ui on top); commerce → PDP/PLP + anti-dark-pattern rules; photographic/poetic briefs (a real photo, 纸刊/zine/拼贴/poster) → routed to the standalone **zine-ui skill** (photo-as-anchor 实景拼贴 · distillation 影像蒸馏 · hybrid photo-abstract 抽象记忆面板 + paper material language); diagram briefs (架构图 · 流程图 · 时序图 · ER 图 · 泳道图 · 甘特图 · mermaid · drawio · a standalone architecture/flowchart/ER diagram) → routed to the standalone **diagram-design skill** (27 图型, editorial design system, draw.io/Mermaid import + HTML/SVG/PNG export).
   Verb commands: craft · audit · bolder · quieter · soul · animate · depth · densify · redesign · match <brand> · init · document.
   Locked design systems: brief names a real brand, "looks like X", or a DESIGN.md exists → that file overrides soul/palette picks; everything else (register, dials, engine, skeleton, blacklist, a11y, pre-flight) still runs.
-version: 0.19.0
+version: 0.20.0
 user-invocable: true
-argument-hint: "[craft · audit · bolder|quieter|soul · animate|depth|densify · redesign · match <brand> · zine · init|document] [target]"
+argument-hint: "[craft · audit · bolder|quieter|soul · animate|depth|densify · redesign · match <brand> · zine · diagram · init|document] [target]"
 license: MIT
 ---
 
@@ -93,11 +93,12 @@ finesse runs as a full build by default, but supports **verb commands** for targ
 | `densify [target]` | Enhance | Adjust DENSITY ± — add/remove content, tune information-per-viewport | `product-ui.md` |
 | `redesign [target]` | Iterate | Upgrade an existing page, audit-first; never full-rebuild for one complaint | `redesign-mode.md` |
 | `zine [target]` | Build/Refine | Apply the paper-zine treatment to a photo-led page — decide 实景拼贴 (keep the photo as anchor) vs 影像蒸馏 (distill it away) vs photo-abstract (photo + derived abstract panel), lay the paper material language. **Routes to the standalone `zine-ui` skill** | `zine-ui` skill |
+| `diagram [target]` | Build | A technical/product diagram as a standalone HTML+SVG file — 27 图型 (architecture, flowchart, sequence, ER…), import draw.io/Mermaid source, export HTML/SVG/PNG. **Routes to the standalone `diagram-design` skill** | `diagram-design` skill |
 
 ### Routing rules
 
 1. **First word matches a command** → load that command's reference and follow it. Everything after the command name is the target. Lay the **§5 substrate** and run the relevant **§8/§10 checks**, but skip the parts of §0–§7 that don't apply to that single action (e.g. `quieter` doesn't re-pick a soul).
-2. **First word doesn't match, but intent clearly maps to one command** ("too plain / boring" → `bolder`; "too flashy" → `quieter`; "feels generic" → `soul`; "make it pop" → `animate`; "add depth / make it 3D / tilt / parallax" → `depth`; "too sparse / too dense" → `densify`; "improve / fix this page" → `redesign`; "make it look like X / X 风格 / in the style of X" → `match`; "make it a zine / 纸刊 / 拾景 / 拼贴 / 抽象记忆面板 / photo-abstract / 把这张照片做成页面 / this photo" → `zine`) → route to that command and proceed as if invoked. If two fit, ask once which.
+2. **First word doesn't match, but intent clearly maps to one command** ("too plain / boring" → `bolder`; "too flashy" → `quieter`; "feels generic" → `soul`; "make it pop" → `animate`; "add depth / make it 3D / tilt / parallax" → `depth`; "too sparse / too dense" → `densify`; "improve / fix this page" → `redesign`; "make it look like X / X 风格 / in the style of X" → `match`; "make it a zine / 纸刊 / 拾景 / 拼贴 / 抽象记忆面板 / photo-abstract / 把这张照片做成页面 / this photo" → `zine`; "make a diagram / architecture diagram / flowchart / sequence diagram / ER 图 / 架构图 / 流程图 / 时序图 / mermaid / drawio" → `diagram`) → route to that command and proceed as if invoked. If two fit, ask once which.
 2a. **`match` / a brief naming a known brand** ("looks like Linear", "Airbnb 风格") → look the brand up in `design-md/INDEX.md`, read its DESIGN.md, and build with it as the **locked design source** per `references/design-md.md`. Register still follows the page's job (§0.A), not the brand.
 3. **No argument at all** (bare `/finesse`) → the user is asking *"what should I do here?"* Don't dump the static menu. Read a few cheap signals and **lead with the 2-3 highest-value commands**, each with a one-line reason, then offer the full table as fallback. Never auto-run — recommend, the user confirms. Signal → pick:
    - **no `PRODUCT.md`** and there's real code/pages → lead with `document` (capture what's built) and/or `init` (write the brief). Brand-new empty project → `init` then `craft`.
@@ -141,6 +142,7 @@ Then determine the register:
   - A **PDP selling one hero item** (a single SKU, a launch, a flagship product) leans **brand**: pick a soul (§4), but keep DENSITY up for specs/reviews/trust signals — see `references/commerce-ui.md`.
   - A **PLP / marketplace with many SKUs** (filters, sort, grid of many products) leans **product**: DENSITY high, SPECTACLE low, same as a dashboard — `references/product-ui.md` grid/filter patterns + `references/commerce-ui.md` commerce rules (price/CTA placement, cart, checkout, dark-pattern bans).
   - When unsure, ask: *"is this page trying to sell the vibe of one product, or help someone compare/filter many?"*
+- **diagram** — the deliverable is a diagram, not a page: an architecture / IT current-state / flowchart / sequence / state machine / ER / timeline / swimlane / quadrant / radar / loop / nested / tree / org chart / layer stack / venn / pyramid / bar / line / Gantt / scatter / high-level / process / medallion / data flow / DP integration / DP security matrix as a standalone HTML+SVG file, or importing draw.io / Mermaid source — **routes out of finesse to the standalone `diagram-design` skill** (its own editorial design system + complexity budget + connector rules + accessible-SVG contract; inherits finesse's craft floor + blacklist + a11y gates; §12).
 
 **Read project memory first.** If a `PRODUCT.md` exists at the project root, read it (register, users, brand personality, locked dials, anti-references) — it **overrides your guesses**. If a `design-model.yaml` exists, read it for the locked palette/type/substrate so this page matches existing ones. Written by `init` / `document` (see Commands).
 
@@ -151,7 +153,7 @@ Then determine the register:
 
 ### 0.B Output a one-line "Design Read" before generating
 
-Format: `Design Read: {industry} · {soul in 2-3 words} · register={brand|product|zine} · job={read|operate} (product only) · SPECTACLE={n} · hero-engine={type}` — for product/zine, `hero-engine` becomes `none` + the substrate/material system (e.g. `component-system`, `paper-zine`).
+Format: `Design Read: {industry} · {soul in 2-3 words} · register={brand|product|zine|diagram} · job={read|operate} (product only) · SPECTACLE={n} · hero-engine={type}` — for product/zine/diagram, `hero-engine` becomes `none` + the substrate/material system (e.g. `component-system`, `paper-zine`, `editorial-tokens`).
 
 Example: `Design Read: deep-space astronomy · cinematic + reverent · register=brand · SPECTACLE=8 · hero-engine=Three.js particle galaxy`
 
@@ -394,7 +396,13 @@ Photographic / poetic briefs (a real photo, 纸刊 / zine / 拼贴 / poster / "�
 
 ---
 
-## 12. OUT OF SCOPE
+## 12. THE DIAGRAM REGISTER → routed to the diagram-design skill
+
+Diagram briefs — the deliverable is a standalone diagram, not a page (architecture, IT current-state, flowchart, sequence, state machine, ER / data model, timeline, swimlane, quadrant, radar, loop / flywheel, nested, tree, org chart, layer stack, venn, pyramid / funnel, bar / line chart, Gantt, scatter, high-level, process, medallion, data flow, DP integration, DP security matrix; or importing draw.io / Mermaid source) — are **routed out of finesse** to the standalone **`diagram-design` skill**: 27 图型, its own editorial design system (paper/ink/accent tokens in `style-guide.md`, first-run style-guide gate), complexity budget (density 4/10, ≤9 nodes), mandatory orthogonal connectors, accessible-SVG contract, import/export machinery. Route at §0.A; the compact rules and trigger vocabulary live in diagram-design's SKILL.md. diagram-design **inherits** finesse's universal craft floor, cheapness blacklist, and a11y gates (declared in its SKILL.md; the full lists live in `references/design-dna.md` §1 and `references/anti-cheap.md` when finesse is also loaded). Source: MIT © Cathryn Lavery (littlemight.com) — keep attribution.
+
+---
+
+## 13. OUT OF SCOPE
 
 finesse covers **both** brand and product UI, so its scope is wide. Hand off only when the work is a **pure backend / API / data task with no interface**, or a brief that explicitly wants a **generic, conventional, zero-craft page** (finesse always brings craft — if the user truly wants bland, that's a different tool). Everything from a spectacle landing page to a dense admin dashboard is in scope: set the register in §0 and route accordingly.
 

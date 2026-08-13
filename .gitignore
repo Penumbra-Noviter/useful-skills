@@ -4,3 +4,8 @@ node_modules/
 .DS_Store
 Thumbs.db
 __pycache__/
+
+# Playwright MCP 运行时产物
+.playwright-mcp/
+# 机器特定符号链接（指向 .cc-switch 实时目录）
+project-kickoff
