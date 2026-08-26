@@ -18,6 +18,7 @@ Routing table for the `design-md/` corpus — the DESIGN.md files (Google Stitch
 | Airtable | `airtable` | product | sober editorial workflow · signature color cards | light | — |
 | Apple | `apple` | brand | photography gallery · Action Blue `#0066cc` | light↔dark | chrome recedes; one signature shadow |
 | Binance | `binance` | brand | dark financial · Binance Yellow `#FCD535` | dark | → product for trading surfaces |
+| Beautiful UI | `beautifului` | product | AI-native instrument · cool near-white + hairlines + one blue-violet accent | light↔dark | a component library, not one product; the **assistant** morphology's token language — pair with `references/ai-native-ui.md` |
 | BMW | `bmw` | brand | settled corporate automotive | light | — |
 | BMW M | `bmw-m` | brand | motorsport bombastic · UPPERCASE display | dark | — |
 | Bugatti | `bugatti` | brand | austere luxury auto · near-black | dark | — |
