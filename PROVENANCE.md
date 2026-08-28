@@ -96,7 +96,7 @@
   - `references/motion.md:359` — 决策框架/数值表/配方蒸馏自 emilkowalski/skills（github.com/emilkowalski/skills，React→vanilla JS 翻译）
   - `design-md/README.md:9` — design-md 语料来源 VoltAgent/awesome-design-md（github.com/VoltAgent/awesome-design-md）
 - **License**：MIT（frontmatter）；仓库根 LICENSE 为 Penumbra-Noviter 本人
-- **本地版本**：0.20.0（演进自导入时的初版）
+- **本地版本**：0.21.0（演进自导入时的初版；快照 2026-08-28）
 - **更新提示**：taste-skill 只影响两个 reference 文件（dials.md、page-skeleton.md），其余为本地演化；上游更新时**不要整文件覆盖**
 
 ### 9. open-kimi-ppt — 自研（逆向）
