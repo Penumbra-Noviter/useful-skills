@@ -6,7 +6,7 @@
 //
 // Usage:
 //   node detect.mjs [--json] [--strict] <file ...>
-//   node detect.mjs --json skills/finesse-ui/examples/*.html
+//   node detect.mjs --json examples/*.html
 //
 // Exit code: 0 by default — ALWAYS, even when P0 findings exist. Findings are
 // DATA carried in the report (the JSON `p0` count), not a tool failure. A

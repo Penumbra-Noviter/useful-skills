@@ -17,10 +17,10 @@
 
 ## Scan 1 — Cheapness Blacklist (`anti-cheap.md`)
 
-**First run the detector** (no network, pure local file scan) to get machine-verifiable hits, then add your own eye:
+**First run the detector** (no network, pure local file scan) to get machine-verifiable hits, then add your own eye. Run from the skill root (the directory containing `scripts/`):
 
 ```bash
-node skills/finesse-ui/scripts/detect.mjs --json <target ...>
+node scripts/detect.mjs --json <target ...>
 ```
 
 It reports findings grouped P0/P1/P2 with `file:line` and the fixing command in `files[]`, a `p0` count, and a `notCovered[]` list of the tells the regex layer **cannot** see. It **always exits 0** — findings are data in the JSON, not a tool failure; read `p0` to know the count (a non-zero exit is reserved for the `--strict` CI/git-hook mode). If the script can't be found (the skill was dropped into a project without it), don't treat that as a blocker — scan by hand against `anti-cheap.md` below. **A clean run means "no regex-detectable slop", not "this page is good"** — the `notCovered[]` items are exactly why Scan 1 always continues into the by-eye pass. Fold its hits into your report, then load `references/anti-cheap.md` and check the offenders the regex can't see (taste-level: default-category aesthetic, fake screenshots, generic card grids):
