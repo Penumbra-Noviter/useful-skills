@@ -19,7 +19,7 @@ Yes, if the page's job is any of:
 
 The tell: the primary action is a **commit** (发布 / 保存 / 提交 / 上线), it's **consequential**, and the user needed to think before pressing it.
 
-**Route check — the reverse also fails:** if the page's job turns out to be **reading** — monitoring, analytics, tables, a dashboard, no commit path anywhere — you're in the wrong file; go to `product-ui.md`. A monitor page built in a workflow shell is as wrong as a settings page built as a dashboard. See SKILL.md §0.F.
+**Route check — the reverse also fails:** if the page's job turns out to be **reading** — monitoring, analytics, tables, a dashboard, no commit path anywhere — you're in the wrong file; go to `product-ui.md`. A monitor page built in a workflow shell is as wrong as a settings page built as a dashboard. If the page's spine is a **conversation or live agent run** (prompt → watch → review/approve), it's an **assistant** page; go to `ai-native-ui.md`. See SKILL.md §0.F.
 
 If the page is a form but the commit is trivial (a login, a search filter, a profile name), you don't need this file — `product-ui.md` §4 is enough.
 

@@ -165,7 +165,7 @@ Generate 5 sharp questions about your specific output, then answer each with con
 
 The route was verified early (SKILL.md §0.F), but check it one final time before "done":
 
-- [ ] **Job matches the reference it was built with:** a **read** page (monitor / analytics / tables — no commit path) was built with `product-ui.md`; an **operate** page (a primary action that commits — 保存 / 发布 / 提交 / 配置 / 上线) was built with `workflow-ui.md`. A settings page wearing a dashboard shell is a route failure, not a style preference.
+- [ ] **Job matches the reference it was built with:** a **read** page (monitor / analytics / tables — no commit path) was built with `product-ui.md`; an **operate** page (a primary action that commits — 保存 / 发布 / 提交 / 配置 / 上线) was built with `workflow-ui.md`; an **assistant** page (spine is a conversation or live agent run — prompt → watch → review/approve) was built with `ai-native-ui.md`. A settings page wearing a dashboard shell is a route failure, not a style preference.
 - [ ] **Commerce pages routed per page job** (PDP leans brand / PLP leans product) per SKILL.md §0.A.
 - [ ] **Zine pages picked a path and kept it** — 实景拼贴 has the real photo anchored; 影像蒸馏 has no stray photographic pixels (SKILL.md §11).
 - [ ] **No cross-register masquerade** — no dashboard shell on a landing page, no hero engine on a product page, no workflow shell on a monitor page.

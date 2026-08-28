@@ -146,6 +146,25 @@ Failing any item below is a **shipping blocker**. Fix before delivery.
 - **拼音缩写 wordmark** — `BJ · ZS · WLC`-style pinyin initials as a logo or decoration strip. → real hanzi or a real English name; pinyin initials read as placeholder.
 - **中文逐字动效** — typewriter / char-by-char reveal as the default motion for Chinese text. → line-by-line or whole-line reveals (single CJK chars carry no per-char information gain; 逐字 reads cheap).
 
+- **中文 AI 口癖 — Chinese AI voice tells** (distilled from vibe-hub.org/anti-ai-flavor, MIT © oil-oil, 2026). These are the *copy/tone* tells that make AI-generated Chinese copy instantly recognizable — distinct from the typography tells above. Each entry: the tell → the fix.
+
+  - **稳稳接住 / 虚假情感承接** — "我就在这里，不躲、不藏、不绕，稳稳地接住你。" — 在对话界面/文案中用于制造亲密感，但实质是 AI 对话模板。 → 直接说功能或结果，不写情感承接台词。
+  - **单字动词堆砌** — "收一下、提一层、落回去、压一下" — 把正常动作拆成单字动词短句，假装"专业"。 → 用正常双字动词："收紧、提升、落实"。
+  - **装饰性双引号** — "先把‘真实’放回产品里，再让‘用户’重新成为体验的主角。" — 给正常词汇加引号，假装在讲哲学概念。 → 普通词不加引号，自然书写。
+  - **夸张比喻（灯塔 / 桥梁 / 钥匙 / 引擎）** — "它是一座穿越信息迷雾的灯塔，为每一个迷失在效率洪流中的人照亮前路。" — 用比喻替代具体功能描述。 → 直接说功能解决什么，不用比喻。
+  - **提升立意** — "这不只是个会议纪要功能，更是在这个被技术加速的时代，帮我们重新找回人与人之间真实的连接。" — 把一个小功能拔高到人生/社会议题。 → 就事论事，功能就是功能，不拔高立意。
+  - **工程黑话堆叠** — "这版我直接砍一刀：先把逻辑压实，再把结构收口，最后把方案落盘，形成一个最小闭环。" — 砍一刀/收口/闭环/落盘/夯实等工程术语堆叠成伪专业短句。 → 正常说话："这个版本先删掉冗余功能，再整理结构和方案"。
+  - **过度称赞用户** — "你这个判断非常准确，而且已经触及了问题最本质、最关键的那一层。" — 对用户的每个微小反馈都过度赞美。 → 直接说"你的判断是对的，按这个方向改"。
+  - **不是 X，而是 Y** — "这不是一次简单的产品更新，而是一场关于效率、协作与未来工作方式的重新定义。" — 用"不是…而是…"句式强行拔高语气。 → 直接说"本次更新增加了协作功能"。
+  - **先说结论的套话** — "我先把结论放在前面：你的直觉完全正确。下面我用三点把这件事讲透。" — 先铺一句结论套话再开始说。 → 直接说结论，不需要铺垫。
+  - **每句拆成分点** — 连续的自然段被拆成编号/圆点列表，但内容本身没有列举意图。 → 能自然连贯写成的就不要拆成列表。
+  - **结尾"如果你愿意"** — "如果你愿意，我下一步可以直接给你一版。" — 每段结尾都问是否要下一版，制造虚假的主动性。 → 直接交付，不用问。
+
+- **框里再套框** — 一个卡片容器里又套三层卡片，每层都有圆角+阴影+边框，视觉上全是"框"没有内容层次。 → 外层容器用 hairline 或阴影，内层用纯色块或 tint 背景，不重复加边框。
+- **Emoji 当图标** — 🚀 极速 / ✨ 智能 / 🛡️ 安全的特征卡片，用 emoji 代替图标库。 → 使用真实图标库（Phosphor / Radix / Tabler）或品牌图标；emoji 仅用于内嵌正文表情，不作为功能图标。
+- **手机端一路堆到底（假响应式）** — 桌面版侧栏+表格+操作按钮在手机上不做路由重构，直接全堆成一列长页面，反而更难操作。 → 每个 section 声明移动端 collapse 策略：侧栏 → 弹出菜单，表格 → 水平滚动 + 首列固定，多按钮 → 折叠进"更多"。
+- **到处补说明** — 每个分类名/标题下都加一句"在这里管理你的 xxx"式的说明，把已经很清楚的标签重复解释。 → 标题本身足够就不加副标签；辅助文本只在真正有歧义时使用（见 §2 eyebrow count 规则）。
+
 ---
 
 ## 3. Motion Tells
@@ -172,6 +191,6 @@ Before shipping, answer honestly:
 7. **Copy clean?** No em-dashes, no fake numbers, no AI-cute strings?
 8. **Contrast AA?** Buttons, placeholders, focus rings included?
 9. **Charts real?** Every bar/line/arc computed from data (no maxed / uniform / barcode / faked marks), axes labeled, right chart type for the question?
-10. **CJK clean?** (Chinese copy only) No `——` / `……` flourish abuse, one punctuation system per string, explicit CJK font stack, body line-height ≥1.75?
+10. **CJK clean?** (Chinese copy only) No `——` / `……` flourish abuse, one punctuation system per string, explicit CJK font stack, body line-height ≥1.75 — and no 中文 AI 口癖 (稳稳接住 / 单字动词 / 夸张比喻 / 提升立意 / 不是 X 而是 Y / 砍一刀收口闭环 / 每句拆成分点).
 
 Any "no" is unshipped work.

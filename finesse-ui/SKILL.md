@@ -155,7 +155,7 @@ Then determine the register:
 
 ### 0.B Output a one-line "Design Read" before generating
 
-Format: `Design Read: {industry} · {soul in 2-3 words} · register={brand|product|zine|diagram} · job={read|operate} (product only) · SPECTACLE={n} · hero-engine={type}` — for product/zine/diagram, `hero-engine` becomes `none` + the substrate/material system (e.g. `component-system`, `paper-zine`, `editorial-tokens`).
+Format: `Design Read: {industry} · {soul in 2-3 words} · register={brand|product|zine|diagram} · job={read|operate|converse} (product only) · SPECTACLE={n} · hero-engine={type}` — for product/zine/diagram, `hero-engine` becomes `none` + the substrate/material system: `component-system` (read) · `workflow-shell` (operate) · `ai-native` (converse/assistant) · `paper-zine` · `editorial-tokens`.
 
 Example: `Design Read: deep-space astronomy · cinematic + reverent · register=brand · SPECTACLE=8 · hero-engine=Three.js particle galaxy`
 
@@ -200,7 +200,7 @@ Override these immediately if the brief provides stronger or contradicting signa
 
 The §0.A route is a first call, not a lock. Verify it at two points — a wrong route costs a full rebuild, and the check is cheaper than the fix:
 
-1. **Right after the Design Read is confirmed (§0.B):** re-run §0.A's read-vs-operate test against the confirmed direction (the `job` field in the Design Read). A page whose primary action **commits** (保存 / 发布 / 提交 / 配置 / 上线) belongs in `workflow-ui.md`; one that **presents** (monitor / analytics / tables) belongs in `product-ui.md`. Contradiction → **re-route now**: swap the reference before laying the shell, and record the change in the decision record.
+1. **Right after the Design Read is confirmed (§0.B):** re-run §0.A's read / operate / converse test against the confirmed direction (the `job` field in the Design Read). A page whose primary action **commits** (保存 / 发布 / 提交 / 配置 / 上线) belongs in `workflow-ui.md`; one that **presents** (monitor / analytics / tables) belongs in `product-ui.md`; one whose spine is a **conversation or live agent run** (prompt → watch → review/approve) belongs in `ai-native-ui.md`. Contradiction → **re-route now**: swap the reference before laying the shell, and record the change in the decision record.
 2. **At assembly time (§7), before the shell is committed:** if the page under construction starts reading like the other job — a dashboard shell gaining a dominant save/config form, or a workflow shell with no commit path — stop and re-route. Do not finish in the wrong morphology; by §10 the rebuild is the whole page.
 
 The references self-check too: `product-ui.md` and `workflow-ui.md` open with the job test, and `preflight.md` §L re-gates the fit at the end.
