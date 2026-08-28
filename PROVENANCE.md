@@ -17,7 +17,7 @@
 | diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.2（上游已 2.3） | 2026-08-13（未 commit） | ✅ **上游有新版本** |
 | museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | — | 2026-08-11 | ✅（wheel URL） |
 | vision | vendored + 改造 | [asuojun/claude-vision-skill](https://github.com/asuojun/claude-vision-skill) | — | — | 2026-08-06 | ✅（README 已记） |
-| finesse-ui | 自研 + 部分派生 | 派生自 taste-skill v2 / emilkowalski/skills / VoltAgent/awesome-design-md | MIT | 0.20.0 | 与批次同 commit 随带，**非 mattpocock 内容** | 部分（仅派生源） |
+| finesse-ui | 自研 + 部分派生 | 派生自 taste-skill v2 / emilkowalski/skills / VoltAgent/awesome-design-md | MIT | 0.21.0 | 快照 2026-08-28 · v0.21.0，**非 mattpocock 内容** | 部分（仅派生源） |
 | open-kimi-ppt | 自研（逆向） | 无（依赖 Moonshot PPTD 格式） | 无 | — | 2026-08-08 | ❌ |
 | neat-freak | vendored + 本地化 | [KKKKhazix/khazix-skills](https://github.com/KKKKhazix/khazix-skills)（neat-freak/，用户 2026-08-13 确认） | — | 3.0.0（上游同版） | 2026-08-11 | ✅ |
 | context-monitor | 自研（推断） | 无 | 无 | — | 2026-08-06 | ❌ |
