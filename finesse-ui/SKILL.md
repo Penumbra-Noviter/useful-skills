@@ -408,6 +408,8 @@ Diagram briefs — the deliverable is a standalone diagram, not a page (architec
 
 finesse covers **both** brand and product UI, so its scope is wide. Hand off only when the work is a **pure backend / API / data task with no interface**, or a brief that explicitly wants a **generic, conventional, zero-craft page** (finesse always brings craft — if the user truly wants bland, that's a different tool). Everything from a spectacle landing page to a dense admin dashboard is in scope: set the register in §0 and route accordingly.
 
+> **Terminology teaching routes to vibehub.** Mid-build, when the user describes an interaction effect in plain language ("鼠标放上去有个小提示", "点完变一下颜色"), finesse keeps building — the term lesson belongs to the standalone **`vibehub` skill**. The two co-fire in the same conversation; they don't pipeline into each other (vibehub translates user language into accurate terms; it does not convert design briefs).
+
 ---
 
 ## Appendix — Install Commands & Canonical Sources
