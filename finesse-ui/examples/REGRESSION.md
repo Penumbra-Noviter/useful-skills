@@ -6,13 +6,21 @@ finesse-ui 用 13 个精选示例证明「语料干净」（detect.mjs p0=0）�
 
 本文件由 T1（回归基线）建立，供后续工单在 skill 方法链改动后重新反测，防止「流程只有理论上成立」。
 
+> **元文档边界：** 本文件是回归测试基座（**元文档**），不是 `examples/` 的正向参考语料。它记录的页面（B1–B4）是
+> 短暂产物，**从未入库、也不应当语料示例**——examples/ 语料对稿样有画廊级承诺，本批页面只做了机械门 + 结构契约 +
+> 运行时验证，没做画廊级打磨。随 skill 入库的正向参考语料（positive-reference corpus，13 个示例）在
+> [`EXAMPLES.md`](EXAMPLES.md)，互相别混用。
+
 ## 用法（如何跑）
 
 每次方法链（SKILL.md §0–§10 / references / detect.mjs）有改动时，重跑一遍：
 
-1. 逐个 brief 执行完整 craft 流程：读 brief → 输出 **Design Read**（决策记录形式）→ 生成 1 个页面 HTML 到临时目录
-   （页面是短暂产物，**不提交**，建议放 git 之外的目录，如 `.worktrees/finesse-regression-tmp/`）→
-   运行 `node finesse-ui/scripts/detect.mjs --json <页面>` 校验 → 按该 brief 的通过标准逐条检查。
+> **cwd 前提：** Run every command from the finesse-ui skill root (the directory containing `scripts/` and
+> `examples/`); address each generated page by its full path.
+
+1. 逐个 brief 执行完整 craft 流程：读 brief → 输出 **Design Read**（决策记录形式）→ 生成 1 个页面 HTML 到**你自己建的
+   临时目录**（页面是短暂产物，**不提交**，放 git 之外的目录即可）→ 运行
+   `node scripts/detect.mjs --json <temp-dir>/<page>.html` 校验 → 按该 brief 的通过标准逐条检查。
 2. **运行时验证（preflight §C，有浏览器时必做）**：grep 只证明引擎代码存在，不证明渲染。用 Playwright 打开页面，
    确认引擎 / 图表 / 提交路径真的出像素、出状态。本批次 4 个页面都做了这一遍，且全部因它抓出过 bug（见「结果与缺口」）。
 3. 更新下方「执行矩阵」与「运行记录」，如实记录通过 / 未过与原因。
@@ -20,9 +28,13 @@ finesse-ui 用 13 个精选示例证明「语料干净」（detect.mjs p0=0）�
 命令行参考：
 
 ```bash
-node finesse-ui/scripts/detect.mjs --json <page.html>   # p0 计在 JSON 里；默认退出码恒为 0
-node finesse-ui/scripts/detect.mjs --strict <page.html> # 有 P0 时以退出码 1 阻塞（CI 用）
+node scripts/detect.mjs --json <temp-dir>/<page>.html   # p0 计在 JSON 里；默认退出码恒为 0
+node scripts/detect.mjs --strict <temp-dir>/<page>.html # 有 P0 或任一文件读取失败时以退出码 1 阻塞（CI 用）
 ```
+
+**防假绿提示：** 输出出现 `!! NOT SCANNED`（读失败的文件）、总结行出现 "not scanned"，或路径可疑却 `p0=0` 时，
+先核对文件真的被扫描到——读失败的文件**不会**打印 `✓ no P0`，总结行会把 `scanned` / `notScanned` 计数分列出来。
+只有 `scanned ≥ 1` 且 `notScanned = 0` 的 `p0=0` 才算真绿。
 
 ## 四个回归 brief（B1–B4 原文 + 各自通过标准）
 

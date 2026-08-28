@@ -13,9 +13,12 @@
 // DATA carried in the report (the JSON `p0` count), not a tool failure. A
 // non-zero exit reads to an agent as "this tool is broken" and it abandons the
 // tool entirely, falling back to eyeballing — so the default path never does
-// that. Pass --strict to make a P0 finding block with exit 1 (for CI / git
-// hooks / humans who want a hard gate). The `audit` command (references/audit.md)
-// consumes the --json output and decides for itself; it does not need exit codes.
+// that. Pass --strict to make a P0 finding OR an unreadable file block with
+// exit 1 (for CI / git hooks / humans who want a hard gate); an unreadable
+// file is a broken/incomplete scan, never a pass. --selftest runs standalone:
+// combining it with file targets or --json is rejected with exit 1. The `audit`
+// command (references/audit.md) consumes the --json output and decides for
+// itself; it does not need exit codes.
 
 import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
@@ -25,6 +28,14 @@ const asJson = args.includes('--json');
 const strict = args.includes('--strict');
 const selftest = args.includes('--selftest');
 const files = args.filter((a) => a !== '--json' && a !== '--strict' && a !== '--selftest');
+
+// --selftest runs standalone: file targets and --json are conflicts, not
+// silently-ignored extras. Reject loudly so a guard never reads a pass from a
+// command that wasn't actually the self-test it asked for.
+if (selftest && (files.length > 0 || asJson)) {
+  console.error('--selftest runs standalone; it cannot be combined with file targets or --json');
+  process.exit(1);
+}
 
 // What the regex layer canNOT see. A clean run means "no regex-detectable slop",
 // NOT "this page is good" — these taste/structure/runtime tells need a human eye
@@ -46,7 +57,7 @@ const NOT_COVERED = [
 if (files.length === 0 && !selftest) {
   // Guidance, not an error. Never teach the agent to abandon the tool.
   const note = 'usage: node detect.mjs [--json] [--strict] <file ...>';
-  if (asJson) console.log(JSON.stringify({ p0: 0, files: [], notCovered: NOT_COVERED, note }, null, 2));
+  if (asJson) console.log(JSON.stringify({ p0: 0, scanned: 0, notScanned: 0, files: [], notCovered: NOT_COVERED, note }, null, 2));
   else console.log(note);
   process.exit(0);
 }
@@ -1057,6 +1068,8 @@ if (selftest) {
 
 const report = [];
 let p0Count = 0;
+let scannedCount = 0;
+let notScannedCount = 0;
 
 for (const file of files) {
   let text;
@@ -1064,10 +1077,12 @@ for (const file of files) {
     text = readFileSync(file, 'utf8');
   } catch (e) {
     report.push({ file, error: String(e.message || e), findings: [] });
+    notScannedCount++;
     continue;
   }
   const { findings, p0 } = analyze(text);
   p0Count += p0;
+  scannedCount++;
   report.push({ file, findings });
 }
 
@@ -1087,12 +1102,18 @@ function allNotCovered() {
 // ---- output ----------------------------------------------------------------
 
 if (asJson) {
-  console.log(JSON.stringify({ p0: p0Count, files: report, notCovered: allNotCovered() }, null, 2));
+  console.log(
+    JSON.stringify(
+      { p0: p0Count, scanned: scannedCount, notScanned: notScannedCount, files: report, notCovered: allNotCovered() },
+      null,
+      2
+    )
+  );
 } else {
   for (const { file, findings, error } of report) {
     const name = basename(file);
     if (error) {
-      console.log(`\n✗ ${name} — read error: ${error}`);
+      console.log(`\n!! NOT SCANNED — ${name} (read error: ${error})`);
       continue;
     }
     if (!findings.length) {
@@ -1106,11 +1127,18 @@ if (asJson) {
       console.log(`        → fix with \`${f.fix}\``);
     }
   }
-  console.log(`\n${p0Count ? `✗ ${p0Count} P0 finding(s) — ships broken` : '✓ no P0 findings'}`);
+  const verdict =
+    notScannedCount > 0
+      ? `✗ ${notScannedCount} file(s) not scanned — findings above are incomplete, check the NOT SCANNED lines`
+      : p0Count
+        ? `✗ ${p0Count} P0 finding(s) — ships broken`
+        : '✓ no P0 findings';
+  console.log(`\n${verdict} · ${scannedCount} file(s) scanned · ${notScannedCount} file(s) not scanned`);
   console.log(`\nRegex layer only — still needs a human/Playwright pass for:`);
   for (const c of allNotCovered()) console.log(`  · ${c}`);
 }
 
 // See the exit-code note at the top: default is always 0 so the agent never reads
-// a finding as a tool malfunction. Only --strict turns a P0 into a blocking exit.
-process.exit(strict && p0Count ? 1 : 0);
+// a finding as a tool malfunction. --strict turns a P0 — or an unreadable file
+// (a broken/incomplete scan, never a pass) — into a blocking exit.
+process.exit(strict && (p0Count || notScannedCount) ? 1 : 0);
