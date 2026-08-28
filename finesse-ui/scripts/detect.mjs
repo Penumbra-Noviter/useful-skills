@@ -6,7 +6,8 @@
 //
 // Usage:
 //   node detect.mjs [--json] [--strict] <file ...>
-//   node detect.mjs --json skills/finesse-ui/examples/*.html
+//   node detect.mjs --json examples/*.html
+//   node detect.mjs --selftest
 //
 // Exit code: 0 by default — ALWAYS, even when P0 findings exist. Findings are
 // DATA carried in the report (the JSON `p0` count), not a tool failure. A
@@ -22,7 +23,8 @@ import { basename } from 'node:path';
 const args = process.argv.slice(2);
 const asJson = args.includes('--json');
 const strict = args.includes('--strict');
-const files = args.filter((a) => a !== '--json' && a !== '--strict');
+const selftest = args.includes('--selftest');
+const files = args.filter((a) => a !== '--json' && a !== '--strict' && a !== '--selftest');
 
 // What the regex layer canNOT see. A clean run means "no regex-detectable slop",
 // NOT "this page is good" — these taste/structure/runtime tells need a human eye
@@ -41,7 +43,7 @@ const NOT_COVERED = [
   'transform-origin: center on a popover — regex cannot know it is not a modal (motion.md §3)',
 ];
 
-if (files.length === 0) {
+if (files.length === 0 && !selftest) {
   // Guidance, not an error. Never teach the agent to abandon the tool.
   const note = 'usage: node detect.mjs [--json] [--strict] <file ...>';
   if (asJson) console.log(JSON.stringify({ p0: 0, files: [], notCovered: NOT_COVERED, note }, null, 2));
@@ -982,18 +984,10 @@ function eyebrowCheck(text) {
 
 // ---- run -------------------------------------------------------------------
 
-const report = [];
-let p0Count = 0;
-
-for (const file of files) {
-  let text;
-  try {
-    text = readFileSync(file, 'utf8');
-  } catch (e) {
-    report.push({ file, error: String(e.message || e), findings: [] });
-    continue;
-  }
-
+// analyze(text) -> { findings, p0 }: the detector core against one source string.
+// Shared by the file loop below and the --selftest gate, so the self-test exercises
+// the exact same rule machinery that scans real pages.
+function analyze(text) {
   const findings = [];
   for (const rule of [...RULES, ...MOTION_RULES]) {
     const hits = rule.find(text);
@@ -1019,9 +1013,61 @@ for (const file of files) {
     const f = fn(text);
     if (f) findings.push({ ...f, count: f.hits.length });
   }
-
   findings.sort((a, b) => severityRank(a.severity) - severityRank(b.severity));
-  p0Count += findings.filter((f) => f.severity === 'P0').length;
+  const p0 = findings.filter((f) => f.severity === 'P0').length;
+  return { findings, p0 };
+}
+
+// --selftest: a regression gate for the detector itself. Two inline fixtures —
+// one clean (expects p0=0), one deliberately sloppy with a known blacklist hit
+// (expects p0>0) — run through the same analyze() the file loop uses. Runs alone;
+// exit 0 on all-pass, 1 on any failure.
+if (selftest) {
+  const CLEAN_FIXTURE =
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+    '<style>body{background:#eef1e6;color:#1c1a13;font-family:sans-serif}</style></head>' +
+    '<body><h1>Clean fixture</h1><p>Plain copy, no em dash, no fade, no pure white.</p></body></html>';
+  const SLOP_FIXTURE =
+    '<!doctype html><html><head><style>.box{transition: all .2s ease-in-out}</style></head>' +
+    '<body><div class="box">Slop fixture</div></body></html>';
+  const cases = [
+    { id: 'clean', html: CLEAN_FIXTURE, expectP0: 0 },
+    { id: 'slop', html: SLOP_FIXTURE, expectP0: 1 },
+  ];
+  let checks = 0, failures = 0;
+  for (const c of cases) {
+    checks++;
+    const { findings, p0 } = analyze(c.html);
+    const ok = c.expectP0 === 0 ? p0 === 0 : p0 > 0;
+    if (ok) {
+      console.log(`SELFTEST PASS — ${c.id}: expected p0 ${c.expectP0 === 0 ? '= 0' : '> 0'}, got ${p0}`);
+    } else {
+      failures++;
+      const saw = findings.map((f) => `${f.id}(${f.severity})`).join(', ') || 'no finding';
+      console.log(`SELFTEST FAIL — ${c.id}: expected p0 ${c.expectP0 === 0 ? '= 0' : '> 0'}, got ${p0} (saw: ${saw})`);
+    }
+  }
+  if (failures) {
+    console.log(`SELFTEST FAIL (${failures}/${checks} checks failed)`);
+    process.exit(1);
+  }
+  console.log(`SELFTEST PASS (${checks} checks)`);
+  process.exit(0);
+}
+
+const report = [];
+let p0Count = 0;
+
+for (const file of files) {
+  let text;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch (e) {
+    report.push({ file, error: String(e.message || e), findings: [] });
+    continue;
+  }
+  const { findings, p0 } = analyze(text);
+  p0Count += p0;
   report.push({ file, findings });
 }
 
