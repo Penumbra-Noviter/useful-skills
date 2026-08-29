@@ -6,6 +6,10 @@
  *   node vision.js <图片路径> [问题]
  *   node vision.js --url <图片链接> [问题]
  *
+ * 多模型兜底:
+ *   默认按顺序尝试 qwen3.7-flash → qwen3.7-flash-2026-07-15 → qwen3.5-omni-plus，
+ *   当前模型报错（额度/限流/不可用）时自动切换下一个，全部失败才退出。
+ *
  * 依赖:
  *   npm install dotenv (可选，如果有 .env 文件)
  *   DASHSCOPE_API_KEY 环境变量 或 同目录 .env 文件（免费在 bailian.console.aliyun.com 获取）
@@ -23,7 +27,23 @@ try { require("dotenv").config({ path: path.resolve(__dirname, ".env") }); } cat
 const BASE_URL = process.env.DASHSCOPE_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1";
 // 安全：API Key 只从环境变量或同目录 .env 读取，禁止硬编码进代码
 const API_KEY = process.env.DASHSCOPE_API_KEY || "";
-const MODEL = process.env.VISION_MODEL || "qwen3.7-flash";
+
+// 模型兜底列表：前一个模型额度/限流失败时自动切换下一个
+const DEFAULT_MODELS = [
+  "qwen3.7-flash",
+  "qwen3.7-flash-2026-07-15",
+  "qwen3.5-omni-plus",
+];
+
+function resolveModels() {
+  // VISION_MODELS（逗号分隔）自定义整个列表，优先级最高
+  const fromList = (process.env.VISION_MODELS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (fromList.length) return fromList;
+  // VISION_MODEL 单独指定主模型（兼容旧配置）
+  const single = process.env.VISION_MODEL;
+  if (single) return [single];
+  return DEFAULT_MODELS;
+}
 
 function parseArgs() {
   const argv = process.argv.slice(2);
@@ -74,7 +94,11 @@ function request(payload) {
       res.on("end", () => {
         if (res.statusCode >= 400) return reject(new Error(`API ${res.statusCode}: ${data.slice(0, 300)}`));
         try {
-          resolve(JSON.parse(data)?.choices?.[0]?.message?.content || data);
+          const parsed = JSON.parse(data);
+          const content = parsed?.choices?.[0]?.message?.content;
+          if (typeof content === "string" && content.trim()) return resolve(content);
+          // 200 但无文本内容：模型可能不支持识图（如文生图模型），视为失败让兜底链继续
+          reject(new Error(`API 200 但无文本内容（模型 ${parsed?.model || "?"} 可能不支持识图）: ${data.slice(0, 200)}`));
         } catch { resolve(data); }
       });
     });
@@ -97,18 +121,34 @@ async function main() {
     console.error("      node vision.js --url <图片链接> [问题]");
     process.exit(1);
   }
+
+  const models = resolveModels();
   try {
     const imageUrl = resolveImageUrl(args.imageSource, args.isUrl);
-    const result = await request({
-      model: MODEL,
-      messages: [{ role: "user", content: [
-        { type: "image_url", image_url: { url: imageUrl } },
-        { type: "text", text: args.prompt },
-      ]}],
-      stream: false,
-      max_tokens: 1024,
-    });
-    console.log(result);
+    let lastError = null;
+
+    for (const model of models) {
+      try {
+        const result = await request({
+          model,
+          messages: [{ role: "user", content: [
+            { type: "image_url", image_url: { url: imageUrl } },
+            { type: "text", text: args.prompt },
+          ]}],
+          stream: false,
+          max_tokens: 1024,
+        });
+        if (models.length > 1) console.error(`模型 ${model} 识图成功`);
+        console.log(result);
+        return;
+      } catch (err) {
+        lastError = err;
+        if (models.length > 1) console.error(`模型 ${model} 失败: ${err.message}`);
+      }
+    }
+
+    console.error("识图失败（所有模型均失败）:", lastError.message);
+    process.exit(1);
   } catch (err) {
     console.error("识图失败:", err.message);
     process.exit(1);

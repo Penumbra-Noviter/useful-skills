@@ -9,3 +9,6 @@ __pycache__/
 .playwright-mcp/
 # 机器特定符号链接（指向 .cc-switch 实时目录）
 project-kickoff
+universal-exam-cram-coach
+# 外部实装 skill（自带 .git，可独立 pull 更新，不入库）
+dao-skill/

@@ -31,5 +31,6 @@ node vision.js --url "<图片链接>" "请用中文描述这张图片的内容"
 ## 配置
 
 - 需要 `DASHSCOPE_API_KEY`（同目录 `.env` 或环境变量，免费在 https://bailian.console.aliyun.com/ 获取）
-- 识图模型可用 `VISION_MODEL` 环境变量覆盖，默认 `qwen3.7-flash`
+- 识图模型默认按顺序尝试 `qwen3.7-flash` → `qwen3.7-flash-2026-07-15` → `qwen3.5-omni-plus`；当前模型报错（额度/限流/不可用）自动切换下一个，全部失败才退出
+- `VISION_MODELS` 环境变量可自定义整个模型列表（逗号分隔）；`VISION_MODEL` 仍可单独指定主模型（未设 `VISION_MODELS` 时生效）
 - 中转地址可用 `DASHSCOPE_BASE_URL` 覆盖，默认 `https://dashscope.aliyuncs.com/compatible-mode/v1`
