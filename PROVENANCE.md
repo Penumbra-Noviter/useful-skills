@@ -40,6 +40,12 @@
   - 注：以上「被删」基于当前 main 快照推断，删除时间可用上游 git 历史核实
 - **本地是否改过内容**：未逐一记录，同步时用 `git diff <导入commit> <上游最新>` 对账
 - **同步方式**：clone 上游 → 逐目录 diff → 合并上游改动（保留本地非官方条目）。
+- **最近同步（2026-08-29）**：
+  - 上游 head：`6654f6b`（2026-08-24，"feat: add 'Information access' category to retrospective skill"）；CHANGELOG 最新 1.2.3；github.com 直连被墙，经 gh-proxy.com 克隆
+  - 34 个共有 skill 全部与上游对齐：30 个无本地改动者批量复制；4 个有本地改动者人工合并（code-review 保 Falsify 轴 + Reviewer posture、grilling 保钢人模式、implement 保交付标准/四状态报告、to-tickets 保切片规模上限）
+  - 本地独有文件保留未动：research/findings-agent-ticket-sizing.md
+  - 本地已删除者未恢复：writing-for-agents（上游仍有，本地有意删）、writing-great-skills、skill-creator（上游均已删）
+  - **2026-08-29 用户决定**：删除 batch-grill-me、design-an-interface、edit-article、find-skills、qa、request-refactor-plan、ubiquitous-language（7 个，未 commit，git 可恢复）；保留 improve-python-architecture、obsidian-vault；上游新增的 implement-spec、retro **用户决定暂不引入**（依赖本地已删的 writing-for-agents / 任务图体系，尚属 in-progress）
 
 ### 2. skill-creator — vendored
 
@@ -139,7 +145,7 @@
 
 ## 已知缺口（待补）
 
-- [ ] mattpocock 批次中「本地有、上游当前 main 无」的 12 个目录（batch-grill-me 等），删除/迁移时间未用上游 git 历史核实——同步时若上游恢复目录则正常对账，若确认已删则决定本地去留
+- [x] mattpocock 批次中「本地有、上游当前 main 无」的目录——**2026-08-29 已核实**（上游 main 快照）：batch-grill-me、design-an-interface、edit-article、find-skills、improve-python-architecture、obsidian-vault、qa、request-refactor-plan、ubiquitous-language、skill-creator、writing-great-skills 均不在上游，属上游删除；本地去留见 §1「最近同步」
 - [ ] skill-creator 的 Apache 2.0 LICENSE.txt 与 mattpocock 批次其余 skill 不协调（疑源自 anthropics/skills），重发布时需注意条款差异
 - [ ] diagram-design 上游 2.3 变更内容未评估
 - [ ] context-monitor 的来源判定为推断，若实际有上游请补记

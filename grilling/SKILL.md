@@ -5,6 +5,19 @@ description: Grill the user relentlessly about a plan, decision, or idea. Use wh
 
 Interview the user relentlessly until you reach a shared understanding. Map this as a **design tree**: every decision branches into the decisions that hang off it.
 
+### 钢人模式（入口探测）
+
+当用户的问题/计划存在显著解释空间或方案分歧时，在构建设计树之前先进入**钢人模式**：
+
+1. **重述问题**：以最完整有力的方式重述用户真正想解决的问题，让用户确认
+2. **双向钢人论证**：分别给出支持用户当前想法、以及反对它的最强论证
+3. **找出分歧**：确定双方真正的分歧点，以及最可能改变结论的关键变量
+4. **一个关键问题**：只问一个最关键的问题；用户回答后给出明确判断和下一步
+
+用户确认方向后，再进入正常的设计树流程。
+
+### 设计树轮询
+
 Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled — the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
 
 Each question should be formatted like so:
