@@ -50,6 +50,7 @@ A starting situation that generates work, then merges onto the main flow.
 Not feature work, just upkeep.
 
 - **`/improve-codebase-architecture`** runs whenever you have a spare moment to keep the codebase good for agents to operate in. It surfaces **deepening opportunities**; picking one _generates an idea_ you can take into the main flow at `/grill-with-docs`. It's the survey that finds the candidates; **`/codebase-design`** (below) is the bench you design the chosen one on.
+- **`/improve-python-architecture`** is the same deepening scan scoped to a Python codebase: structural report first, then grill the candidate you pick. Python repo → this one; anything else → `/improve-codebase-architecture`.
 
 ## Vocabulary underneath
 
@@ -76,6 +77,7 @@ Off the main flow entirely.
 
 - **`/grill-me`**: the same relentless interview as `/grill-with-docs`, but **stateless**: it saves nothing locally and builds no `CONTEXT.md`. Reach for it when you are **not working in a working directory** (sharpening a plan, a design, a piece of writing, anything with no repo under it). If you are in a working directory, use `/grill-with-docs` instead: it runs the same interview and leaves a paper trail, so it is strictly the better one.
 - **`/grilling`** is the interview primitive itself: rounds, the frontier, facts are the agent's job and decisions are yours. `/grill-me` and `/grill-with-docs` are the two named ways in, and `/triage`, `/wayfinder` and `/improve-codebase-architecture` all run it internally. Reach for it directly only when you want the interview with no wrapper around it.
+- **`/loop-me`** is `/grilling` scoped to this workspace: grill me about the specs for the workflows I want to build here, without leaving the directory. In-repo counterpart of `/grill-me`'s stateless interview.
 - **`/resolving-merge-conflicts`** works an in-progress merge or rebase conflict hunk by hunk, resolving by **intent** traced to each side's primary source rather than by picking lines, then finishes the operation. It never runs `--abort`. Standalone and off every flow: reach for it when you are already mid-conflict.
 - **`/prototype`** is a small, throwaway program that answers one design question: does this state model feel right, or what should this UI look like. Throwaway is a constraint on how the code is written, not a promise to destroy it: the answer folds into the real code, and the prototype itself is kept as a **primary source** on a `prototype/<name>` branch out of main, pointed at from the implementation issue. It's the detour in step 2 of the main flow, but reach for it any time a design question is hard to settle on paper.
 - **`/research`**: delegate reading legwork to a **background agent**: it investigates a question against **primary sources**, then leaves a cited Markdown file in the repo. Keep working while it reads. The file it produces is something to take *into* the main flow at `/grill-with-docs`, since research feeds the thinking rather than replacing it.
@@ -83,7 +85,60 @@ Off the main flow entirely.
 - **`/wizard`** is for the steps only a **human** can take: provisioning infrastructure, setting up credentials or CI secrets, clicking through an unfamiliar third-party dashboard, running a one-off migration or cutover. It generates an interactive bash script that opens each URL, captures each value, and writes it into `.env` and GitHub secrets, so the procedure stops being something you re-explain to an agent every time. Model-invoked, so the agent reaches for it the moment it hits a wall only you can pass. If the agent could just do it itself, it should; this is for where a human is genuinely in the loop.
 - **`/wait-what`** is the corrective for a message that didn't land. Use it mid-conversation, inside any other skill, and the agent re-pitches what it just said with the context you were missing, in plain English, using the `CONTEXT.md` vocabulary. It works after the fact; `/grill-with-docs` is the upfront cure, because a shared language agreed early is what stops the jargon arriving at all.
 - **`/teach`**: learn a concept over multiple sessions, using the current directory as a stateful workspace.
-- **`/writing-for-agents`** is the reference for writing documents agents consume: skills, AGENTS.md, pointed-at docs.
+- **`/universal-exam-cram-coach`**: structured last-minute exam prep — parse materials/outline into a wiki + question bank, drill with scoring, review mistakes. Reach for it when a deadline drives the learning, not the other way around.
+- **`/claude-handoff`** (distinct from `/handoff`): hands the **whole current conversation** to a fresh background agent that picks the work up immediately — forward progress without writing a portable file.
+- **`/skill-authoring`** is the reference for writing documents agents consume: skills, AGENTS.md, pointed-at docs.
+
+## Other families
+
+Beyond the engineering flow. Ask here when the work isn't shipping application code: content and design, intelligence and reverse engineering, the skill ecosystem itself, one-shot tooling, and the plugin families that live outside this repo. Routing rule is the same as everywhere in this map — each entry names its trigger, not its whole manual.
+
+### Content & design
+
+- **`/writing`**: the orchestration entry for long-form writing. It checks which piece already exists and routes to the right stage: `/writing-fragments` (explore, mine raw material), `/writing-shape` (exploit, linear paragraphs), `/writing-beats` (exploit, narrative beats). Long article/essay/story → start here.
+- **`/finesse-ui`**: high-craft web interfaces — brand surfaces, product UI, workflow UI, AI-assistant UI. Anti-slop; routes diagram requests to `/diagram-design`.
+- **`/zine-ui`**: paper-zine visual language for photo/poetic briefs (拾景纸刊): photo collage, image distillation, abstract memory panels. "把这张照片做成页面" → here.
+- **`/diagram-design`**: 27 diagram types (architecture, flow, sequence, ER, timeline, swimlane…) rendered as inline-SVG HTML, importable to draw.io.
+- **`/open-kimi-ppt`**: presentations — create/edit/replicate/export, delivering a PPTD project folder plus a local .pptx.
+- **`/obsidian-vault`**: search, create, and organize notes in the Obsidian vault with wikilinks and index notes.
+- **`/cangjie-skill`**: distill a book/video/podcast/course into an executable skill set (拆书/蒸馏).
+
+### Intel & reverse engineering
+
+- **`/agent-reach`**: full-web research on any topic, and the **mandatory entry whenever a platform name or URL is shared** (小红书 etc.). Search/调研/查 → here, not the engineering flow.
+- **`/research`** also investigates, but against high-trust primary sources, leaving a cited Markdown file in the repo (detailed under Standalone).
+- **`/fetchflow`**: orchestrates scraping and reverse engineering toward one data target; pre-audits automation red lines before executing.
+- **`/reverse-flow`**: guided RE of binaries, firmware, mobile apps, scripts, protocol captures, document samples. Malware/suspicious-file analysis also lives here.
+- **`/museon-cli`**: social-media research, content, accounts, scheduling, publishing, automation, and performance review.
+
+### Skill ecosystem & housekeeping
+
+- **`/dao-skill`**: the meta-designer — design, audit, optimize, or evolve a skill; find a skill's root problem before refactoring it.
+- **`/vibehub`**: translate vibe-coded descriptions into precise terminology mid-task (tooltip, hover…).
+- **`/vision`**: identify/analyze local or web images via vision.js (fallback when the View agent is unavailable).
+- **`/context-monitor`**: read current context/token usage to decide model switches.
+- **`/distill-lesson`**: distill this session's lessons into atomic notes in the Obsidian knowledge base (沉淀/复盘).
+- **`/neat-freak`**: knowledge & governance closeout — reconcile docs/rules/memory with code reality, audit workspace residue, produce a pending-deletion list for confirmation.
+- **`/simplify-codebase`**: evidence-backed code simplification audit — dead code, duplicate state, redundant abstractions.
+- **`/git-guardrails-claude-code`**: install Claude Code hooks that block destructive git commands (push, reset --hard, clean, branch -D).
+
+### One-shot tooling (engineering ecosystem)
+
+- **`/setup-matt-pocock-skills`** is the Precondition above — one-time repo bootstrap.
+- **`/project-kickoff`** is the full engineering pipeline from one goal sentence: Grilling consensus → spec/tickets → parallel Implement agents → code-review → Neat cleanup. If the user says "启动项目 / 布置任务 / 开始这个工程" without a scoped ticket yet, that's this one — it pre-empts the main flow's manual steps 1–3.
+- **`/setup-pre-commit`**: Husky + lint-staged (Prettier), typecheck, and tests on commit.
+- **`/setup-ts-deep-modules`**: wire dependency-cruiser so each package is a deep module; implementation reaches main through entry-point files.
+- **`/migrate-to-shoehorn`**: migrate test `as` assertions to @total-typescript/shoehorn.
+- **`/scaffold-exercises`**: create exercise structures (sections/problems/solutions/explainers) that pass linting.
+
+### Plugin families (outside this repo)
+
+Provided by plugins, not files in this repo; amount to `family:skill` invocations.
+
+- **`document-skills:docx`** / **`document-skills:pdf`** / **`document-skills:pptx`** / **`document-skills:xlsx`**: office-document workflows — Word edits with tracked changes, PDF production (reports/LaTeX/creative), PPTX via pptxgenjs/python-pptx, spreadsheet handling with a visual acceptance gate.
+- **`browser-use:control-browser`**: main-agent-only browser automation — navigate, click, type, fill, screenshot, verify. Delegating to a subagent is forbidden.
+- **`browser-use:web-gui-tester`**: GUI-based black-box frontend testing — simulate real user clicks/input/scrolling, verify by screenshot.
+- **`android-emulator:android-dev`**: Android app build/run/inspect/light automation (screen capture, UI tree, logs, tap/swipe/type).
 
 ## Precondition
 
