@@ -28,6 +28,7 @@ FetchFlow 是一个薄编排层：它**不重写**任何底层能力，而是把
 - 需要统一报告：读 `references/shared-evidence-protocol.md`。
 - 边界细节：读 `references/trust-boundaries.md`。
 - 授权预检：任何采集/逆向前，读 `references/authorization-check.md` 并跑 `scripts/check_target.py`。
+- 任务级网络画像：离线样本/lab/授权目标四档分档与离线样本合法化标准，读 `references/network-profile.md`（吸收自 reverse-skill scope-contract）。
 - 爬取细节：进 `modules/crawl/`（含选型与反爬回退决策）。
 - 逆向细节：委托 `reverse-flow`，输出契约见 `modules/reverse/references/evidence-contract.md`。
 
@@ -38,6 +39,7 @@ FetchFlow 是一个薄编排层：它**不重写**任何底层能力，而是把
 - `CHECKPOINT`（登录墙 / 鉴权 / robots 禁止 / 样本缺失等）→ **停下把信号摆给用户确认**，确认后继续。
 - `BLOCK`（明确红线）→ 停止。
 - 预检结果作为报告第一项证据。
+- 任务级网络画像（见 `references/network-profile.md`）：`offline` 的本地自持样本无需再确认；其余任务选定一档 `lab_only` / `authorized_target_only` / `unrestricted_lab`，网络行为超出所选档位时停下问用户。
 
 路由（Routing）：接到目标后，先判断意图属于哪一类：
 
@@ -63,6 +65,7 @@ FetchFlow 是一个薄编排层：它**不重写**任何底层能力，而是把
 当前阶段 / Current phase:
 目标 / Target:
 授权预检 / Authorization pre-flight: ALLOW | CHECKPOINT(<signals>) | BLOCK(<reason>)
+网络画像 / Network profile: offline | lab_only | authorized_target_only | unrestricted_lab
 已路由模块 / Routed module: crawl | reverse | chain(→)
 已验证事实 / Verified facts:
 关键证据 / Key evidence: (url/offset/函数/字符串/哈希/status_code/提取结果)

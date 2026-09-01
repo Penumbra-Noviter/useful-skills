@@ -22,6 +22,9 @@
 | neat-freak | vendored + 本地化 | [KKKKhazix/khazix-skills](https://github.com/KKKKhazix/khazix-skills)（neat-freak/，用户 2026-08-13 确认） | — | 3.0.0（上游同版） | 2026-08-11 | ✅ |
 | context-monitor | 自研（推断） | 无 | 无 | — | 2026-08-06 | ❌ |
 | project-kickoff | 自研 | 无（符号链接 → `.cc-switch/skills/project-kickoff/`） | 无 | 有 REVISIONS.md | 独立维护 | ❌ |
+| simplify-codebase | vendored + 适配 | [tt-a1i/simplify-codebase](https://github.com/tt-a1i/simplify-codebase) | MIT | — | 2026-08-29 | ✅ |
+| reverse-skill（选择性吸收） | vendored(3 refs) + distilled(1) | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | MIT（主体；CTF 子包 GPLv3 未吸收） | v1.0.1 | 2026-09-01 | ✅ |
+| writing-humanizer | distilled | [op7418/Humanizer-zh](https://github.com/op7418/Humanizer-zh)（← blader/humanizer + stop-slop + 维基百科 Signs of AI writing） | MIT | — | 2026-09-01 | ✅ |
 
 ---
 
@@ -131,6 +134,49 @@
 
 - **物理位置**：符号链接 → `/c/Users/Administrator/.cc-switch/skills/project-kickoff/`（独立目录，自带 REVISIONS.md / TO-TICKETS.md）
 - **同步**：在真实位置维护，本仓库仅指针
+
+### 13. simplify-codebase — vendored + 适配（dao-skill 评估后入库）
+
+- **上游**：https://github.com/tt-a1i/simplify-codebase（"先证明，再删除"的代码简化审计/执行器；Survey 只读 / Change 授权修改 × Focused / Broad；9 字段证明记录制；5 个 references + docs/validation.md + agents/openai.yaml + 双语 README）
+- **License**：MIT（© 2026 simplify-codebase contributors）
+- **导入**：2026-08-29；来源 `D:\Desktop\downloads\skill respority\simplify-codebase-main\simplify-codebase-main\`（下载物为双层目录，有效根在内层）
+- **dao-skill 评估**：E1 结构级 78/100，Trust Gate PASS；P0 无；仅做最小适配（见下）
+- **本地改动**（与原版 diff 极小，同步上游时保留以下三处即可）：
+  1. description 中文触发词扩展（原版仅"代码简化/熵回收"→ 补 简化代码 / 删除死代码 / 清理冗余 / 减少复杂度 / 冗余审计）
+  2. description 尾部加路由边界：模块加深→improve-codebase-architecture，变更评审→code-review
+  3. 5 处 reference 链接文本改为完整路径反引号标记 `` `references/x.md` ``（dao-skill 检索约定）
+- **放置决策**：独立 skill（不路由进 ask-matt / improve-codebase-architecture 等），model-invoked 触发，接线方式与库内 diagram-design 同构
+- **更新提示**：上游更新时逐文件对账；SKILL.md 需保留上述本地改动，其余文件可整体覆盖
+
+### 14. reverse-skill（选择性吸收）— vendored + distilled
+
+- **上游**：https://github.com/zhaoxuya520/reverse-skill（v1.0.1，2026-08-08 release）
+- **License**：主体 MIT（Copyright (c) 2026 zhaoxuya520）；`CTF-Sandbox-Orchestrator/` 为 GPLv3 —— **GPL 子包未吸收**
+- **导入**：2026-09-01，来源 `D:\Desktop\downloads\skill respority\reverse-skill-main\`
+- **吸收方式**：只取高价值 references，**未引入路由矩阵/脚本链/MCP 全家桶**（评估：48 skill 路由包对当前体系属过度设计）
+- **吸收清单**（4 个文件，3 vendored + 1 distilled）：
+  1. `reverse-flow/references/frida-cookbook.md`（472 行，vendored；文件头有来源标注）
+  2. `reverse-flow/references/ollvm-deobfuscation.md`（501 行，vendored；文件头有来源标注）
+  3. `reverse-flow/references/apk-security-checklist.md`（230 行，vendored；文件头有来源标注）
+  4. `fetchflow/references/network-profile.md`（distilled：吸收 scope-contract 四档网络画像+离线样本合法化概念，fetchflow 术语改写，非逐字复制）
+- **本地接线**：
+  - reverse-flow/SKILL.md「Bundled resources」新增 3 行引用
+  - fetchflow/SKILL.md「Resource Guide」+「Workflow Step 0」+「Output Protocol」补 network-profile 引用与字段
+- **验证**：全部 .py 语法 OK；`check_target.py` 冒烟通过（本地路径 → ALLOW）
+- **更新提示**：上游更新时只对账上述 4 个吸收文件；SKILL.md 侧改动为本地接线，勿被上游覆盖
+
+### 15. writing-humanizer — distilled（dao-skill 模式 F 自化吸收）
+
+- **上游**：https://github.com/op7418/Humanizer-zh（"去中文 AI 味" skill；核心翻译自 blader/humanizer，实用部分参考 hardikpandya/stop-slop，知识基底为维基百科 [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)）
+- **License**：MIT，Copyright (c) 2026 歸藏
+- **导入**：2026-09-01，经 gh-proxy.com 克隆验证后蒸馏（github.com 直连被墙）
+- **吸收方式**：distilled 而非 vendored —— 保留 24 种 AI 写作模式的完整目录（词汇表/问题/改写示例 = 可移植机制）与五核心规则、质量评分表；改写为 writing 家族子 skill 格式（`disable-model-invocation: true` + `<what-to-do>/<supporting-info>`），新增与三件套的分工边界与触发词
+- **本地接线**：
+  - 新增 `writing-humanizer/SKILL.md`（唯一文件）
+  - `writing/SKILL.md`：Step 4 新增"成文后润色（去 AI 味）"路由 → writing-humanizer；description 补去 AI 味触发词；通过标准/边界同步更新
+- **放置决策**：并入 writing 家族作润色 pass（不是第四写作阶段，不路由进 ask-matt）
+- **验证**：dao-skill `quality_check.py` 结构检查通过（E1）；行为抽查含 5 核心规则 + 24 模式 + 质量评分自检
+- **更新提示**：上游更新时对账 24 模式清单与示例即可；writing-humanizer 为本地改写版，SKILL.md 勿整文件覆盖
 
 ---
 

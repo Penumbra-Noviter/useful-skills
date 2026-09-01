@@ -109,6 +109,9 @@ Read only what is needed:
 - `references/reverse-techniques.md`: static, dynamic, decompilation, firmware, mobile, managed-runtime, and patch-diff techniques.
 - `references/evidence-reporting.md`: report templates, evidence tables, confidence language, and advisory format.
 - `references/vulnerability-review.md`: vulnerability classes, triage criteria, root-cause workflow, severity, and remediation structure.
+- `references/frida-cookbook.md`: Frida dynamic-instrumentation recipes (anti-debug bypass, hook patterns, iOS/Android) — vendored from reverse-skill (MIT).
+- `references/ollvm-deobfuscation.md`: OLLVM control-flow-flattening deobfuscation workflow (IDA/angr/Binary Ninja tools) — vendored from reverse-skill (MIT).
+- `references/apk-security-checklist.md`: APK static/dynamic security checklist (manifest, native layer, crypto, pinning) — vendored from reverse-skill (MIT).
 
 ## Scripts
 
