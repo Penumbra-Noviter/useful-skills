@@ -7,7 +7,7 @@ Multi-axis review of the diff between `HEAD` and a fixed point the user supplies
 
 - **Standards**: does the code conform to this repo's documented coding standards?
 - **Spec**: does the code faithfully implement the originating issue / spec?
-- **Falsify** — construct inputs and states specifically designed to break the changes. Test failure paths before happy path. "Passed" is not the bar; "didn't test the failure" is the risk.
+- **Falsify** — construct inputs and states specifically designed to break the changes. Test failure paths before happy path. "Passed" is not the bar; "didn't test the failure" is the risk. Within this axis, run a **silent-failure hunt**: swallowed errors are the failure paths tests miss most. Hunt empty `catch {}` blocks, errors folded into `null`/empty arrays with no context, dangerous fallbacks (`.catch(() => [])`, default values that hide the real failure), lost stack traces, generic rethrows, missing async handling, and missing timeout/rollback around network, file, and DB paths.
 
 The Standards and Spec axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings. Falsify runs as a third parallel sub-agent when the orchestrator requests it (see axis selection in the invocation prompt).
 
@@ -19,6 +19,24 @@ The reviewer is an **auditor, not a collaborator**.
 - Distinguish hard violations (documented standard breaches) from judgement calls (smell heuristics).
 
 The issue tracker should have been provided to you. If `docs/agents/issue-tracker.md` is missing, tell the user to run `/setup-matt-pocock-skills`.
+
+## Report credibility gate
+
+The reviewer is only as useful as its findings are trustworthy. An LLM reviewer's primary failure mode is manufactured findings, filler nits, and severity inflation — not missed ones. Enforce these rules on every axis:
+
+- **Confidence filter.** Report a finding only if you are >80% sure it is a real problem for this codebase. Skip stylistic preferences unless they violate project conventions.
+- **Pre-Report Gate (four questions).** Before writing any finding, all four must be answerable; if any is "no" or "unsure", downgrade severity or drop the finding:
+  1. Can I cite the exact file and line?
+  2. Can I name the concrete failure mode — input, state, and bad outcome? If you can't name the trigger, you are pattern-matching, not reviewing.
+  3. Have I read the surrounding context (callers, imports, tests)? Many apparent issues are already handled one frame up or guarded by a type.
+  4. Is the severity defensible? A missing docstring is never HIGH; a single bad `any` in a test fixture is never CRITICAL. Severity inflation erodes trust faster than missed findings.
+- **HIGH/CRITICAL require proof** — exact snippet + line, the specific input→state→outcome scenario, and why existing guards (types, validation, framework defaults) don't catch it. Missing any of the three: demote to MEDIUM or drop.
+- **Zero findings is a valid outcome.** A clean review is a clean review; do not manufacture findings to justify the invocation.
+- **Skip the known false positives** unless this codebase gives you specific evidence to the contrary: "consider adding error handling" on calls whose error path is handled upstream (framework middleware, error boundaries, top-level try/catch); "missing input validation" on internal functions whose callers already validate; well-known constants (HTTP status codes, common timeouts, array index 0); exhaustive switches or generated code flagged as "too long"; N+1 queries on fixed-cardinality loops or batched paths; fire-and-forget calls (logging, metrics, queue pushes) flagged as "missing await"; `Math.random()` in non-cryptographic contexts; `eval`/`Function` in an explicitly code-loading plugin surface.
+
+When tempted to flag one of the above, ask: "would a senior engineer on this team actually change this in review?" If no, skip it.
+
+The gate applies to every sub-agent: the briefs in step 4 must carry it verbatim.
 
 ## Process
 
@@ -65,6 +83,8 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn the sub-agents in parallel
 
+Every brief below must carry the **Report credibility gate** from above (verbatim): confidence filter, Pre-Report Gate, HIGH/CRITICAL-proof requirement, zero-findings-are-valid, and the false-positive skip list. The gate is what keeps a multi-axis review from collapsing into noise.
+
 **Standards sub-agent prompt** should include:
 
 - The full diff command and commit list.
@@ -78,6 +98,11 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 - The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
 
 If the spec is missing, skip the Spec sub-agent and note this in the final report.
+
+**Falsify sub-agent prompt** (when the axis is requested) should include:
+
+- The diff command and commit list.
+- The brief: "Construct inputs and states specifically designed to break these changes. Test failure paths before happy path; a test or code path that only proves the happy case is not evidence. Also hunt silent failures: empty `catch {}` blocks, errors folded into `null`/empty arrays with no context, dangerous fallbacks (`.catch(() => [])`, default values that hide the real failure), lost stack traces, generic rethrows, missing async handling, and missing timeout/rollback around network, file, and DB paths. For every finding cite the exact line, the input→state→outcome scenario, and why existing guards don't catch it. Under 400 words."
 
 ### 5. Aggregate
 

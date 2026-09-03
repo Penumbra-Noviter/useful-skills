@@ -25,6 +25,7 @@
 | simplify-codebase | vendored + 适配 | [tt-a1i/simplify-codebase](https://github.com/tt-a1i/simplify-codebase) | MIT | — | 2026-08-29 | ✅ |
 | reverse-skill（选择性吸收） | vendored(3 refs) + distilled(1) | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | MIT（主体；CTF 子包 GPLv3 未吸收） | v1.0.1 | 2026-09-01 | ✅ |
 | writing-humanizer | distilled | [op7418/Humanizer-zh](https://github.com/op7418/Humanizer-zh)（← blader/humanizer + stop-slop + 维基百科 Signs of AI writing） | MIT | — | 2026-09-01 | ✅ |
+| code-review（本地蒸馏补强） | distilled（补 2 机制） | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code)（agents/code-reviewer + silent-failure-hunter） | MIT | — | 2026-09-01 | ✅ |
 
 ---
 
@@ -46,6 +47,7 @@
 - **最近同步（2026-08-29）**：
   - 上游 head：`6654f6b`（2026-08-24，"feat: add 'Information access' category to retrospective skill"）；CHANGELOG 最新 1.2.3；github.com 直连被墙，经 gh-proxy.com 克隆
   - 34 个共有 skill 全部与上游对齐：30 个无本地改动者批量复制；4 个有本地改动者人工合并（code-review 保 Falsify 轴 + Reviewer posture、grilling 保钢人模式、implement 保交付标准/四状态报告、to-tickets 保切片规模上限）
+  - **code-review 另有本地蒸馏补强（2026-09-01，§16）**：新增 Report credibility gate 小节 + Falsify 轴静默失败专项 + Step 4 子智能体 brief 约束——上游同步时保留，勿被上游覆盖（详见 §16）
   - 本地独有文件保留未动：research/findings-agent-ticket-sizing.md
   - 本地已删除者未恢复：writing-for-agents（上游仍有，本地有意删）、writing-great-skills、skill-creator（上游均已删）
   - **2026-08-29 用户决定**：删除 batch-grill-me、design-an-interface、edit-article、find-skills、qa、request-refactor-plan、ubiquitous-language（7 个，未 commit，git 可恢复）；保留 improve-python-architecture、obsidian-vault；上游新增的 implement-spec、retro **用户决定暂不引入**（依赖本地已删的 writing-for-agents / 任务图体系，尚属 in-progress）
@@ -177,6 +179,19 @@
 - **放置决策**：并入 writing 家族作润色 pass（不是第四写作阶段，不路由进 ask-matt）
 - **验证**：dao-skill `quality_check.py` 结构检查通过（E1）；行为抽查含 5 核心规则 + 24 模式 + 质量评分自检
 - **更新提示**：上游更新时对账 24 模式清单与示例即可；writing-humanizer 为本地改写版，SKILL.md 勿整文件覆盖
+
+### 16. code-review（本地蒸馏补强）— distilled（dao-skill 模式 F 自化吸收）
+
+- **上游**：https://github.com/affaan-m/everything-claude-code（ECC，140K+ stars；取 `agents/code-reviewer.md` 与 `agents/silent-failure-hunter.md` 两处机制）
+- **License**：上游 MIT
+- **导入**：2026-09-01；本地路径 `D:\Desktop\downloads\skill respority\ECC-main\ECC-main\`
+- **吸收方式**：distilled，只取 2 个高杠杆机制，不引入 ECC 整体体系（68 agents / 数百 skills 对 ZCode 单链属过度设计）：
+  1. **Report credibility gate**（来自 code-reviewer）：置信度过滤（>80% 才报）+ Pre-Report Gate 四问（能否引具体行/能否说具体失败模式/是否读过上下文/严重级是否站得住）+ HIGH/CRITICAL 必须三件套证据 + 零发现合法 + 常见误报清单——直击 LLM 审查者编造发现/严重级通胀的失败模式
+  2. **Silent-failure hunt**（来自 silent-failure-hunter）：Falsify 轴内新增静默失败专项——空 `catch {}`、错误折成 null/空数组、危险 fallback、丢失堆栈、泛化重抛、缺超时/回滚
+- **本地接线**：`code-review/SKILL.md` 新增 `## Report credibility gate` 小节；Falsify 轴定义与 Step 4 子智能体 brief 同步补静默失败 + gate 约束；与既有 Falsify/Reviewer posture 本地改动合流
+- **放置决策**：并入既有 code-review skill（同一 root/trigger，merge 优于 create），不新增独立 skill、不路由进 ask-matt
+- **验证**：YAML frontmatter 解析通过（E1）；通读防矛盾；无独立 judge（E2 未做，dry-run 级）
+- **更新提示**：上游同步时保留 §1 所列 code-review 既有本地改动 + 本 §16 新增内容，勿整文件覆盖；上游更新时只对账 code-reviewer/silent-failure-hunter 两处
 
 ---
 
