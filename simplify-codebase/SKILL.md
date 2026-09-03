@@ -1,6 +1,6 @@
 ---
 name: simplify-codebase
-description: Simplification audit or authorized codebase simplification whose stated objective is to remove accidental complexity. Use for evidence-backed deletion or consolidation of dead code, duplicate state, redundant APIs or layers, ownerless abstractions, obsolete compatibility or design records, and over-engineering in any language; also use for 代码简化 / 简化代码 / 熵回收 / 删除死代码 / 清理冗余 / 减少复杂度 / 冗余审计. Do not use for general code review, onboarding, style-only refactoring, or performance tuning; for module deepening (加深 / 重构设计) use improve-codebase-architecture, for change review use code-review.
+description: Simplification audit or authorized codebase simplification whose stated objective is to remove accidental complexity. Use for evidence-backed deletion or consolidation of dead code, duplicate state, redundant APIs or layers, ownerless abstractions, obsolete compatibility or design records, and over-engineering in any language; also use for 代码简化 / 简化代码 / 熵回收 / 删除死代码 / 清理冗余 / 减少复杂度 / 冗余审计 / 墓碑代码 / 交付前清理 / 临时代码清理. Do not use for general code review, onboarding, style-only refactoring, or performance tuning; for module deepening (加深 / 重构设计) use improve-codebase-architecture, for change review use code-review.
 ---
 
 # Simplify Codebase
@@ -35,6 +35,8 @@ The contract map is complete when all in-scope entrypoints and authority boundar
 ## Cover the relevant surface
 
 For every Broad engagement, and for Focused work involving dynamic architecture or dependency substitution, read [`references/investigation.md`](references/investigation.md). Build a coverage map before ranking findings; the first plausible deletion must not end the survey.
+
+For a preflight cleanup before delivery or after a feature stabilizes — removing one-off tests, debug prints, throwaway endpoints, hardcoded test data, and one-off scripts — read [`references/tombstone-code.md`](references/tombstone-code.md) and honor its red lines before any cut.
 
 For concurrency, cancellation, readiness, cleanup, defensive copies, validation, authorization, security isolation, accessibility, data-loss prevention, or cross-process data, also read [`references/boundaries-and-lifecycle.md`](references/boundaries-and-lifecycle.md).
 
