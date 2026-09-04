@@ -1,0 +1,48 @@
+#!/bin/sh
+# 项目 pre-commit 钩子：机械检查，失败即拒绝提交。
+# 1) pool_cleanup_check.py —— TO-TICKETS/TECH_DEBT 清出机制（候选区状态/活跃表/归档索引/脚注编号）
+# 2) doc_sync.py --check —— CODE_WIKI 机械标记防漂移（完整档；CODE_WIKI.md 存在且 pytest 已装才跑，档位自适应）
+# 3) doc_standards_check.py —— DOCUMENTATION_STANDARDS 文档清单登记/双向覆盖/门禁脚本/pre-commit 挂载
+# 由 scripts/install-hooks.bat 复制到 .git/hooks/pre-commit（.git/hooks 不入库）。
+# 手动测试：sh .git/hooks/pre-commit
+
+cd "$(git rev-parse --show-toplevel)" 2>/dev/null || exit 1
+
+# python 解析器跨平台：Windows Git Bash 惯用 `python`（python3 可能是商店占位符），
+# Linux 常用 `python3`——按序探测，任一可用即可。
+if command -v python >/dev/null 2>&1; then
+    PY=python
+elif command -v python3 >/dev/null 2>&1; then
+    PY=python3
+else
+    echo "pre-commit: 未找到 python/python3，跳过机械检查" >&2
+    exit 0
+fi
+
+failed=0
+
+# 检查 1：清出机制（纯标准库，无 pytest 依赖——必须执行）
+if ! "$PY" scripts/pool_cleanup_check.py --check; then
+    echo "pre-commit 拦截：TO-TICKETS/TECH_DEBT 清出机制违规——按处置指引修复后重试。" >&2
+    failed=1
+fi
+
+# 检查 2：CODE_WIKI 漂移（完整档专属：标准档无 CODE_WIKI.md 时跳过；依赖 pytest，未装亦跳过）
+if [ -f CODE_WIKI.md ] && "$PY" -c "import pytest" >/dev/null 2>&1; then
+    if ! "$PY" scripts/doc_sync.py --check; then
+        echo ""
+        echo "pre-commit 拦截：CODE_WIKI.md 机械标记已漂移（测试数/模块行数/方法签名与代码不同步）。" >&2
+        echo "请先运行：$PY scripts/doc_sync.py  刷新标记后再提交。" >&2
+        failed=1
+    fi
+else
+    echo "pre-commit: 无 CODE_WIKI.md 或未安装 pytest，跳过 doc_sync 校验" >&2
+fi
+
+# 检查 3：文档规范总表合规（纯标准库——必须执行）
+if ! "$PY" scripts/doc_standards_check.py --check; then
+    echo "pre-commit 拦截：DOCUMENTATION_STANDARDS.md 文档清单/门禁挂载违规——按处置指引修复后重试。" >&2
+    failed=1
+fi
+
+exit $failed

@@ -1,0 +1,28 @@
+@echo off
+REM project hooks: install pre-commit hook to .git/hooks/pre-commit.
+REM Source lives in scripts/pre-commit.sh (version-controlled). .git/hooks/ is NOT
+REM committed, so re-run this script after cloning / re-initializing the repo.
+REM The hook runs under Git for Windows' sh.
+REM NOTE: keep this file ASCII-only so it parses correctly under any Windows codepage.
+
+setlocal
+cd /d "%~dp0\.."
+
+if not exist .git\hooks (
+    echo [hooks] ERROR: .git\hooks not found ^(not a git repo root?^)
+    exit /b 1
+)
+
+copy /y scripts\pre-commit.sh .git\hooks\pre-commit >nul
+if errorlevel 1 (
+    echo [hooks] ERROR: failed to copy scripts\pre-commit.sh
+    exit /b 1
+)
+
+echo [hooks] pre-commit hook installed: .git\hooks\pre-commit
+echo         It runs "scripts/pool_cleanup_check.py --check" (清出机制),
+echo         "python scripts/doc_sync.py --check" (CODE_WIKI 漂移) and
+echo         "python scripts/doc_standards_check.py --check" (文档规范总表)
+echo         on every commit and blocks the commit when any check fails.
+echo         Uninstall: del .git\hooks\pre-commit
+endlocal
