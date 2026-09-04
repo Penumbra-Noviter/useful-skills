@@ -29,6 +29,7 @@ FetchFlow 是一个薄编排层：它**不重写**任何底层能力，而是把
 - 边界细节：读 `references/trust-boundaries.md`。
 - 授权预检：任何采集/逆向前，读 `references/authorization-check.md` 并跑 `scripts/check_target.py`。
 - 任务级网络画像：离线样本/lab/授权目标四档分档与离线样本合法化标准，读 `references/network-profile.md`（吸收自 reverse-skill scope-contract）。
+- 本机工具检测与调用：任务启动时读 `references/local-toolchain.md`，跑 `python D:\Desktop\Craft\re-toolchain\check-tools.py --json` 确认已装工具；按 C1/C2 阶段直接 CLI/库调用，不让用户手动开工具。
 - 爬取细节：进 `modules/crawl/`（含选型与反爬回退决策）。
 - 逆向细节：委托 `reverse-flow`，输出契约见 `modules/reverse/references/evidence-contract.md`。
 

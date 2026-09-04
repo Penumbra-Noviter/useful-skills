@@ -105,6 +105,7 @@ Read only what is needed:
 - `references/capabilities.md`: reverse-engineering capability checklist covering common artifact types and analysis skills.
 - `references/tooling-matrix.md`: tool choices by platform/file type and what evidence to collect.
 - `references/tool-catalog.md`: curated high-star reverse-engineering and security-analysis tools with category mapping.
+- `references/local-toolchain.md`: 本机工具链映射（re-toolchain）——案例启动时读它，并跑 `python D:\Desktop\Craft\re-toolchain\check-tools.py --json` 检测本机已装工具；按阶段自动调用，不让用户手动开 GUI。
 - `references/prompting.md`: English-core reverse-mode prompt blocks for user-directed local sandbox work and ambiguous user-intent recovery, with Chinese user-facing templates.
 - `references/reverse-techniques.md`: static, dynamic, decompilation, firmware, mobile, managed-runtime, and patch-diff techniques.
 - `references/evidence-reporting.md`: report templates, evidence tables, confidence language, and advisory format.
