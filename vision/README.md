@@ -26,7 +26,7 @@
    VISION_MODEL=qwen3.7-flash
    ```
    如果用的不是千问，同步在 `.env` 里设置 `DASHSCOPE_BASE_URL`。⚠️ 不要把 Key 写进 `vision.js`，也不要提交 `.env` 到仓库
-3. 把 `CLAUDE.md` 的内容合并到项目的 `CLAUDE.md`（没有就新建）
+3. 把 `SKILL.md` 里「触发场景 + 用法」的内容合并到项目的 `CLAUDE.md`（没有就新建）
 4. 告诉用户：配置完成，以后直接发图片就行，AI 会自动识图
 
 ### 场景 B：用户要在 cyberboss 里用
@@ -55,10 +55,10 @@
 
 | 服务 | 模型 | 备注 |
 |------|------|------|
-| **阿里云百炼（推荐）** | `qwen3.5-omni-plus` | 新用户 100 万 token 免费 |
-| 阿里云百炼 | `qwen-vl-max` | 同上 |
+| **阿里云百炼（推荐）** | `qwen3.7-flash` | 当前 `vision.js` 默认模型，新用户 100 万 token 免费 |
+| 阿里云百炼 | `qwen3.5-omni-plus` | 兜底链第三位，同上 |
 | OpenAI | `gpt-4o-mini` | 需海外支付 |
-| 其他 | 任何 OpenAI 兼容格式 | 改 `BASE_URL` 和模型名即可 |
+| 其他 | 任何 OpenAI 兼容格式 | 改 `DASHSCOPE_BASE_URL` 和模型名即可 |
 
 ### 自动配置
 
@@ -82,12 +82,12 @@ AI 会问你用什么服务、Key 是什么，然后自动配好。
 
 1. 把 `vision.js` 拷到项目里
 2. 在项目根目录创建 `.env` 文件，填 `DASHSCOPE_API_KEY=你的Key`、`VISION_MODEL=模型名`（如用非千问服务还需在 `.env` 里设置 `DASHSCOPE_BASE_URL`）。⚠️ 不要把 Key 写进 `vision.js`
-3. 把 `CLAUDE.md` 放到项目根目录
+3. 把 `SKILL.md` 的「触发场景 + 用法」合并进项目说明文件（`CLAUDE.md` 或等价文件），让 AI 知道何时调用 `vision.js`
 
 ### 文件说明
 
 | 文件 | 用途 |
 |------|------|
 | `vision.js` | 核心脚本，OpenAI 兼容格式 |
-| `CLAUDE.md` | 项目说明书，告诉 AI 何时用 vision.js |
+| `SKILL.md` | 本 skill 的运行契约（触发场景/规则/配置），把其中「触发场景 + 用法」合并到你的项目说明文件（如 `CLAUDE.md`）即可让 AI 自动识图 |
 | `cyberboss-setup.md` | cyberboss 自动配置指令 |

@@ -31,6 +31,15 @@ node vision.js --url "<图片链接>" "请用中文描述这张图片的内容"
 ## 配置
 
 - 需要 `DASHSCOPE_API_KEY`（同目录 `.env` 或环境变量，免费在 https://bailian.console.aliyun.com/ 获取）
-- 识图模型默认按顺序尝试 `qwen3.7-flash` → `qwen3.7-flash-2026-07-15` → `qwen3.5-omni-plus`；当前模型报错（额度/限流/不可用）自动切换下一个，全部失败才退出
+- 识图模型默认按顺序尝试 `qwen3.7-flash` → `qwen3.7-flash-2026-07-15` → `qwen3.5-omni-plus`；当前模型报错（额度/限流/不可用/超时）自动切换下一个，全部失败才退出
 - `VISION_MODELS` 环境变量可自定义整个模型列表（逗号分隔）；`VISION_MODEL` 仍可单独指定主模型（未设 `VISION_MODELS` 时生效）
 - 中转地址可用 `DASHSCOPE_BASE_URL` 覆盖，默认 `https://dashscope.aliyuncs.com/compatible-mode/v1`
+- 请求超时默认 60 秒，可用 `VISION_TIMEOUT_MS` 调整（毫秒）
+
+## 边界与隐私
+
+- 调用即把图片上传到你配置的识图服务（默认阿里云百炼），**识别前须确认用户同意上传**
+- 识图服务可能有调用成本（免费额度用完后按量计费），多图大批量时先提示用户
+- 只返回模型给出的文字描述；不做 OCR 版式还原、像素级细节等超出模型能力的保证
+- 本地图片超过 10MB 或 API 超时会如实报错，不静默丢弃、不编造内容
+- 用户未主动要求时**不要**自动识别图片，也不要主动提及此能力（见上「触发场景」）
