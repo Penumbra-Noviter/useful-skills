@@ -17,6 +17,10 @@ The integrated creation-layer skill for anything an agent consumes: skills first
 - Package, validate, or distribute a skill.
 - Diagnose why an existing skill misbehaves (failure modes).
 
+## Collaboration contract with dao-skill
+
+When routed from `dao-skill` (its Creation Routing Contract, Mode C/D/E file-producing work), this skill is the writing executor: `dao-skill` owns root problem, tension, 三才, production pattern, and repository shape; this skill owns anatomy (file layout), principles (predictability, information hierarchy, pruning), process (init/package/validate), the invocation decision, and packaging checks. Do not redo dao-skill's root/mode analysis; apply its `skill-generation-template.md` skeleton together with `references/anatomy.md` / `references/principles.md`. See `ADR-002-hardening-dao-authoring-routing.md`.
+
 ## Invocation decision first
 
 Before writing, decide how the document is reached — it changes what you write:

@@ -96,10 +96,12 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 ### Content & design
 
 - **`/writing`**: the orchestration entry for long-form writing. It checks which piece already exists and routes to the right stage: `/writing-fragments` (explore, mine raw material), `/writing-shape` (exploit, linear paragraphs), `/writing-beats` (exploit, narrative beats). Long article/essay/story → start here.
+- **`/writing-humanizer`**: the polish stage after the writing three-piece — strip the AI fingerprint from finished prose (去 AI 味): rewrite stiff passages to read human. It only does post-draft humanizing; explore/exploit stay with the three-piece.
 - **`/finesse-ui`**: high-craft web interfaces — brand surfaces, product UI, workflow UI, AI-assistant UI. Anti-slop; routes diagram requests to `/diagram-design`.
 - **`/zine-ui`**: paper-zine visual language for photo/poetic briefs (拾景纸刊): photo collage, image distillation, abstract memory panels. "把这张照片做成页面" → here.
 - **`/diagram-design`**: 27 diagram types (architecture, flow, sequence, ER, timeline, swimlane…) rendered as inline-SVG HTML, importable to draw.io.
 - **`/open-kimi-ppt`**: presentations — create/edit/replicate/export, delivering a PPTD project folder plus a local .pptx.
+- **`/officecli`**: CLI for Office documents (.docx/.xlsx/.pptx) — create, inspect, proofread, add charts, render to PNG for visual check, no Office install. Collaborates with the `document-skills` plugin: it loads that skill's design spec, then executes and renders.
 - **`/obsidian-vault`**: search, create, and organize notes in the Obsidian vault with wikilinks and index notes.
 - **`/cangjie-skill`**: distill a book/video/podcast/course into an executable skill set (拆书/蒸馏).
 
@@ -118,6 +120,7 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 - **`/vision`**: identify/analyze local or web images via vision.js (fallback when the View agent is unavailable).
 - **`/context-monitor`**: read current context/token usage to decide model switches.
 - **`/distill-lesson`**: distill this session's lessons into atomic notes in the Obsidian knowledge base (沉淀/复盘).
+- **`/kb-search`**: read the dev knowledge base (demo vault) for hard-won lessons at the moments they matter — before writing tests, refactoring, or on a debugging failure. Retrieve ≤5 hits from 经验/ notes (read-only). The read half of the knowledge loop; `/distill-lesson` is the write half.
 - **`/neat-freak`**: knowledge & governance closeout — reconcile docs/rules/memory with code reality, audit workspace residue, produce a pending-deletion list for confirmation.
 - **`/simplify-codebase`**: evidence-backed code simplification audit — dead code, duplicate state, redundant abstractions.
 - **`/git-guardrails-claude-code`**: install Claude Code hooks that block destructive git commands (push, reset --hard, clean, branch -D).
@@ -127,6 +130,7 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 - **`/setup-matt-pocock-skills`** is the Precondition above — one-time repo bootstrap.
 - **`/project-kickoff`** is the full engineering pipeline from one goal sentence: Grilling consensus → spec/tickets → parallel Implement agents → code-review → Neat cleanup. If the user says "启动项目 / 布置任务 / 开始这个工程" without a scoped ticket yet, that's this one — it pre-empts the main flow's manual steps 1–3.
 - **`/setup-pre-commit`**: Husky + lint-staged (Prettier), typecheck, and tests on commit.
+- **`/doc-scaffold`**: stand up a project's documentation structure and its mechanical gates — the standard four (AGENTS/PROJECT_REFERENCE/TO-TICKETS/DEV_LOG) plus optional CODE_WIKI, a DOCUMENTATION_STANDARDS table, and pre-commit checks, all mechanically verified.
 - **`/setup-ts-deep-modules`**: wire dependency-cruiser so each package is a deep module; implementation reaches main through entry-point files.
 - **`/migrate-to-shoehorn`**: migrate test `as` assertions to @total-typescript/shoehorn.
 - **`/scaffold-exercises`**: create exercise structures (sections/problems/solutions/explainers) that pass linting.

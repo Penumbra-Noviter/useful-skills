@@ -81,4 +81,5 @@ description: 写作编排层：一个入口把长篇写作意图路由到 writin
 
 - 不重写三件套的写作机制、文件格式、改写纪律；不把它们的规则复制到本文件。
 - 不替三件套发明第四阶段（如"发布""排版"）——用户要求发布/排版时说明不在编排层内，按需走 open-kimi-ppt 等其他 skill。`writing-humanizer` 的去 AI 味同样不是第四阶段：它是成文后的润色 pass，机制在子 skill，不在本文件。
+- 成文产物是 Markdown（`writing/article.md`）。用户要求把成文导出为 Word/Excel/PPT 文档时，路由到 document-skills（docx/pptx/xlsx 设计规范）+ officecli（执行与渲染目检，内联契约见 officecli SKILL.md 本地扩展节）；本编排层不管格式层，但必须把这条路指出去，不让产物停在 markdown 默认交付。
 - 唯一职责：意图 → 阶段/润色 → 子 skill → 文件路径。路到了，执行就交给子 skill 的 SKILL.md。

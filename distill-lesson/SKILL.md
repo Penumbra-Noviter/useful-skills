@@ -17,6 +17,7 @@ description: 按 AGENTS.md 3.5 知识库闭环约定，把本次会话的经验�
 
 4. **写笔记**：每条教训一个文件，写入 `经验/<教训标题>.md`：
    - frontmatter 必填：`summary`（≤50 字，预检扫描只读此行）、`provenance`（来源可追溯：会话 id / commit / DEV_LOG 条目）、`project`、`date`、`status`（已验证 `verified`，未复现验证 `candidate`）
+   - frontmatter 可选：`agents_md_feedback`——核对「本条经验与全局 AGENTS.md 哪条规则冲突/印证」（冲突 = 生成宪法清理候选，随蒸馏汇报提出；印证 = 宪法吸收门禁的观察点；无则留空，不制造噪音）
    - 章节按模板：症状 / 根因 / 代价 / 教训 / 防复发 / 关联（wikilink 到 `经验/` 已有相关条目）
    - 一条笔记一个教训（原子性），不合并多个教训
 
