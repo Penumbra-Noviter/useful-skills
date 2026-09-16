@@ -65,7 +65,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `improve-codebase-architecture` | 扫描代码库找深化机会 → HTML 报告 → grill |
 | `improve-python-architecture` | 同上，针对 Python |
 | `simplify-codebase` | 基于证据的简化审计：删死代码、去重、拆冗余抽象 |
-| `code-review` | 定点 diff 多轴评审（Standards + Spec 并行，Falsify 按需第三轴） |
+| `code-review` | 定点 diff 多轴评审（Standards + Spec 并行，Falsify 按需第三轴；kickoff 期末审核语境为四轴，含 Architecture 模块结构评估） |
 | `diagnosing-bugs` | 疑难 bug / 性能回归诊断闭环 |
 | `resolving-merge-conflicts` | 解决进行中的 git merge/rebase 冲突 |
 | `git-guardrails-claude-code` | 给 Claude Code 装 git 安全钩子，拦危险命令 |
