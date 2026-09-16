@@ -35,6 +35,8 @@ The limit on this is the **[smart zone](https://www.aihero.dev/ai-coding-diction
 
 A starting situation that generates work, then merges onto the main flow.
 
+- **A new project — or auditing an existing one** → **`/product-facets`**. It derives which orthogonal facets (功能/UI/责任/安全/发布/运维/文档…) the project needs from its **基调** (交付意图 × 业务性质 × 质量强度), each designed and verified separately, so "功能能跑、其他面裸奔" doesn't happen. Carry the facet map into the main flow.
+
 - **Bugs and requests piling up** → **`/triage`**. It moves issues through triage roles and produces agent-ready issues, which **`/implement`** later picks up.
 
   Triage is only for issues **you didn't create**: bug reports, incoming feature requests, anything that arrives raw. Tickets that `/to-tickets` produced are already agent-ready, so **don't triage them**.
@@ -88,6 +90,7 @@ Off the main flow entirely.
 - **`/universal-exam-cram-coach`**: structured last-minute exam prep — parse materials/outline into a wiki + question bank, drill with scoring, review mistakes. Reach for it when a deadline drives the learning, not the other way around.
 - **`/claude-handoff`** (distinct from `/handoff`): hands the **whole current conversation** to a fresh background agent that picks the work up immediately — forward progress without writing a portable file.
 - **`/skill-authoring`** is the reference for writing documents agents consume: skills, AGENTS.md, pointed-at docs.
+- **`/threat-model`**: pre-code STRIDE threat modeling for features involving auth, credentials, external input, multi-tenancy, or encryption — produces a verifiable security requirements checklist before you start building.
 
 ## Other families
 
@@ -112,6 +115,10 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 - **`/fetchflow`**: orchestrates scraping and reverse engineering toward one data target; pre-audits automation red lines before executing.
 - **`/reverse-flow`**: guided RE of binaries, firmware, mobile apps, scripts, protocol captures, document samples. Malware/suspicious-file analysis also lives here.
 - **`/museon-cli`**: social-media research, content, accounts, scheduling, publishing, automation, and performance review.
+
+### Cloud & storage
+
+- **`/quarkclouddrive`**: Quark Drive (夸克网盘) official skill — file upload/download (resumable), sharing/saving, batch rename, album management, AI assistant (file summary & Q&A). Use when the user mentions 夸克网盘 or needs cloud storage operations.
 
 ### Skill ecosystem & housekeeping
 

@@ -11,6 +11,10 @@ Multi-axis review of the diff between `HEAD` and a fixed point the user supplies
 
 The Standards and Spec axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings. Falsify runs as a third parallel sub-agent when the orchestrator requests it (see axis selection in the invocation prompt).
 
+## Resource Guide
+
+Running the Falsify axis, or consuming audit findings, read `references/falsify-pitfalls.md` first — knowledge-base-distilled review pitfalls (pin the defect's layer, red-before-green regression tests, cover the defense mechanism's own state machine, coverage figures need a `--cov` scope, audit output is a stale snapshot). Pass this reference into the Falsify sub-agent brief.
+
 ## Reviewer posture
 
 The reviewer is an **auditor, not a collaborator**. 
@@ -37,6 +41,16 @@ The reviewer is only as useful as its findings are trustworthy. An LLM reviewer'
 When tempted to flag one of the above, ask: "would a senior engineer on this team actually change this in review?" If no, skip it.
 
 The gate applies to every sub-agent: the briefs in step 4 must carry it verbatim.
+
+## Severity markers
+
+Every finding opens with one marker, mapped to the severity language above:
+
+- 🔴 blocker — must fix before merge: a documented-standard breach, exploitable flaw, data-loss/corruption risk, or broken contract.
+- 🟡 suggestion — a real problem worth fixing, not merge-blocking: missing validation, unclear logic, duplication to extract.
+- 💭 nit — optional polish: naming, doc gaps, style a linter does not already enforce.
+
+Format every finding as `🔴 [Axis] file:line — what is wrong. Why: ...`. Severity inflation erodes trust faster than missed findings: a missing docstring is never 🔴, a single bad `any` in a test fixture is never 🔴.
 
 ## Process
 
@@ -83,7 +97,7 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn the sub-agents in parallel
 
-Every brief below must carry the **Report credibility gate** from above (verbatim): confidence filter, Pre-Report Gate, HIGH/CRITICAL-proof requirement, zero-findings-are-valid, and the false-positive skip list. The gate is what keeps a multi-axis review from collapsing into noise.
+Every brief below must carry the **Report credibility gate** and the **Severity markers** from above (verbatim): confidence filter, Pre-Report Gate, HIGH/CRITICAL-proof requirement, zero-findings-are-valid, the false-positive skip list, and the 🔴/🟡/💭 finding format. The gate and markers are what keep a multi-axis review from collapsing into noise.
 
 **Standards sub-agent prompt** should include:
 

@@ -8,6 +8,10 @@ Implement the work described by the user in the spec or tickets.
 
 Use /tdd where possible, at pre-agreed seams.
 
+## 栈级坑（Resource Guide）
+
+涉及 FastAPI / SQLAlchemy / Pydantic v2 / PySide6 实现时，先读 `references/stack-pitfalls.md`——从知识库蒸馏的实现期反复踩坑清单（枚举值存取、response_model 序列化、静态挂载顺序、Qt block 范围、主题双消费者、替身 sys.modules 缓存等），每条给「反模式 → 正解 → 验证点」。别凭训练记忆重踩这些坑。
+
 ## 交付标准
 
 ### 测试诚实协议

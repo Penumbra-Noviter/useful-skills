@@ -12,3 +12,9 @@ project-kickoff
 universal-exam-cram-coach
 # 外部实装 skill（自带 .git，可独立 pull 更新，不入库）
 dao-skill/
+# 夸克网盘 skill：仅入库代码，运行态（明文 accessToken / 搜索结果 / 日志）一律排除
+# 运行态子目录按宿主 agent 命名（当前 deepseek），故用白名单而非硬编码目录名
+quarkclouddrive/*
+!quarkclouddrive/SKILL.md
+!quarkclouddrive/references/
+!quarkclouddrive/scripts/
