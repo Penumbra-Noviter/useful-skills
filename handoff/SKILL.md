@@ -5,7 +5,7 @@ argument-hint: "What will the next session be used for?"
 disable-model-invocation: true
 ---
 
-Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS - not the current workspace.
+Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to `D:\Desktop\Craft\handoff` (create the directory first if it does not exist) - not the temporary directory, not the current workspace. This keeps every handoff in one place for unified management and reading. Filename should include the project/topic name plus a date or timestamp so files do not collide.
 
 Include a "suggested skills" section in the document, naming which skills the next agent should call the Skill tool for.
 
