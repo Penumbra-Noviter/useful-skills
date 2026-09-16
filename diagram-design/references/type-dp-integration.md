@@ -405,4 +405,3 @@ When this gets unwieldy:
 - `assets/example-dp-integration.html` — minimal light (1 footer = AD). Gallery default.
 - `assets/example-dp-integration-dark.html` — same, dark skin.
 - `assets/example-dp-integration-full.html` — same, editorial-card frame.
-- *Extended pattern (not shipped as a file):* exercises §4 color override + multi-footer — AD in rust-red, Observability (Prometheus/Grafana/Loki) in slate-blue. Canvas height grown to fit 2 footer rows. Regenerate per §4 if this variant is needed.

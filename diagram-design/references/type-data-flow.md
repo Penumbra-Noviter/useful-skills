@@ -369,4 +369,3 @@ Above 4 lanes or 6 steps: split into two diagrams (e.g., ingestion pipeline / an
 - `assets/example-data-flow.html` — minimal light (the platform, 4-role × 5-step: Admin, Engineers, Scientists, Consumers). Gallery default.
 - `assets/example-data-flow-dark.html` — same, dark skin.
 - `assets/example-data-flow-full.html` — same, editorial-card frame.
-- *Extended pattern (not shipped as a file):* exercises §4 color override — Access Control node in rust-red (governance), Clean & Stage node in slate-blue (data quality). Focal accent on Analyze step + Explore & Model node + anon-data arrow unchanged. Regenerate per §4 if this variant is needed.

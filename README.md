@@ -140,9 +140,11 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 
 - 本仓库根 `LICENSE` 为 **MIT**（Copyright 2026 Penumbra-Noviter），覆盖自研/深度改写内容。
 - 各 vendored / distilled skill 保留各自上游许可，**重新分发前请逐条核对** `PROVENANCE.md`：
-  - `cangjie-skill` — AGPL v3
-  - `zine-ui` — personal non-commercial（商业使用需作者书面许可）
-  - `diagram-design` / `simplify-codebase` / `vibehub` / `writing-humanizer` — MIT 等（见各自 LICENSE）
+  - `cangjie-skill` — MIT（v2.5.0 起，上游 [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill)）
+  - `zine-ui` — personal non-commercial（商业使用需作者书面许可，上游 [Zeejay0/gathered-scenes-zine-skill](https://github.com/Zeejay0/gathered-scenes-zine-skill)）
+  - `diagram-design` — MIT（上游 [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)）
+  - `simplify-codebase` / `vibehub` / `writing-humanizer` — MIT 等（上游见 `PROVENANCE.md` §13/§3/§15）
+  - `agent-reach` — 上游 [Panniantong/Agent-Reach](https://github.com/Panniantong/Agent-Reach)（本地 skill 文档层，CLI 需独立安装）
   - mattpocock 批次 ~46 个 — 见上游 https://github.com/mattpocock/skills
 - `PROVENANCE.md` 是全库来源登记（vendored / distilled / 自研 / 封装判定、上游 URL、本地改动点、同步流程），更新 skill 前先查它。
 

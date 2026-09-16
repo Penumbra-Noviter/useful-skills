@@ -10,12 +10,13 @@
 
 | Skill | 类型 | 上游 | License | 本地版本 | 导入 | 可追踪更新 |
 |---|---|---|---|---|---|---|
+| cangjie-skill | vendored（官方 Release 包） | [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill) | MIT（v2.5.0 起） | 2.5.0 | 2026-08-27 → 2026-09-16 更新 | ✅ |
 | mattpocock 批次 ~46 个 skill | vendored | [mattpocock/skills](https://github.com/mattpocock/skills)（**用户 2026-08-13 确认**） | 见上游 | 无版本号 | 2026-08-06 | ✅ |
 | skill-creator | vendored | mattpocock/skills（随批次导入；Apache 2.0 LICENSE.txt 系上游随附） | Apache 2.0 | — | 2026-08-06 | ✅（并入批次） |
 | vibehub | vendored | [oil-oil/vibe-hub-skill](https://github.com/oil-oil/vibe-hub-skill) | MIT | — | 2026-08-11 | ✅（config.json 已记） |
 | zine-ui | distilled | [Zeejay0/gathered-scenes-zine-skill](https://github.com/Zeejay0/gathered-scenes-zine-skill) + photo-abstract-editorial（Codex） | personal non-commercial | 1.0.0 | 2026-08-11 | ✅ |
-| diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.2（上游已 2.3） | 2026-08-13（未 commit） | ✅ **上游有新版本** |
-| museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | — | 2026-08-11 | ✅（wheel URL） |
+| diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.6.27 | 2026-08-13（未 commit） | ✅ |
+| museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | wheel v0.6.0 | 2026-08-11 | ✅（wheel URL） |
 | vision | vendored + 改造 | [asuojun/claude-vision-skill](https://github.com/asuojun/claude-vision-skill) | — | — | 2026-08-06 | ✅（README 已记） |
 | finesse-ui | 自研 + 部分派生 | 派生自 taste-skill v2 / emilkowalski/skills / VoltAgent/awesome-design-md | MIT | 0.21.0 | 快照 2026-08-28 · v0.21.0，**非 mattpocock 内容** | 部分（仅派生源） |
 | open-kimi-ppt | 自研（逆向） | 无（依赖 Moonshot PPTD 格式） | 无 | — | 2026-08-08 | ❌ |
@@ -23,6 +24,7 @@
 | context-monitor | 自研（推断） | 无 | 无 | — | 2026-08-06 | ❌ |
 | project-kickoff | 自研 | 无（符号链接 → `.cc-switch/skills/project-kickoff/`） | 无 | 有 REVISIONS.md | 独立维护 | ❌ |
 | simplify-codebase | vendored + 适配 | [tt-a1i/simplify-codebase](https://github.com/tt-a1i/simplify-codebase) | MIT | — | 2026-08-29 | ✅ |
+| agent-reach | vendored（skill 文档层） | [Panniantong/Agent-Reach](https://github.com/Panniantong/Agent-Reach) | MIT（上游） | 15 平台（上游已 16） | 2026-08-26（未登记，本次补） | ✅（上游有更新未合入） |
 | reverse-skill（选择性吸收） | vendored(3 refs) + distilled(1) | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | MIT（主体；CTF 子包 GPLv3 未吸收） | v1.0.1 | 2026-09-01 | ✅ |
 | writing-humanizer | distilled | [op7418/Humanizer-zh](https://github.com/op7418/Humanizer-zh)（← blader/humanizer + stop-slop + 维基百科 Signs of AI writing） | MIT | — | 2026-09-01 | ✅ |
 | code-review（本地蒸馏补强） | distilled（补 2 机制） | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code)（agents/code-reviewer + silent-failure-hunter） | MIT | — | 2026-09-01 | ✅ |
@@ -51,6 +53,7 @@
   - 本地独有文件保留未动：research/findings-agent-ticket-sizing.md
   - 本地已删除者未恢复：writing-for-agents（上游仍有，本地有意删）、writing-great-skills、skill-creator（上游均已删）
   - **2026-08-29 用户决定**：删除 batch-grill-me、design-an-interface、edit-article、find-skills、qa、request-refactor-plan、ubiquitous-language（7 个，未 commit，git 可恢复）；保留 improve-python-architecture、obsidian-vault；上游新增的 implement-spec、retro **用户决定暂不引入**（依赖本地已删的 writing-for-agents / 任务图体系，尚属 in-progress）
+- **2026-09-16 核对**：上游 head `959a8e9`（2026-09-15）。自上次同步点 `6654f6b` 后上游仅两处变动：retro deterministic-checks（本地未引入，维持原决定）、link-skills misc 收录逻辑（本地无此 skill）。**34 个共有 skill 无内容变更，无需重新同步。**
 
 ### 2. skill-creator — vendored
 
@@ -64,6 +67,7 @@
 - **License**：MIT，Copyright (c) 2026 oil-oil
 - **记录**：`vibehub/LICENSE` 末尾 + `vibehub/vibehub.config.json`（schemaVersion 1，siteUrl/repositoryUrl/skillPath 齐全）
 - **导入**：`fdc181e`（2026-08-11）
+- **2026-09-16 核对**：上游 head `8d77154`（2026-09-10，「明确 Skill 功能、首次使用与执行边界」）。逐文件 diff 后确认**本地版 = 上游当前内容 + 本地「## 边界」小节（finesse 分工）+ 本地 LICENSE**，本地已是超集，无需合入。
 
 ### 4. zine-ui — distilled
 
@@ -72,30 +76,39 @@
 - **License**：personal non-commercial，**不覆盖于 finesse-ui 的 MIT 条款**
 - **导入**：`fdc181e`（2026-08-11）
 - **本地改动**：蒸馏为三路径（实景拼贴/影像蒸馏/抽象记忆面板），继承 finesse-ui craft floor
+- **2026-09-16 核对**：上游 head `b9edb83`（2026-09-03，「Consolidate Live edition files into one skill folder」结构重组）。本地为 distilled 深度改写，不整目录跟随；核对内容语义未变，暂不更新。
 
 ### 5. diagram-design — vendored + 上游缺陷修复
 
 - **上游**：https://github.com/cathrynlavery/diagram-design（作者 Cathryn Lavery，littlemight.com，MIT）
-- **本地版本**：2.2；**上游最新 2.3（2026-08 已发布）——待同步检查**
+- **本地版本**：**2.6.27（2026-09-16 同步上游 main @`9874ad7`，plugin manifest 2.6.27）**；同步前为 2.2（27 型精简版）
 - **导入**：2026-08-13（用户交付 `D:\Desktop\downloads\diagram-design-main`），**未 commit**
+- **2026-09-16 同步内容**：
+  - 上游 2.2 → 2.6.x 为 **40 型完整版**：新增 semantic-patterns 行为路由、animation 动画层、Excalidraw 导入、Non-Latin（韩/繁中/西里尔）标签指南、profiles/doctor/export-registry 等通用 reference、13 个扩展型（polar/waterfall/treemap/sankey/fishbone/wardley/kanban/journey/deployment/dependency/uml-class/story-map/db-schema）及其 example HTML
+  - 本地 86 个上游新增文件拷贝（新 type references/assets/脚本）；17 个共有 references 取上游新版；4 个脚本（drawio/mermaid/excalidraw_extract.py、self_check.py）取上游新版并清 pycache
+  - SKILL.md 以上游正文为基底，**重放本地定制层**：frontmatter 40 型双语触发词（when_to_use/user-invocable/argument-hint/version 2.6.27/license MIT）、finesse 继承段（Inherited constraints）、Origin & license 段、本地 onboarding gate 5 分支话术
+  - assets 同名文件（example-*.html、template*.html、index.html）**保留本地版未覆盖**（内容级微调无法判归属，防误删本地成果）
 - **本地修复的 4 个上游缺陷**（同步时勿被上游覆盖）：
-  1. style-guide gate 检测旧皮肤 token（rust #b5523a）→ 统一为 style-guide.md 实际值（atomic-tangerine #eb6c36）
-  2. style-guide.md Inversion rule 遗留旧皮肤色 rgba(28,25,23) → 当前 ink rgba(45,49,66)
-  3. 4 个 type 参考文档承诺的 11 个 `*-extended` 示例文件在上游 main 也不存在 → 改为 "not shipped as a file" 描述
+  1. style-guide gate 检测旧皮肤 token（rust #b5523a）→ 统一为 style-guide.md 实际值（atomic-tangerine #eb6c36）——**上游新版 SKILL 的 gate 已采用 #eb6c36 值，本修复并入本地 gate 段**
+  2. style-guide.md Inversion rule 遗留旧皮肤色 rgba(28,25,23) → 当前 ink rgba(45,49,66)——**上游 2.6.27 仍未修，本次同步后已重新应用**
+  3. 4 个 type 参考文档承诺的 11 个 `*-extended` 示例文件在上游 main 也不存在 → **上游新版已改为文档内置完整示例（如 type-process.md §12），从根上解决，无需再改**
   4. reference 文件为 CRLF 行尾，grep 校验需 `tr -d '\r'`
-- **frontmatter 改造**：本地加了 when_to_use/user-invocable/argument-hint，description 双语触发词，version 展平为 2.2
+- **frontmatter 改造**：本地加了 when_to_use/user-invocable/argument-hint，description 双语触发词，version 展平（现 2.6.27）
+- **更新提示**：assets 同名文件为本地保留版，下次同步前先 diff 判定归属；style-guide Inversion 修复与 gate 段为本地保护点
 
 ### 6. museon-cli — 封装
 
 - **上游**：https://github.com/Museon-AI/museon-cli（SKILL.md 安装命令里的 wheel URL 即上游发布物）
 - **本地角色**：安装 + 操作指南外壳，非复制上游代码
 - **导入**：`fdc181e`（2026-08-11）
+- **2026-09-16 更新**：wheel pin v0.5.9 → **v0.6.0**（上游 2026-09-12 release，asset `museoncli-0.6.0-py3-none-any.whl`）
 
 ### 7. vision — vendored + 改造
 
 - **上游**：https://github.com/asuojun/claude-vision-skill（README.md 内记录 clone 地址）
 - **本地改动**：`9b36024`（2026-08-11）精简脚本与 SKILL 文档
 - **导入**：`77430e9`（2026-08-06）
+- **2026-09-16 核对**：上游 head `fa5ca17`（2026-08-11，PR #9 剪贴板读取）——本地改造版无该能力，评估后**暂不合入**（本地已有截屏/文件路径通道，剪贴板路径收益低）
 
 ### 8. finesse-ui — 自研 + 部分派生
 
@@ -126,6 +139,7 @@
   - 新增 `when_to_use` frontmatter（上游无）
   - 2026-08-13 补齐缺失的 4 个 reference + audit-inventory.sh，正文 6 处引用已验证闭合（注意：SKILL.md 为 CRLF 行尾，校验引用需 `tr -d '\r'`）
 - **导入**：`fdc181e`（2026-08-11，移除旧 `neat/` 目录并改名）。旧 `neat/` 目录（77430e9 导入时 name 已是 neat-freak）推断同为 khazix-skills 来源的早期引入
+- **2026-09-16 核对**：上游 `neat-freak/` 路径自 2026-08-13 后**零提交**（上游 9-16 的 aihot v1.7.1 更新是另一 skill），无需更新
 - **更新提示**：正文为中文改写版，同步上游时人工合入；若上游更新 references，优先把缺失的 4 个 reference 文件补齐而非只更新 SKILL.md
 
 ### 11. context-monitor — 自研（推断）
@@ -143,11 +157,13 @@
 - **License**：MIT（© 2026 simplify-codebase contributors）
 - **导入**：2026-08-29；来源 `D:\Desktop\downloads\skill respority\simplify-codebase-main\simplify-codebase-main\`（下载物为双层目录，有效根在内层）
 - **dao-skill 评估**：E1 结构级 78/100，Trust Gate PASS；P0 无；仅做最小适配（见下）
-- **本地改动**（与原版 diff 极小，同步上游时保留以下三处即可）：
-  1. description 中文触发词扩展（原版仅"代码简化/熵回收"→ 补 简化代码 / 删除死代码 / 清理冗余 / 减少复杂度 / 冗余审计）
+- **本地改动**（同步上游时保留以下三处即可）：
+  1. description 中文触发词扩展（原版仅"代码简化/熵回收"→ 补 简化代码 / 删除死代码 / 清理冗余 / 减少复杂度 / 冗余审计 / 墓碑代码 / 交付前清理 / 临时代码清理）
   2. description 尾部加路由边界：模块加深→improve-codebase-architecture，变更评审→code-review
   3. 5 处 reference 链接文本改为完整路径反引号标记 `` `references/x.md` ``（dao-skill 检索约定）
+  4. 证明记录 9 字段精简为 7 字段（去 Finding ID/Locus/Topology，留 Candidate/Burden/Reachability/Rationale/Cut/Consequence/Confidence/Proof/Net effect 中与本地工作流契合的 7 个）；新增墓碑代码段落（`references/tombstone-code.md`，本地独有）
 - **放置决策**：独立 skill（不路由进 ask-matt / improve-codebase-architecture 等），model-invoked 触发，接线方式与库内 diagram-design 同构
+- **2026-09-16 同步**：上游 9-04 新增「可视化 companion」能力——合入 `references/visual-reporting.md`、`visualization/`（29 文件：render-cleanup-map.mjs + archify-core 渲染器 + schema + examples + tests）、`docs/visual-report-example.md`；SKILL.md 并入 visual companion 段落（保留本地 7 字段体系，不引入冲突的 Finding ID 条款）。`.github/workflows`（CI）与 `PRODUCT.md`（产品说明）不引入
 - **更新提示**：上游更新时逐文件对账；SKILL.md 需保留上述本地改动，其余文件可整体覆盖
 
 ### 14. reverse-skill（选择性吸收）— vendored + distilled
@@ -165,6 +181,7 @@
   - reverse-flow/SKILL.md「Bundled resources」新增 3 行引用
   - fetchflow/SKILL.md「Resource Guide」+「Workflow Step 0」+「Output Protocol」补 network-profile 引用与字段
 - **验证**：全部 .py 语法 OK；`check_target.py` 冒烟通过（本地路径 → ALLOW）
+- **2026-09-16 核对**：上游 head `7e2097f`（2026-09-03，docs-only 安全集成记录），与吸收的 4 个文件无交集，无需更新
 - **更新提示**：上游更新时只对账上述 4 个吸收文件；SKILL.md 侧改动为本地接线，勿被上游覆盖
 
 ### 15. writing-humanizer — distilled（dao-skill 模式 F 自化吸收）
@@ -178,6 +195,7 @@
   - `writing/SKILL.md`：Step 4 新增"成文后润色（去 AI 味）"路由 → writing-humanizer；description 补去 AI 味触发词；通过标准/边界同步更新
 - **放置决策**：并入 writing 家族作润色 pass（不是第四写作阶段，不路由进 ask-matt）
 - **验证**：dao-skill `quality_check.py` 结构检查通过（E1）；行为抽查含 5 核心规则 + 24 模式 + 质量评分自检
+- **2026-09-16 核对**：上游仅 README 安装方式更新（npx 一键安装），与本地 distilled 内容无关，无需更新
 - **更新提示**：上游更新时对账 24 模式清单与示例即可；writing-humanizer 为本地改写版，SKILL.md 勿整文件覆盖
 
 ### 16. code-review（本地蒸馏补强）— distilled（dao-skill 模式 F 自化吸收）
@@ -191,7 +209,18 @@
 - **本地接线**：`code-review/SKILL.md` 新增 `## Report credibility gate` 小节；Falsify 轴定义与 Step 4 子智能体 brief 同步补静默失败 + gate 约束；与既有 Falsify/Reviewer posture 本地改动合流
 - **放置决策**：并入既有 code-review skill（同一 root/trigger，merge 优于 create），不新增独立 skill、不路由进 ask-matt
 - **验证**：YAML frontmatter 解析通过（E1）；通读防矛盾；无独立 judge（E2 未做，dry-run 级）
+- **2026-09-16 核对**：上游 ECC head `8321021`（2026-09-12，fix memory 目录遍历），与本地吸收的 code-reviewer/silent-failure-hunter 两处无交集，无需更新
 - **更新提示**：上游同步时保留 §1 所列 code-review 既有本地改动 + 本 §16 新增内容，勿整文件覆盖；上游更新时只对账 code-reviewer/silent-failure-hunter 两处
+
+### 17. agent-reach — vendored（skill 文档层，2026-09-16 补登记）
+
+- **上游**：https://github.com/Panniantong/Agent-Reach（Python 包形态：`agent_reach/` + channels/backends/guides + `agent_reach/skill/` 为 skill 文档源）
+- **License**：上游 MIT；本地 frontmatter `homepage` 已指向上游
+- **导入**：2026-08-26（本地 SKILL.md 时间戳）；PROVENANCE 首次登记于 2026-09-16
+- **本地形态**：skill 文档层（SKILL.md + 7 个 references：search/social/career/dev/web/video/finance），依赖用户独立安装上游 `agent-reach` CLI（pip/pipx）
+- **本地改动**：SKILL.md 双语触发词 + 路由表 + 零配置命令 + check-update 提醒；references 为上游 docs 的精简适配
+- **2026-09-16 核对**：上游 head `a19a171`（2026-09-15）新增 **Boss直聘 channel（#627）**，平台数 15→16，career 分类需更新（`channels/boss.py` + `references/career.md` 增补 + SKILL 平台数/路由）。**本次用户未选合入，待下轮执行**
+- **更新提示**：合入时对账上游 `agent_reach/skill/` 的 SKILL.md 与 career.md，保留本地路由表/触发词结构
 
 ---
 
@@ -200,7 +229,7 @@
 1. **查本文件**对应条目 → 拿到上游 URL、本地版本、本地改动点
 2. **确认上游最新版本**（git clone / gh api / 上游 README）
 3. **对账 diff**：`git diff <本仓库导入commit> <上游文件>`，逐项评估
-4. **保留本地改动点**（每条目已列；diagram-design 的 4 个修复、finesse-ui 的 references 尤其注意）。**自研/深度改写类条目（finesse-ui、open-kimi-ppt、neat-freak、context-monitor）默认只允许人工挑选合入，禁止任何形式的覆盖**
+4. **保留本地改动点**（每条目已列；diagram-design 的 4 个修复与 frontmatter/gate、finesse-ui 的 references 尤其注意）。**自研/深度改写类条目（finesse-ui、open-kimi-ppt、neat-freak、context-monitor）默认只允许人工挑选合入，禁止任何形式的覆盖**
 5. **同步后更新本文件**：同步日期、上游版本、改动摘要
 6. 若同步牵涉 license 变化 → 同步更新对应 LICENSE 与 frontmatter
 
@@ -208,5 +237,6 @@
 
 - [x] mattpocock 批次中「本地有、上游当前 main 无」的目录——**2026-08-29 已核实**（上游 main 快照）：batch-grill-me、design-an-interface、edit-article、find-skills、improve-python-architecture、obsidian-vault、qa、request-refactor-plan、ubiquitous-language、skill-creator、writing-great-skills 均不在上游，属上游删除；本地去留见 §1「最近同步」
 - [ ] skill-creator 的 Apache 2.0 LICENSE.txt 与 mattpocock 批次其余 skill 不协调（疑源自 anthropics/skills），重发布时需注意条款差异
-- [ ] diagram-design 上游 2.3 变更内容未评估
-- [ ] context-monitor 的来源判定为推断，若实际有上游请补记
+- [x] diagram-design 上游 2.3+ 变更内容评估——**2026-09-16 已同步至 2.6.27（40 型）并重放本地定制**
+- [x] context-monitor 的来源判定为推断——仍无上游线索，维持自研判定
+- [ ] agent-reach 上游 Boss直聘 channel 合入（用户 2026-09-16 未选，挂起）

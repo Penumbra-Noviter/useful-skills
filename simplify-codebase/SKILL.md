@@ -76,8 +76,10 @@ If the user requests a simplification proposal, local cleanup annotation, or des
 
 If the user asks to combine findings from another branch, pull request, task, or agent run, read [`references/integrating-findings.md`](references/integrating-findings.md). Preserve evidence, not finding counts.
 
+Generate a visual companion only when the user explicitly requests one or confirms an offer. If confirmed relationships would make a candidate clearer, explain what the map would clarify and ask before generating it. Without confirmation, complete the text report without a map; do not wait on visual delivery to finish the audit. For authorized visual delivery, read [`references/visual-reporting.md`](references/visual-reporting.md) and use the bundled cleanup-map renderer. The map is an optional companion to the proof records, not evidence by itself. Do not write Survey artifacts into the target repository unless the user requested repository files.
+
 ## Deliver the result
 
-For a survey, report coverage, ranked proof records, rejected or unresolved high-value leads, and the next fact needed for each uncertainty.
+For a survey, report coverage, ranked proof records, rejected or unresolved high-value leads, and the next fact needed for each uncertainty. When a visual companion was requested or confirmed, report its status and cleanup-map deep links separately.
 
 For a change, complete the validation and operation receipt defined in [`references/execution-and-recovery.md`](references/execution-and-recovery.md). Report each validation layer separately; a narrow green check does not establish broader runtime, deployment, or user acceptance.
