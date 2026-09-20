@@ -23,7 +23,7 @@ The route most work travels. You have an idea and want it built.
    - **Yes** → **`/to-spec`** (turn the thread into a spec), then **`/to-tickets`** to split it into tracer-bullet tickets, each declaring its **blocking edges**. On a local tracker that's one file per ticket under `.scratch/<feature>/issues/`, worked blockers-first by hand; on a real tracker the edges become native blocking links, so any ticket whose blockers are done can be grabbed: kick off **`/implement`** per ticket, **`/clear`ing context between each one**. Each ticket is self-contained, so the last one's context is disposable.
    - **No** → **`/implement`** right here, in the same context window.
 
-   Either way, **`/implement`** builds each issue by driving **`/tdd`** internally (one red-green slice at a time), then closes out by running **`/code-review`**, a two-axis review (Standards + Spec) of the diff, before committing. Reach for **`/tdd`** on its own when you just want to build a concrete behaviour test-first without a full spec, and **`/code-review`** on its own whenever you want to review a branch or PR against a fixed point.
+   Either way, **`/implement`** builds each issue by driving **`/tdd`** internally (one red-green slice at a time), then closes out by running **`/code-review`** on the diff — a multi-axis review (Standards + Spec in parallel, **Falsify** when the orchestrator requests it; Architecture when a kickoff's final audit asks for module-structure assessment) — before committing. Reach for **`/tdd`** on its own when you just want to build a concrete behaviour test-first without a full spec, and **`/code-review`** on its own whenever you want to review a branch or PR against a fixed point. When review or self-check needs a named falsification checklist, the Falsify axis pulls in **`/simple-logic`**'s capability cards (fallacy-detector, argument-evaluator, root-cause; see Reasoning underneath).
 
 ### Context hygiene
 
@@ -60,6 +60,12 @@ Two model-invoked references that run *beneath* the other skills, each the singl
 
 - **`/domain-modeling`**: sharpen the project's *domain* language: challenge a fuzzy term, resolve an overloaded word ("account" doing three jobs), record a hard-to-reverse decision as an ADR. It's the active discipline `/grill-with-docs` drives to keep `CONTEXT.md` a clean glossary.
 - **`/codebase-design`** is the deep-module vocabulary (module, interface, depth, seam, adapter, leverage, locality) for designing a module's *shape*: a lot of behaviour behind a small interface at a clean seam. `/tdd` and `/improve-codebase-architecture` both speak it.
+
+## Reasoning underneath
+
+One model-invoked method layer, distilled from 《简单的逻辑学》 into executable capability cards. Reach for it directly when the **reasoning**, not the process, is in question — or let the flows above pull its checklists in.
+
+- **`/simple-logic`**: 9 capability cards for classical logic — fallacy-detector (name the fallacy, structure before tactics), argument-evaluator (four-step gate: premises → truth → relevance → valid form), fact-confirmation, clear-communication, conditional-argument, quantifier-audit, define-terms, root-cause (trace the causal chain to the fundamental cause, not the direct one), attitude-check. Trigger on 谬误识别/论证评定/事实确认/因果分析/逻辑检查. `/code-review`'s Falsify axis, the AGENTS.md adversarial self-check, and the grilling family all draw its cards as named checklists; the AGENTS.md quality principle points at it for exactly this.
 
 ## Phase boundaries
 
@@ -102,9 +108,9 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 - **`/writing-humanizer`**: the polish stage after the writing three-piece — strip the AI fingerprint from finished prose (去 AI 味): rewrite stiff passages to read human. It only does post-draft humanizing; explore/exploit stay with the three-piece.
 - **`/finesse-ui`**: high-craft web interfaces — brand surfaces, product UI, workflow UI, AI-assistant UI. Anti-slop; routes diagram requests to `/diagram-design`.
 - **`/zine-ui`**: paper-zine visual language for photo/poetic briefs (拾景纸刊): photo collage, image distillation, abstract memory panels. "把这张照片做成页面" → here.
-- **`/diagram-design`**: 27 diagram types (architecture, flow, sequence, ER, timeline, swimlane…) rendered as inline-SVG HTML, importable to draw.io.
+- **`/diagram-design`**: 40 diagram types (architecture, flow, sequence, ER, timeline, swimlane, quadrant, sankey, fishbone, Wardley…) rendered as inline-SVG HTML, importable to draw.io/Mermaid/Excalidraw.
 - **`/open-kimi-ppt`**: presentations — create/edit/replicate/export, delivering a PPTD project folder plus a local .pptx.
-- **`/officecli`**: CLI for Office documents (.docx/.xlsx/.pptx) — create, inspect, proofread, add charts, render to PNG for visual check, no Office install. Collaborates with the `document-skills` plugin: it loads that skill's design spec, then executes and renders.
+- **`/officecli`**: CLI for Office documents (.docx/.xlsx/.pptx) — create, inspect, proofread, add charts, render to PNG for visual check, no Office install. Collaborates with the document plugins (below): loads their design specs, then executes and renders.
 - **`/obsidian-vault`**: search, create, and organize notes in the Obsidian vault with wikilinks and index notes.
 - **`/cangjie-skill`**: distill a book/video/podcast/course into an executable skill set (拆书/蒸馏).
 
@@ -146,10 +152,12 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 
 Provided by plugins, not files in this repo; amount to `family:skill` invocations.
 
-- **`document-skills:docx`** / **`document-skills:pdf`** / **`document-skills:pptx`** / **`document-skills:xlsx`**: office-document workflows — Word edits with tracked changes, PDF production (reports/LaTeX/creative), PPTX via pptxgenjs/python-pptx, spreadsheet handling with a visual acceptance gate.
+- **`documents:docx`** / **`pdf:pdf`** / **`presentations:pptx`** / **`spreadsheets:xlsx`**: office-document workflows — Word edits with tracked changes, PDF production (reports/LaTeX/creative), PPTX via pptxgenjs/python-pptx, spreadsheet handling with a visual acceptance gate.
 - **`browser-use:control-browser`**: main-agent-only browser automation — navigate, click, type, fill, screenshot, verify. Delegating to a subagent is forbidden.
 - **`browser-use:web-gui-tester`**: GUI-based black-box frontend testing — simulate real user clicks/input/scrolling, verify by screenshot.
 - **`android-emulator:android-dev`**: Android app build/run/inspect/light automation (screen capture, UI tree, logs, tap/swipe/type).
+- **`computer-use:computer-use`**: full desktop control — operate the machine's GUI directly as a fallback when browser or device automation isn't the right tool.
+- **`plugin-creator:plugin-creator`**: scaffold and package a new plugin (a family of skills) per the plugin authoring guide.
 
 ## Precondition
 

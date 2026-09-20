@@ -1,6 +1,6 @@
 # useful-skills
 
-Claude Code / zcode 的个人技能库：**63 个可执行 skill（本仓库）+ 7 个插件族条目**，覆盖从立项、编码、质量到情报、内容生产、UI 设计、设备自动化的完整工程流。每个 skill 是一个自包含目录（`SKILL.md` + 可选 `references/` / `scripts/` / `examples/`），按触发词被模型自动调用或由用户显式 `/` 唤起。
+Claude Code / zcode 的个人技能库：**64 个可执行 skill（本仓库）+ 9 个插件族条目**，覆盖从立项、编码、质量到情报、内容生产、UI 设计、设备自动化的完整工程流。每个 skill 是一个自包含目录（`SKILL.md` + 可选 `references/` / `scripts/` / `examples/`），按触发词被模型自动调用或由用户显式 `/` 唤起。
 
 ## 快速开始
 
@@ -14,7 +14,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 
 ## 生态总览（9 域）
 
-本仓库 63 个 skill 按功能分成 9 个域；另有 7 个插件族条目（`document-skills` 四件套、`android-emulator`、`browser-use` 两件套）随宿主环境提供，不在此仓库。
+本仓库 64 个 skill 按功能分成 9 个域；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
 
 ### 域 0 · Skill 生态自治
 
@@ -26,6 +26,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `dao-skill` | 设计/审计/优化/进化 skill 的元设计器 |
 | `skill-authoring` | 编写、结构化、打包 SKILL.md / AGENTS.md 等 agent 文档 |
 | `cangjie-skill` | 拆书/蒸馏长内容（书/视频/播客/课程）→ 一组可执行 skill |
+| `simple-logic` | 《简单的逻辑学》能力卡（9 张：谬误识别/论证评定/事实确认/沟通清晰化/因果分析…），cangjie-tools 生成；Falsify 评审与对抗性自检的具名检查表执行层 |
 
 ### 域 1 · 立项与规划
 
@@ -96,7 +97,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `writing-shape` | 写作收束：素材线性排成文章 |
 | `writing-beats` | 写作叙事：素材排成节拍旅程 |
 | `writing-humanizer` | 去 AI 味润色，让文本像人写的 |
-| `diagram-design` | 27 种示意图 → 内联 SVG HTML，可导入 draw.io/Mermaid |
+| `diagram-design` | 40 种示意图 → 内联 SVG HTML，可导入 draw.io/Mermaid/Excalidraw |
 | `obsidian-vault` | Obsidian 笔记搜索/创建/整理（wikilink + 索引） |
 
 ### 域 6 · UI 设计

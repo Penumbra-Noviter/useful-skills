@@ -28,6 +28,7 @@
 | reverse-skill（选择性吸收） | vendored(3 refs) + distilled(1) | [zhaoxuya520/reverse-skill](https://github.com/zhaoxuya520/reverse-skill) | MIT（主体；CTF 子包 GPLv3 未吸收） | v1.0.1 | 2026-09-01 | ✅ |
 | writing-humanizer | distilled | [op7418/Humanizer-zh](https://github.com/op7418/Humanizer-zh)（← blader/humanizer + stop-slop + 维基百科 Signs of AI writing） | MIT | — | 2026-09-01 | ✅ |
 | code-review（本地蒸馏补强） | distilled（补 2 机制） | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code)（agents/code-reviewer + silent-failure-hunter） | MIT | — | 2026-09-01 | ✅ |
+| simple-logic | distilled（cangjie-tools v2.5.0 生成） | 《简单的逻辑学》(D. Q. McInerny) 经 [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill) 蒸馏 | 原书文本衍生 | v2.5.0（生成器） | 2026-09-16 | — |
 
 ---
 
@@ -221,6 +222,15 @@
 - **本地改动**：SKILL.md 双语触发词 + 路由表 + 零配置命令 + check-update 提醒；references 为上游 docs 的精简适配
 - **2026-09-16 核对**：上游 head `a19a171`（2026-09-15）新增 **Boss直聘 channel（#627）**，平台数 15→16，career 分类需更新（`channels/boss.py` + `references/career.md` 增补 + SKILL 平台数/路由）。**本次用户未选合入，待下轮执行**
 - **更新提示**：合入时对账上游 `agent_reach/skill/` 的 SKILL.md 与 career.md，保留本地路由表/触发词结构
+
+### 18. simple-logic — distilled（cangjie-tools v2.5.0 生成）
+
+- **来源**：《简单的逻辑学》（D. Q. McInerny）全书经 [cangjie-skill](https://github.com/kangarooking/cangjie-skill)（v2.5.0）拆书蒸馏为 9 张能力卡 + 全书入口
+- **导入**：2026-09-16（cangjie-tools v2.5.0 生成，committed 73f763e）
+- **本地形态**：整书入口 SKILL.md + `references/`（overview / glossary / cheatsheet / capability-index）+ `references/capabilities/` 9 张能力卡（fallacy-detector、argument-evaluator、fact-confirmation、clear-communication、conditional-argument、quantifier-audit、define-terms、root-cause、attitude-check）
+- **生成元数据**：`cangjie.bundle-id: bundle.simple-logic`、`cangjie.capability-count: 9`
+- **定位**：AGENTS.md「对抗性自检」的执行层——Falsify/评审需要具名检查表时调用其能力卡（fallacy-detector / argument-evaluator / root-cause）；ask-matt 路由见其 Reasoning underneath 小节
+- **上游同步**：再生成/模板升级用同一 cangjie-tools 版本，勿手工混改「生成元数据」区
 
 ---
 
