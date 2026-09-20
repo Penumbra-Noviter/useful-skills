@@ -153,3 +153,4 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 
 - 新增/改版 skill 后同步 `PROVENANCE.md`（来源登记）与 `ask-matt`（路由）。
 - 全库功能图谱（反向检索表）与生态分工记录位于 zcode 工作区，仓库内不重复维护。
+- **pre-commit 门禁**（`.githooks/pre-commit`，自仓库内共享）：新增/删除/变更 skill 时，强制 `ask-matt` 全库路由与 `README` skill map 同步——新增 skill 未登记、删除 skill 未清残、或 commit 后的库事实与两份地图漂移，提交被拦截。启用方式：`git config core.hooksPath .githooks`（一次性，本机生效）。

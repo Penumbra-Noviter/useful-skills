@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# pre-commit: skill 库路由/地图一致性门禁
+#
+# 规则：
+#   1. 全量覆盖 —— 库中每个顶层 skill（含 SKILL.md 的目录）必须同时登记在
+#      ask-matt/SKILL.md（`/slug` 路由）与 README.md（`slug` 行）里。
+#      新增 skill 未登记 → 拦截；任何 commit 都按提交后状态 (index) 校验，
+#      防止 ask-matt / README 编辑后与库事实漂移。
+#   2. 删除专项 —— 本次提交删除的顶层 skill，其 slug 必须已从 ask-matt 与
+#      README 中移除，不留悬空引用。
+#   3. 软提示 —— 非 ask-matt 的 SKILL.md 内容变更时提醒核对描述是否仍准确（不拦截）。
+#
+# 豁免说明：被 .gitignore 排除的外部实装（dao-skill / project-kickoff /
+# universal-exam-cram-coach）不在 git index 中，正向检查天然不涉及；
+# ask-matt 路由器自身不在自己的路由里登记（README 有它即可）。
+set -u
+
+fail=0
+top="$(git rev-parse --show-toplevel)" || exit 1
+cd "$top" || exit 1
+
+# 提交将采用的版本 = index 版本（未 staged 的改动不参与本次提交）
+ask_matt="$(git show :ask-matt/SKILL.md 2>/dev/null || true)"
+readme="$(git show :README.md 2>/dev/null || true)"
+
+# ---- 1. 全量覆盖 ----
+slugs="$(git ls-files '*/SKILL.md' | sed 's#/.*##' | sort -u)"
+missing_am=0
+missing_rd=0
+while IFS= read -r slug; do
+  [ -n "$slug" ] || continue
+  [ "$slug" = "ask-matt" ] && continue
+  if ! printf '%s' "$ask_matt" | grep -Fq "\`/$slug\`"; then
+    echo "  ⚠ ask-matt 路由缺登记: /$slug"; missing_am=1
+  fi
+  if ! printf '%s' "$readme" | grep -Fq "\`$slug\`"; then
+    echo "  ⚠ README skill map 缺登记: $slug"; missing_rd=1
+  fi
+done <<< "$slugs"
+[ "$missing_am" -ne 0 ] && fail=1
+[ "$missing_rd" -ne 0 ] && fail=1
+
+# ---- 2. 删除专项（含重命名旧路径）----
+deleted_slugs="$(git diff --cached --name-status | \
+  awk -F'\t' '($1 ~ /^D/ || $1 ~ /^R/) && $2 ~ /^[^\/]+\/SKILL\.md$/ { sub(/\/SKILL\.md$/, "", $2); print $2 }' | \
+  sort -u)"
+while IFS= read -r slug; do
+  [ -n "$slug" ] || continue
+  if printf '%s' "$ask_matt" | grep -Fq "\`/$slug\`"; then
+    echo "  ⚠ 已删除的 skill 仍留在 ask-matt 路由: /$slug"; fail=1
+  fi
+  if printf '%s' "$readme" | grep -Fq "\`$slug\`"; then
+    echo "  ⚠ 已删除的 skill 仍留在 README skill map: $slug"; fail=1
+  fi
+done <<< "$deleted_slugs"
+
+# ---- 3. 软提示：SKILL.md 内容变更 ----
+changed_skills="$(git diff --cached --name-only | grep -E '/SKILL\.md$' | grep -v '^ask-matt/' || true)"
+[ -n "$changed_skills" ] && echo "  ℹ 本次有 SKILL.md 内容变更：请确认 ask-matt / README 中对应描述仍准确（名称/定位变了就一并更新）。"
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "✗ 提交被拦截：skill 路由 / skill map 与库事实不一致。"
+  echo "  更新 ask-matt/SKILL.md 与 README.md，git add 后重新提交。"
+  exit 1
+fi
+exit 0
