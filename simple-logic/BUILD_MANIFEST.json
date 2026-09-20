@@ -1,0 +1,39 @@
+{
+  "tool": "cangjie-tools v2.5.0",
+  "published_hashes": {
+    "references\\capabilities\\argument-evaluator.md": "97ae1fbf73351b642e482a5c7e781cbd45ccc3d88a909fdf357a2667c6274cb8",
+    "references\\capabilities\\attitude-check.md": "b23f6ac492641535bd2727818081f2785fb51297a9dbebf63478a03b3e895406",
+    "references\\capabilities\\clear-communication.md": "79542a87bcf73f90cf12e1d28fac395da5e1152486b4f056fe37278b88095bda",
+    "references\\capabilities\\conditional-argument.md": "352269833ee4a95990203a1d2b6741775a60754b18c9cad7f544de092b59e005",
+    "references\\capabilities\\define-terms.md": "ad8ee31a334461c21e7bb1b0b066e76c035d67a1d177a056729b84484c4bf919",
+    "references\\capabilities\\fact-confirmation.md": "ce9f53dd6ae9ae19e8368d14a6d3a23945eef4e463b25c66233da7ae1f7afa47",
+    "references\\capabilities\\fallacy-detector.md": "f7d2111270c25873c68174920e8b525e933c38e5d7e1ff488c9f8f60c98e9bfd",
+    "references\\capabilities\\quantifier-audit.md": "d483bdc8c9789ebbccb1eeed336a64217b672192147c3c7e3da29cc02febac9a",
+    "references\\capabilities\\root-cause.md": "29903dc01085783a7fb39293b3b28f1fcd71deeb2c1079a53d8be9a8c93d4cf1",
+    "references\\capability-index.md": "d6a9cb94fa5084e8c6fc06e57d5392402f259c595fc7fc4a1df3e37dc8d11ceb",
+    "references\\cheatsheet.md": "99dafee072fb948374b0a79748964c3ae377440708d3bc54a4e8fd2b9eb7e238",
+    "references\\glossary.md": "9a00a6ef5c7b2e62b10a2621c07c6184d7f16fad7cea1c650964787c15ec0c5b",
+    "references\\overview.md": "2b2f0c2078f89e113e3a9ef68206be46566d2da0841132764b260879c27cdef2",
+    "SKILL.md": "fd258f59581c5a42afbf861689ba0e349a981cf98290da813f953044df181792"
+  },
+  "note": "update/重编译前比对 published_hashes；检测到本地手改不得静默覆盖",
+  "bundle_id": "bundle.simple-logic",
+  "bundle_sha256": "068d74ea9eccb09379309d869d8655a3b202e452cf430fd73e0755ad88ee2297",
+  "variant": "single",
+  "run_id": "run-20260916-141235-a3fe1c",
+  "decision": {
+    "schema_version": 1,
+    "requested": "single",
+    "selected": "single",
+    "decision_policy": "single-first-v1",
+    "skill_budget": 8,
+    "promoted_count": 7,
+    "capability_count": 9,
+    "reasons": [
+      "用户显式选择 single，auto 决策器不覆盖用户选择"
+    ],
+    "alternative": "compact pack（1 个来源路由入口 + 7 个晋级 Skill，共 8 个可发现入口）",
+    "user_confirmed": true,
+    "preserve_strategy_on_update": true
+  }
+}
