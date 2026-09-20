@@ -9,6 +9,10 @@ Python / TS·JS / Go 三节。意图与结构提炼自 alibaba/open-code-review 
 `internal/config/rules/rule_docs/`（Apache-2.0），按本项目口径精简——它是一部
 「检查表 + 排除表」，剔除排除表后失去 precision 保护，本文件只保留排除表这半边。
 
+**未覆盖语言的降级规则**：diff 语言不在本文件三节内（Java、Rust、shell、C# 等）时，
+子代理只用 code-review skill 的通用假阳性跳过清单，不编造本文件的语言特定排除项，
+并在覆盖表备注中显式声明「无语言专属清单，走通用 gate」。这是设计行为，不是遗漏。
+
 **维护约定（防双源漂移）**：每条排除的阳性检项本体在 OCR 规则文档（外部上游），
 本文件是面向本项目子代理的精简副本；新增语言节时对照上游 `rule_docs/<lang>.md`
 提炼。上游更新优先，本文件按需对齐，不逐字同步。

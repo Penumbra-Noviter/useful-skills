@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes: Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
+description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along multiple axes: Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?) run as parallel sub-agents; Falsify (construct inputs/states designed to break the changes) runs as a third axis when the orchestrator requests it; Architecture (module-structure assessment) joins in kickoff final-audit contexts. Reports the axes side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
 ---
 
 Multi-axis review of the diff between `HEAD` and a fixed point the user supplies:
@@ -17,7 +17,7 @@ The Standards and Spec axes run as **parallel sub-agents** so they don't pollute
 
 Running the Falsify axis, or consuming audit findings, read `references/falsify-pitfalls.md` first — knowledge-base-distilled review pitfalls (pin the defect's layer, red-before-green regression tests, cover the defense mechanism's own state machine, coverage figures need a `--cov` scope, audit output is a stale snapshot). Pass this reference into the Falsify sub-agent brief.
 
-For language-specific do-not-report guidance, Standards and Falsify sub-agents read `references/negative-checklists.md`, taking the section matching the diff's languages (Python / TS·JS / Go today). It layers on top of the skip list in the credibility gate below.
+For language-specific do-not-report guidance, Standards and Falsify sub-agents read `references/negative-checklists.md`, taking the section matching the diff's languages (Python / TS·JS / Go today). It layers on top of the skip list in the credibility gate below. Languages without a checklist section get **only** the generic skip list — a deliberate degradation, not an omission; do not pretend unlisted languages have specialized protection.
 
 ## Reviewer posture
 
@@ -41,7 +41,7 @@ The reviewer is only as useful as its findings are trustworthy. An LLM reviewer'
 - **HIGH/CRITICAL require proof** — exact snippet + line, the specific input→state→outcome scenario, and why existing guards (types, validation, framework defaults) don't catch it. Missing any of the three: demote to MEDIUM or drop.
 - **Zero findings is a valid outcome.** A clean review is a clean review; do not manufacture findings to justify the invocation.
 - **Skip the known false positives** unless this codebase gives you specific evidence to the contrary: "consider adding error handling" on calls whose error path is handled upstream (framework middleware, error boundaries, top-level try/catch); "missing input validation" on internal functions whose callers already validate; well-known constants (HTTP status codes, common timeouts, array index 0); exhaustive switches or generated code flagged as "too long"; N+1 queries on fixed-cardinality loops or batched paths; fire-and-forget calls (logging, metrics, queue pushes) flagged as "missing await"; `Math.random()` in non-cryptographic contexts; `eval`/`Function` in an explicitly code-loading plugin surface.
-- **Negative checklists layer on top of the skip list.** The skip list above is language-agnostic and heuristic. Sub-agents reviewing Python, TS/JS, or Go must additionally read the matching section of `references/negative-checklists.md` and honor its concrete "do not report" exclusions (e.g. mutable-default-argument patterns in a function that never mutates the argument; `.pyi` stub unused imports; Go timer `.Stop()` missing on Go 1.23+ where it is not a leak). A finding that trips an exclusion must carry diff evidence that proves the exclusion doesn't apply. The repo's own documented standards still override the checklists; anything tooling enforces is skipped regardless.
+- **Negative checklists layer on top of the skip list.** The skip list above is language-agnostic and heuristic. Sub-agents reviewing Python, TS/JS, or Go must additionally read the matching section of `references/negative-checklists.md` and honor its concrete "do not report" exclusions (e.g. mutable-default-argument patterns in a function that never mutates the argument; `.pyi` stub unused imports; Go timer `.Stop()` missing on Go 1.23+ where it is not a leak). A finding that trips an exclusion must carry diff evidence that proves the exclusion doesn't apply. The repo's own documented standards still override the checklists; anything tooling enforces is skipped regardless. For languages without a checklist section (Java, Rust, shell, ...), run on the generic skip list alone and say so in the coverage notes — falling back to the generic gate is the designed behavior, never an excuse to invent language-specific exclusions on the fly.
 
 When tempted to flag one of the above, ask: "would a senior engineer on this team actually change this in review?" If no, skip it.
 
@@ -178,11 +178,11 @@ Reconcile, verify, then present.
 
 **Verify anchors.** For every 🔴 finding, confirm the quoted snippet exists at the cited `file:line` in the working tree (read the file, or `git grep -n` a distinctive line from the snippet). A 🔴 whose snippet does not match its cited location is demoted to 🟡 or dropped, per the gate.
 
-Then present the reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. When the Falsify axis was requested, present its findings under a `## Falsify` heading as well. Do **not** merge or rerank findings, because the axes are deliberately separate (see _Why two axes_).
+Then present the reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. When the Falsify axis was requested, present its findings under a `## Falsify` heading as well. Do **not** merge or rerank findings, because the axes are deliberately separate (see _Why Standards and Spec are separate_).
 
 End with a one-line summary: total findings per axis, the worst issue _within each axis_ (if any), and the coverage reconciliation result (X/Y files reviewed across axes; Z flagged UNREVIEWED). Don't pick a single winner across axes: that's the reranking the separation exists to prevent.
 
-## Why two axes
+## Why Standards and Spec are separate
 
 A change can pass one axis and fail the other:
 
