@@ -21,7 +21,7 @@
 | finesse-ui | 自研 + 部分派生 | 派生自 taste-skill v2 / emilkowalski/skills / VoltAgent/awesome-design-md | MIT | 0.21.0 | 快照 2026-08-28 · v0.21.0，**非 mattpocock 内容** | 部分（仅派生源） |
 | open-kimi-ppt | 自研（逆向） | 无（依赖 Moonshot PPTD 格式） | 无 | — | 2026-08-08 | ❌ |
 | neat-freak | vendored + 本地化 | [KKKKhazix/khazix-skills](https://github.com/KKKKhazix/khazix-skills)（neat-freak/，用户 2026-08-13 确认） | — | 3.0.0（上游同版） | 2026-08-11 | ✅ |
-| context-monitor | 自研（推断） | 无 | 无 | — | 2026-08-06 | ❌ |
+| context-monitor | 自研（推断）／已移除 2026-09-20 | 无 | 无 | — | 2026-08-06 | — |
 | project-kickoff | 自研 | 无（符号链接 → `.cc-switch/skills/project-kickoff/`） | 无 | 有 REVISIONS.md | 独立维护 | ❌ |
 | simplify-codebase | vendored + 适配 | [tt-a1i/simplify-codebase](https://github.com/tt-a1i/simplify-codebase) | MIT | — | 2026-08-29 | ✅ |
 | agent-reach | vendored（skill 文档层） | [Panniantong/Agent-Reach](https://github.com/Panniantong/Agent-Reach) | MIT（上游） | 15 平台（上游已 16） | 2026-08-26（未登记，本次补） | ✅（上游有更新未合入） |
@@ -143,9 +143,10 @@
 - **2026-09-16 核对**：上游 `neat-freak/` 路径自 2026-08-13 后**零提交**（上游 9-16 的 aihot v1.7.1 更新是另一 skill），无需更新
 - **更新提示**：正文为中文改写版，同步上游时人工合入；若上游更新 references，优先把缺失的 4 个 reference 文件补齐而非只更新 SKILL.md
 
-### 11. context-monitor — 自研（推断）
+### 11. context-monitor — 自研（推断）· 2026-09-20 已移除
 
-- 77430e9 导入时即存在；中文内容、无 LICENSE、无来源标记 → 判为自研。若实际来自某处请补记
+- 77430e9 导入时即存在；中文内容、无 LICENSE、无来源标记 → 判为自研。若实际来自某处请补记（条目已删，git 历史或本存档可溯）
+- **移除（2026-09-20）**：功能与主力 agent（ZCode / dsh）的原生实时 token 占用监控重复，用户拍板删除
 
 ### 12. project-kickoff — 自研（独立位置）
 
@@ -239,7 +240,7 @@
 1. **查本文件**对应条目 → 拿到上游 URL、本地版本、本地改动点
 2. **确认上游最新版本**（git clone / gh api / 上游 README）
 3. **对账 diff**：`git diff <本仓库导入commit> <上游文件>`，逐项评估
-4. **保留本地改动点**（每条目已列；diagram-design 的 4 个修复与 frontmatter/gate、finesse-ui 的 references 尤其注意）。**自研/深度改写类条目（finesse-ui、open-kimi-ppt、neat-freak、context-monitor）默认只允许人工挑选合入，禁止任何形式的覆盖**
+4. **保留本地改动点**（每条目已列；diagram-design 的 4 个修复与 frontmatter/gate、finesse-ui 的 references 尤其注意）。**自研/深度改写类条目（finesse-ui、open-kimi-ppt、neat-freak）默认只允许人工挑选合入，禁止任何形式的覆盖**
 5. **同步后更新本文件**：同步日期、上游版本、改动摘要
 6. 若同步牵涉 license 变化 → 同步更新对应 LICENSE 与 frontmatter
 
@@ -248,5 +249,5 @@
 - [x] mattpocock 批次中「本地有、上游当前 main 无」的目录——**2026-08-29 已核实**（上游 main 快照）：batch-grill-me、design-an-interface、edit-article、find-skills、improve-python-architecture、obsidian-vault、qa、request-refactor-plan、ubiquitous-language、skill-creator、writing-great-skills 均不在上游，属上游删除；本地去留见 §1「最近同步」
 - [ ] skill-creator 的 Apache 2.0 LICENSE.txt 与 mattpocock 批次其余 skill 不协调（疑源自 anthropics/skills），重发布时需注意条款差异
 - [x] diagram-design 上游 2.3+ 变更内容评估——**2026-09-16 已同步至 2.6.27（40 型）并重放本地定制**
-- [x] context-monitor 的来源判定为推断——仍无上游线索，维持自研判定
+- [x] context-monitor 的来源判定为推断——**2026-09-20 已移除**（与 ZCode/dsh 原生 token 监控重复），条目随库删除
 - [ ] agent-reach 上游 Boss直聘 channel 合入（用户 2026-09-16 未选，挂起）

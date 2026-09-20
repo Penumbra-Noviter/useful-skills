@@ -131,7 +131,6 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 - **`/dao-skill`**: the meta-designer — design, audit, optimize, or evolve a skill; find a skill's root problem before refactoring it.
 - **`/vibehub`**: translate vibe-coded descriptions into precise terminology mid-task (tooltip, hover…).
 - **`/vision`**: identify/analyze local or web images via vision.js (fallback when the View agent is unavailable).
-- **`/context-monitor`**: read current context/token usage to decide model switches.
 - **`/distill-lesson`**: distill this session's lessons into atomic notes in the Obsidian knowledge base (沉淀/复盘).
 - **`/kb-search`**: read the dev knowledge base (demo vault) for hard-won lessons at the moments they matter — before writing tests, refactoring, or on a debugging failure. Retrieve ≤5 hits from 经验/ notes (read-only). The read half of the knowledge loop; `/distill-lesson` is the write half.
 - **`/neat-freak`**: knowledge & governance closeout — reconcile docs/rules/memory with code reality, audit workspace residue, produce a pending-deletion list for confirmation.
