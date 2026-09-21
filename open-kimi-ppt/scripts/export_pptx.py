@@ -336,6 +336,35 @@ def ensure_debug_chrome() -> Optional[int]:
     raise ExportError(f"debug browser did not open CDP port {port} within 20s")
 
 
+def kill_debug_chrome() -> None:
+    """Kill leftover agent-browser debug Chrome instances (Windows only).
+
+    agent-browser launches Chrome with a dedicated --user-data-dir under the
+    temp dir (okp-cdp-profile). Leftover instances can be reused as a stale
+    session and make exports fail with "export dialog did not become ready".
+    Killing only processes whose command line matches that profile never
+    touches the user's own Chrome/Edge. Non-Windows platforms do nothing
+    (agent-browser manages its own browser lifecycle there).
+    """
+    if sys.platform != "win32":
+        return
+    profile_marker = "okp-cdp-profile"
+    powershell = (
+        "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | "
+        f"Where-Object {{ $_.CommandLine -match '{profile_marker}' }} | "
+        "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+    )
+    try:
+        subprocess.run(
+            ["powershell", "-NoProfile", "-Command", powershell],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        pass  # cleanup is best-effort; the export retry path still applies
+
+
 def find_manifest(source: Path) -> Path:
     source = source.expanduser().resolve()
     if source.is_file():
@@ -360,7 +389,14 @@ def read_yaml_mapping(path: Path) -> Tuple[str, Dict[str, Any]]:
     try:
         value = yaml.safe_load(text)
     except yaml.YAMLError as exc:
-        raise ExportError(f"invalid YAML in {path}: {exc}") from exc
+        raise ExportError(
+            "invalid YAML in {path}: {exc}\n"
+            "常见原因与修法：\n"
+            "  1) 文本值里出现「词: 」形式的冒号（如 text: xxx concern: yyy）会被 YAML 当成映射语法 → "
+            "整行 text 值用双引号包裹，例如 text: \"... concern: ...\"；\n"
+            "  2) 值以特殊字符开头（*、&、!、|、> 等）或以行首空格缩进 → 同样用引号包裹；\n"
+            "  3) 缩进层级与上下文不符 → 检查该行对齐到所属元素的同一列。".format(path=path, exc=exc)
+        ) from exc
     if not isinstance(value, dict):
         raise ExportError(f"expected a YAML mapping in {path}")
     return text, value
@@ -555,7 +591,49 @@ def wait_for_export_dialog(browser: BrowserSession, timeout: float = 20.0) -> Di
             return last
         except ExportError:
             time.sleep(0.35)
-    raise ExportError(f"export dialog did not become ready: {last}")
+    raise export_dialog_timeout(last)
+
+
+def _open_export_dialog(browser: BrowserSession, url: str) -> Dict[str, Any]:
+    """Open the local editor, wait until the deck is ready, and click 导出
+    to bring up the export dialog. Shared by the normal path and the
+    kill-and-retry path.
+    """
+    log("opening the local neo-ppt editor")
+    browser.open(url)
+    browser.run(
+        [
+            "wait",
+            "--fn",
+            'document.documentElement.dataset.deckStatus === "ready"',
+        ],
+        timeout=120,
+    )
+    browser.run(["set", "viewport", "1280", "720"])
+    snapshot = browser.snapshot()
+    export_ref = ref_by_name(snapshot, "导出", "button")
+    browser.run(["click", f"@{export_ref}"])
+    return wait_for_export_dialog(browser)
+
+
+def export_dialog_timeout(last: Optional[Dict[str, Any]]) -> ExportError:
+    """Build an actionable error for the "export dialog did not become ready" case.
+
+    Root causes seen in the wild: a leftover agent-browser debug Chrome
+    instance on port 9337 being reused as a stale session. The message names
+    the automatic cleanup performed by the caller (kill_debug_chrome) plus a
+    manual one-liner, instead of dumping an undigestible CDP snapshot.
+    """
+    hint = (
+        "export dialog did not become ready: the local editor did not open the export dialog.\n"
+        "常见原因：残留的 agent-browser 调试 Chrome（--user-data-dir 含 okp-cdp-profile）"
+        "被复用成失效会话。\n已自动按 okp-cdp-profile 特征清理该 Chrome 簇；请重试导出。\n"
+        "若仍失败，手动清理后重试：\n"
+        "  powershell -NoProfile -Command \"Get-CimInstance Win32_Process -Filter \\\"Name='chrome.exe'\\\" "
+        "| ? { $_.CommandLine -match 'okp-cdp-profile' } | Stop-Process -Force\"\n"
+        "（该命令只杀调试实例，不影响你自己的 Chrome/Edge）"
+    )
+    return ExportError(hint)
 
 
 def is_pptx(path: Path) -> bool:
@@ -933,21 +1011,20 @@ def export_pptx(
         browser = BrowserSession(agent_browser, session, temp_dir, download_dir, cdp_port)
         downloads = default_downloads_dir()
         try:
-            log("opening the local neo-ppt editor")
-            browser.open(url)
-            browser.run(
-                [
-                    "wait",
-                    "--fn",
-                    'document.documentElement.dataset.deckStatus === "ready"',
-                ],
-                timeout=120,
-            )
-            browser.run(["set", "viewport", "1280", "720"])
-            snapshot = browser.snapshot()
-            export_ref = ref_by_name(snapshot, "导出", "button")
-            browser.run(["click", f"@{export_ref}"])
-            dialog = wait_for_export_dialog(browser)
+            try:
+                dialog = _open_export_dialog(browser, url)
+            except ExportError as first_error:
+                # Dialog timeout is usually a stale reused debug-Chrome session.
+                # Kill the leftover cluster and retry once against a fresh browser.
+                log(
+                    f"export dialog did not become ready ({first_error}); "
+                    "killing leftover debug Chrome and retrying once"
+                )
+                browser.close()
+                kill_debug_chrome()
+                cdp_port = ensure_debug_chrome()
+                browser = BrowserSession(agent_browser, session, temp_dir, download_dir, cdp_port)
+                dialog = _open_export_dialog(browser, url)
 
             state = switch_state(dialog)
             if state is not None:
@@ -989,6 +1066,10 @@ def export_pptx(
             server.shutdown()
             server.server_close()
             thread.join(timeout=2)
+            # 复盘教训: agent-browser 的调试 Chrome 若留着复用，下次导出会
+            # 复用失效会话而卡 "export dialog did not become ready"。导出结束
+            # 即清理（成功/失败都执行），代价是下次冷启动一次 Chrome。
+            kill_debug_chrome()
 
     slide_count = patch_transitions(output, transition)
     summary = verify_output(output, transition, embed_fonts)
@@ -1064,6 +1145,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"open-kimi-ppt export failed: {exc}", file=sys.stderr)
         return 1
     print(json.dumps(summary, ensure_ascii=False, indent=2))
+    if summary.get("fontParts", 0) == 0:
+        print(
+            "open-kimi-ppt 提示: 本版 .pptx 未嵌入字体 (fontParts=0)。"
+            "若本机未安装 deck 使用的字体（默认 MiSans），PPT 会回退到系统字体且粗体失真。"
+            "本机已装对应字体则可忽略；若需分发到未装字体的机器，请用 --browser 路径重导出"
+            "（该路径嵌入字体，fontParts=1）。",
+            file=sys.stderr,
+        )
     return 0
 
 

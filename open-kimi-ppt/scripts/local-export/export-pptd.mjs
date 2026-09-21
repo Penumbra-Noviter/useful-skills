@@ -49,7 +49,18 @@ async function loadYaml() {
           ['-c', 'import sys,yaml,json; print(json.dumps(yaml.safe_load(sys.stdin.read()), ensure_ascii=False))'],
           { input: text, encoding: 'utf8', maxBuffer: 50 * 1024 * 1024 },
         );
-        if (r.status !== 0) throw new Error('python yaml failed: ' + (r.stderr || r.stdout));
+        if (r.status !== 0) {
+          const raw = String(r.stderr || r.stdout || '').trim();
+          if (/python3?[^]*not (found|recognized)|is not recognized/i.test(raw) || r.error) {
+            throw new Error(
+              'python3 yaml fallback failed: python3 不在 PATH（Windows 常见）。' +
+              '修法：安装 Python 3 后把 python3.exe 放进 PATH（或复制一份到 Python 安装目录），' +
+              '或先 `npm install yaml js-yaml` 让 Node 用 JS 解析，绕过 python 回落。' +
+              '原始错误: ' + (raw || r.error?.message || 'undefined')
+            );
+          }
+          throw new Error('python yaml failed: ' + raw);
+        }
         return JSON.parse(r.stdout);
       };
     }

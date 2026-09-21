@@ -827,6 +827,39 @@ interface Line extends ElementBase {
   border: {style: solid, width: 2, color: "$primary"}
 ```
 
+**折线圆角（流程图中连接节点的常用形态）：**
+
+多段直线拼接会产生尖角（视觉生硬）；要平滑转角，用**一条 line 承载整条折线**，把首尾之外的中间点作为弯折点，并配合 `curve: "round"`（圆角过渡，默认值）或 `curve: "smooth"`（贝塞尔平滑曲线）。不要再拆成多条独立 line——拆开后每条都是直段，转角必然尖锐。
+
+```yaml
+# 下-左-下 折线：首尾为端点，中间两个点为弯折点，round 给出圆角过渡
+- elementId: route-line
+  elementType: line
+  bounds: [136, 186, 115, 114]
+  viewBox: [115, 114]
+  points: "115,0 115,54 0,54 0,114"
+  curve: round
+  arrow: [null, arrow]
+  border: {style: solid, width: 1, color: "$faint"}
+
+# 同一路径用 smooth：整条线变为平滑曲线（弯折点不再走直线段）
+- elementId: route-line-smooth
+  elementType: line
+  bounds: [136, 186, 115, 114]
+  viewBox: [115, 114]
+  points: "115,0 115,54 0,54 0,114"
+  curve: smooth
+  arrow: [null, arrow]
+  border: {style: solid, width: 1, color: "$faint"}
+```
+
+要点：
+
+- `points` 首尾是曲线实际经过的点，中间点是弯折/控制点；把折线的每个转角对应一个中间点即可。
+- `curve: "round"`（默认）适合流程图：正交走向 + 小半径圆角过渡，方向感清晰。
+- `curve: "smooth"` 适合需要柔和弧线的场景（装饰线、数据流弧），但会弯曲直线段。
+- `viewBoxW : viewBoxH` 必须等于 `bounds.w : bounds.h`，否则折线被拉伸变形（坐标用相对值或按比例换算）。
+
 ---
 
 ### Image (image)
