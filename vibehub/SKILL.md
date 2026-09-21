@@ -14,7 +14,7 @@ description: 在任何 Vibe Coding 编程任务及其后续补充中持续识别
 
 ## 边界
 
-UI 设计构建走 `finesse` skill：用户要求设计/构建/打磨页面、界面或交互效果时，构建本身由 finesse 执行；VibeHub 不接管构建流程，仍按本文档在开发任务中补术语。两者在同一对话中并存，不做流水线耦合。
+UI 设计构建走 `finesse-ui` skill：用户要求设计/构建/打磨页面、界面或交互效果时，构建本身由 finesse-ui 执行；VibeHub 不接管构建流程，仍按本文档在开发任务中补术语。两者在同一对话中并存，不做流水线耦合。
 
 ## 每轮都检查
 
@@ -68,6 +68,7 @@ node "<skill-root>/scripts/vibehub.mjs" resolve \
   --compact
 ```
 
+- `<skill-root>` 是当前 vibehub skill 所在目录（`vibehub.mjs` 位于其 `scripts/` 子目录），按当前 agent 环境的 skill 目录解析——**不要硬编码本机绝对路径、不要臆造路径**。若无法定位 `vibehub.mjs` 或脚本缺失：先如实告知用户缺脚本，不跳过查询、不伪造结果。
 - 高置信度时只传一个候选；存在歧义时才增加候选，最多三个。
 - 不要把用户整句原话直接当作搜索词。
 - 比较标题、别名、定义和匹配字段，只采用真正符合当前场景的结果。

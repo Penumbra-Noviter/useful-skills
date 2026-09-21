@@ -1,6 +1,6 @@
 ---
 name: officecli
-description: Create, analyze, proofread, render, and modify Office documents (.docx, .xlsx, .pptx) using the officecli CLI tool. Use when the user wants to create, inspect, check formatting, find issues, add charts, modify Office documents, or render Office files to PNG for visual inspection. Collaborates with document-skills (docx/pptx/xlsx): load that skill's design specs, execute and render with officecli.
+description: Create, analyze, proofread, render, and modify Office documents (.docx, .xlsx, .pptx) using the officecli CLI tool. Use when the user wants to create, inspect, check formatting, find issues, add charts, modify Office documents, or render Office files to PNG for visual inspection. Collaborates with the document plugin family (`documents:docx` / `presentations:pptx` / `spreadsheets:xlsx` — formerly the single `document-skills` plugin, split on rename): load those skills' design specs, execute and render with officecli.
 ---
 
 # officecli
@@ -430,25 +430,25 @@ nothing without error) are listed there.
 
 ---
 
-## 与 document-skills 的内联契约（本机专用，非上游）
+## 与文档插件族的内联契约（本机专用，非上游）
 
-**分工原则：document-skills 提供设计规范与质量清单（规范资产），officecli 承担执行、渲染、目检与既有文档编辑（执行层）。不是二选一，是接管线。**
+**分工原则：文档插件族（`documents:docx` / `presentations:pptx` / `spreadsheets:xlsx`；旧名单一 `document-skills` 插件，ZCode 更新后拆分改名）提供设计规范与质量清单（规范资产），officecli 承担执行、渲染、目检与既有文档编辑（执行层）。不是二选一，是接管线。**
 
 | 任务类型 | 规范来源 | 执行 |
 |---|---|---|
-| 新建 docx（封面/版式/CJK 排版） | document-skills docx（design-system/common-rules/postcheck） | docx-js 或 officecli 均可；**渲染目检必须 officecli** |
-| 新建 pptx（palette/布局/避免 AI 味） | document-skills pptx（Part 1 设计原则） | pptxgenjs 或 officecli 均可；**渲染目检必须 officecli** |
-| 新建 xlsx / 数据清洗 / 透视 | document-skills xlsx（scenes/engines/quality/pipeline） | openpyxl 或 officecli 均可 |
+| 新建 docx（封面/版式/CJK 排版） | `documents:docx`（design-system/common-rules/postcheck） | docx-js 或 officecli 均可；**渲染目检必须 officecli** |
+| 新建 pptx（palette/布局/避免 AI 味） | `presentations:pptx`（Part 1 设计原则） | pptxgenjs 或 officecli 均可；**渲染目检必须 officecli** |
+| 新建 xlsx / 数据清洗 / 透视 | `spreadsheets:xlsx`（scenes/engines/quality/pipeline） | openpyxl 或 officecli 均可 |
 | **编辑既有文档**（表格/页眉/修订/透视/公式） | — | **优先 officecli**（set/query/batch/merge，python 系改不动或破坏格式的场景） |
 | 视觉验收（渲染 → 目检 → 修复 → 复验） | — | **唯一通道：officecli `view screenshot` 出 PNG → View 子智能体目检**（judge 本机无视觉） |
 
 **为什么必须 officecli 做目检（本机事实，2026-09-07 核实）：**
-- LibreOffice 未安装 → document-skills 的 PDF 转换与 pdftoppm 渲染验证链路整条断
-- judge 子智能体无视觉模型 → pptx skill 官方规定的 "pdftoppm → judge" Visual QA 不可用
+- LibreOffice 未安装 → 文档插件族的 PDF 转换（`pdf:pdf`）与 pdftoppm 渲染验证链路整条断
+- judge 子智能体无视觉模型 → `presentations:pptx` 官方规定的 "pdftoppm → judge" Visual QA 不可用
 - officecli 内置渲染引擎无 Office 依赖，是当前唯一可用的文档渲染与目检通道
 - （pptxgenjs 已装 2026-09-07，pptx 创建主链路恢复；创建可用 pptxgenjs/python-pptx/officecli 任一，目检仍必须 officecli）
 
-**硬规则（对齐 document-skills 的 MANDATORY 风格）：**
+**硬规则（对齐文档插件族 MANDATORY / design-system 风格）：**
 1. 任何产出或修改 docx/pptx/xlsx 后，必须执行一次渲染目检：`officecli view <file> screenshot --page 1-N -o <dir>/page-N.png` → View 子智能体逐页验收（对照设计意图检查内容一致性/溢出/截断/越界/对比度）。
 2. 检出问题 → 用 officecli `set`/`add`/`remove` 修复 → 重渲染 → 复验通过后才算完成交付。
-3. 新建任务的最终文件在交付前用 `officecli validate` 过一遍 OpenXML 校验（docx 场景再叠加 document-skills 的 postcheck.py）。
+3. 新建任务的最终文件在交付前用 `officecli validate` 过一遍 OpenXML 校验（docx 场景再叠加 `documents:docx` 的 postcheck.py）。

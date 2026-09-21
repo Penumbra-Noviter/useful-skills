@@ -19,3 +19,8 @@ quarkclouddrive/*
 !quarkclouddrive/SKILL.md
 !quarkclouddrive/references/
 !quarkclouddrive/scripts/
+
+# Skill 生态治理文档（本地参考，不纳入 git 版本治理）
+TO-TICKETS.md
+TECH_DEBT.md
+DEV_LOG.md

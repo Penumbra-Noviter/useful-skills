@@ -7,9 +7,11 @@ description: Search, create, and manage notes in the Obsidian vault with wikilin
 
 ## Vault location
 
-`/mnt/d/Obsidian Vault/AI Research/`
+This skill targets Obsidian's multi-vault knowledge base rooted at `D:/Desktop/knowledge base/` (domains such as `demo` for programming, `Studying Game` for game research). Resolve the target vault root for this session via the library-routing rule in AGENTS.md §3.5 — a project's `KNOWLEDGE_BASE.md` first, then the vault's own `README.md`, defaulting to `demo` for programming. Let the user name the vault explicitly otherwise (e.g. `D:/Desktop/knowledge base/well-being`). All commands below use `<VAULT_ROOT>` for that resolved root.
 
-Mostly flat at root level.
+`<VAULT_ROOT>` must be a Windows / Git-Bash-resolvable path (`D:/...` or `/d/...`) — never a WSL `/mnt/...` path, which is unresolvable in this environment.
+
+The vault is mostly flat at its root level.
 
 ## Naming conventions
 
@@ -29,10 +31,10 @@ Mostly flat at root level.
 
 ```bash
 # Search by filename
-find "/mnt/d/Obsidian Vault/AI Research/" -name "*.md" | grep -i "keyword"
+find "<VAULT_ROOT>" -name "*.md" | grep -i "keyword"
 
 # Search by content
-grep -rl "keyword" "/mnt/d/Obsidian Vault/AI Research/" --include="*.md"
+grep -rl "keyword" "<VAULT_ROOT>" --include="*.md"
 ```
 
 Or use Grep/Glob tools directly on the vault path.
@@ -49,11 +51,11 @@ Or use Grep/Glob tools directly on the vault path.
 Search for `[[Note Title]]` across the vault to find backlinks:
 
 ```bash
-grep -rl "\\[\\[Note Title\\]\\]" "/mnt/d/Obsidian Vault/AI Research/"
+grep -rl "\\[\\[Note Title\\]\\]" "<VAULT_ROOT>"
 ```
 
 ### Find index notes
 
 ```bash
-find "/mnt/d/Obsidian Vault/AI Research/" -name "*Index*"
+find "<VAULT_ROOT>" -name "*Index*"
 ```

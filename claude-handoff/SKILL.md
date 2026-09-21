@@ -16,3 +16,5 @@ Do not duplicate content already captured in other artifacts (specs, plans, ADRs
 Redact any sensitive information, such as API keys, passwords, or personally identifiable information, since the summary becomes the agent's prompt.
 
 If the user passed arguments, treat them as a description of what the next session will focus on and tailor the summary accordingly.
+
+Use this skill when the handoff should **launch a fresh background agent immediately**. If the user wants to save the handoff as a file to pick up later instead, use the `handoff` skill.

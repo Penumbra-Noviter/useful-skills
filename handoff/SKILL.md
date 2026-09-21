@@ -14,3 +14,5 @@ Do not duplicate content already captured in other artifacts (specs, plans, ADRs
 Redact any sensitive information, such as API keys, passwords, or personally identifiable information.
 
 If the user passed arguments, treat them as a description of what the next session will focus on and tailor the doc accordingly.
+
+Use this skill when the handoff should be **saved as a file** for later pickup. If the user wants the next agent to start working **immediately** (a fresh background agent seeded with the summary), use the `claude-handoff` skill instead.

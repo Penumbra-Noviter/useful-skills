@@ -136,7 +136,7 @@ How to add tone: **have a take** (react to the facts, don't just report them); *
 
 ## Source and boundaries
 
-- Mechanism distilled from [Humanizer-zh](https://github.com/op7418/Humanizer-zh) (MIT, © 歸藏; translated from blader/humanizer, referencing hardikpandya/stop-slop), itself based on Wikipedia's [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing). See `PROVENANCE.md` §15.
+- Mechanism distilled from [Humanizer-zh](https://github.com/op7418/Humanizer-zh) (MIT, © 歸藏; translated from blader/humanizer, referencing hardikpandya/stop-slop), itself based on Wikipedia's [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing). See the repository-root `PROVENANCE.md` §15.
 - Out of scope: mining new material (fragments), structuring/exploit (shape/beats), publishing or platform formatting. This skill polishes text that already exists.
 - If the input has no AI smell to begin with, say so plainly — do not invent edits to justify the pass.
 

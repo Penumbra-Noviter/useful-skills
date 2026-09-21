@@ -64,7 +64,7 @@ Offer **multi-context** (a root `CONTEXT-MAP.md` pointing to per-context `CONTEX
 
 Show the user a draft of:
 
-- The `## Agent skills` block to add to whichever of `CLAUDE.md` / `AGENTS.md` is being edited (see step 4 for selection rules)
+- The `## Agent skills` block to add to `AGENTS.md` (see step 4, which migrates any existing `CLAUDE.md` first)
 - The contents of `docs/agents/issue-tracker.md`, `docs/agents/domain.md`, and `docs/agents/triage-labels.md` (the last only when `triage` is installed)
 
 Let them edit before writing.
@@ -73,11 +73,11 @@ Let them edit before writing.
 
 **Pick the file to edit:**
 
-- If `CLAUDE.md` exists, edit it.
-- Else if `AGENTS.md` exists, edit it.
-- If neither exists, ask the user which one to create; don't pick for them.
+- If `AGENTS.md` exists, edit it.
+- Else if `CLAUDE.md` exists, rename it to `AGENTS.md` first (per this repo's convention the agent guide is always `AGENTS.md`), then edit it.
+- If neither exists, ask the user to confirm creating `AGENTS.md`.
 
-Never create `AGENTS.md` when `CLAUDE.md` already exists (or vice versa); always edit the one that's already there.
+Never create or keep `CLAUDE.md`. If both already exist, `AGENTS.md` is authoritative — migrate any `CLAUDE.md`-only content into it, then confirm with the user before removing `CLAUDE.md`.
 
 If an `## Agent skills` block already exists in the chosen file, update its contents in-place rather than appending a duplicate. Don't overwrite user edits to the surrounding sections.
 

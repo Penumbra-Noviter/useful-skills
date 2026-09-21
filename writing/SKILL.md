@@ -55,7 +55,7 @@ description: 写作编排层：一个入口把长篇写作意图路由到 writin
 1. **执行时读子 skill**：路由到哪个阶段，就 Read 那个子 skill 的 `SKILL.md` 并按其流程执行（三件套是 user-invoked，由你代跑）。本文件不复制其机制（grounding/append/只读 pile/改写规则一律以子 skill 为准）。
 2. **路径在调用时显式传入**：explore 传产物路径；exploit 传 pile 路径 + 产物路径。子 skill 内部"没给路径就问一次"的兜底永远不该触发——你已经传了。
 3. **产物文件冲突**：`article.md` 已存在且是新一篇 → 问一次（覆盖/另起名），不静默覆盖。
-4. **跨 session 衔接**：新会话靠产物文件判定阶段，直接续。本 skill 自身不留状态文件——状态 = 产物文件本身（`skill-ecosystem.md` 只记编排关系，不记单个写作事项）。
+4. **跨 session 衔接**：新会话靠产物文件判定阶段，直接续。本 skill 自身不留状态文件——状态 = 产物文件本身（跨 skill 编排关系记在 README「编排架构」与本文件 Step 2 路由表，本编排层不记单个写作事项）。
 
 ## Step 4 · 成文后润色（可选，去 AI 味）
 
@@ -81,5 +81,5 @@ description: 写作编排层：一个入口把长篇写作意图路由到 writin
 
 - 不重写三件套的写作机制、文件格式、改写纪律；不把它们的规则复制到本文件。
 - 不替三件套发明第四阶段（如"发布""排版"）——用户要求发布/排版时说明不在编排层内，按需走 open-kimi-ppt 等其他 skill。`writing-humanizer` 的去 AI 味同样不是第四阶段：它是成文后的润色 pass，机制在子 skill，不在本文件。
-- 成文产物是 Markdown（`writing/article.md`）。用户要求把成文导出为 Word/Excel/PPT 文档时，路由到 document-skills（docx/pptx/xlsx 设计规范）+ officecli（执行与渲染目检，内联契约见 officecli SKILL.md 本地扩展节）；本编排层不管格式层，但必须把这条路指出去，不让产物停在 markdown 默认交付。
+- 成文产物是 Markdown（`writing/article.md`）。用户要求把成文导出为 Word/Excel/PPT 文档时，路由到文档插件族（`documents:docx` / `presentations:pptx` / `spreadsheets:xlsx`，设计规范；旧名单一 `document-skills` 插件已拆分改名为此三件）+ officecli（执行与渲染目检，内联契约见 officecli SKILL.md 本地扩展节）；本编排层不管格式层，但必须把这条路指出去，不让产物停在 markdown 默认交付。
 - 唯一职责：意图 → 阶段/润色 → 子 skill → 文件路径。路到了，执行就交给子 skill 的 SKILL.md。
