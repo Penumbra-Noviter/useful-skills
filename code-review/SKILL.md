@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along multiple axes: Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?) run as parallel sub-agents; Falsify (construct inputs/states designed to break the changes) runs as a third axis when the orchestrator requests it; Architecture (module-structure assessment) joins in kickoff final-audit contexts. Reports the axes side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
+description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along multiple axes: Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?) run as parallel sub-agents; Falsify (construct inputs/states designed to break the changes) runs as a third axis when the orchestrator requests it; Architecture (module-structure assessment) joins in kickoff final-audit contexts. Orchestrators may request a single axis (单轴) for incremental runs; this file is the single source for agents/code-review.md. Reports the axes side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
 ---
 
 Multi-axis review of the diff between `HEAD` and a fixed point the user supplies:
@@ -27,6 +27,10 @@ The reviewer is an **auditor, not a collaborator**.
 - Distinguish hard violations (documented standard breaches) from judgement calls (smell heuristics).
 
 The issue tracker should have been provided to you. If `docs/agents/issue-tracker.md` is missing, tell the user to run `/setup-matt-pocock-skills`.
+
+## Single source
+
+`agents/code-review.md` — the sub-agent prompt this skill orchestrates — carries only identity, inputs and the operational echo of the disciplines defined here; **this file is the canonical contract**. The two files are kept aligned by `project-kickoff/validate_skills.py` (bidirectional echo of the discipline terms, see its `SKILL_AGENT_ECHO` table). When they conflict, this file wins; fix the agent file, not this one. `project-kickoff` references this contract by pointer and does not re-copy it.
 
 ## Report credibility gate
 
@@ -146,12 +150,14 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 Every brief below must carry, verbatim: the **Report credibility gate** (including the negative-checklists rule), the **Severity markers**, the **remove pass**, the **coverage discipline**, and the **line anchoring** rules from above. These are what keep a multi-axis review from collapsing into noise — and what stop it from silently skipping files or drifting off their actual lines. Every brief also receives the **review-file manifest from step 1** in full, with status and +/- counts, and must end its findings with its coverage table. No comment may target a file outside the manifest, however loudly the context tools argue for it; context is for understanding, not for comment targets. The Falsify brief additionally receives `references/falsify-pitfalls.md`; the Standards and Falsify briefs additionally receive the relevant language section of `references/negative-checklists.md` (the orchestrator resolves it by the diff's languages).
 
+**Axis selection (单轴).** The orchestrator may request a single axis instead of the full four — `project-kickoff`'s wave-end incremental review passes `单轴: Falsify` (Falsify + file-scope verification against the declared ticket ranges + over-engineering detection), and its final audit runs all four. When a single axis is requested, spawn only that axis's sub-agent, skip the others, and note in the final report which axes ran and which were skipped and why. The 单轴 term is echoed in `agents/code-review.md` and checked by `validate_skills.py`.
+
 **Standards sub-agent prompt** should include:
 
 - The full diff command and commit list.
 - The review-file manifest.
 - The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full (the sub-agent has no other access to it), plus the resolved language negative checklist.
-- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls: documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Cover every manifest entry; end with your coverage table. Findings under 400 words (coverage table separate)."
+- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk; (c) safety red-lines — hard violations: secrets/tokens hardcoded in code (grep `sk-`, `api_key`, `password`, `token`; if hit, verify they go through config/env vars), `.gitignore` not covering secrets and caches, hardcoded external-service dependencies — breach = hard violation; (d) over-engineering: judge unannounced abstractions / redundant dependencies / needless hooks against the project's injected minimalism ladder (Ponytail — YAGNI → reuse in-repo → stdlib → platform-native → installed deps → one-liner → minimal working code), i.e. the explicit Speculative Generality hook in LLM contexts. Distinguish hard violations from judgement calls: documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Cover every manifest entry; end with your coverage table. Findings under 400 words (coverage table separate)."
 
 **Spec sub-agent prompt** should include:
 
@@ -170,6 +176,13 @@ If the spec is missing, skip the Spec sub-agent and note this in the final repor
 - The brief: "Construct inputs and states specifically designed to break these changes. Test failure paths before happy path; a test or code path that only proves the happy case is not evidence. Also hunt silent failures: empty `catch {}` blocks, errors folded into `null`/empty arrays with no context, dangerous fallbacks (`.catch(() => [])`, default values that hide the real failure), lost stack traces, generic rethrows, missing async handling, and missing timeout/rollback around network, file, and DB paths. For every finding cite the exact line, the input→state→outcome scenario, and why existing guards don't catch it. Cover every manifest entry; end with your coverage table. Findings under 400 words (coverage table separate)."
 - If the run was marked `LARGE_CHANGESET` in step 1, prepend to the brief: "Start with a plan section: the three riskiest areas of the change and the verification strategy for each (which files, which states, which inputs). Then execute it. Keep the plan in the report; findings must trace to a planned risk or explicitly note they surfaced outside it."
 
+**Architecture sub-agent prompt** (when the axis is requested) should include:
+
+- The diff command and commit list.
+- The review-file manifest.
+- The spec (if any; otherwise say the review is diff-only).
+- The brief: "Assess module structure against the shared architecture vocabulary (deep vs shallow modules, interface, seam, adapter, leverage, locality — see the AGENTS.md appendix). Report per file/hunk: (a) deep vs shallow modules: protocol surface vs implementation depth, name pass-through shells; (b) locality: does one concept's change scatter across many places; (c) leverage: exported names with little behaviour (low-leverage surface); (d) seams: hard couplings that are hard to replace or test, missing swappable interface where something actually varies; (e) structural smells: Shotgun Surgery / Divergent Change / Feature Envy / Data Clumps / Repeated Switches. Cover every manifest entry; end with your coverage table. Findings under 400 words (coverage table separate)."
+
 ### 5. Aggregate
 
 Reconcile, verify, then present.
@@ -182,11 +195,13 @@ Then present the reports under `## Standards` and `## Spec` headings, verbatim o
 
 End with a one-line summary: total findings per axis, the worst issue _within each axis_ (if any), and the coverage reconciliation result (X/Y files reviewed across axes; Z flagged UNREVIEWED). Don't pick a single winner across axes: that's the reranking the separation exists to prevent.
 
-## Why Standards and Spec are separate
+## Why the axes are four
 
-A change can pass one axis and fail the other:
+A change can pass one axis and fail another:
 
 - Code that follows every standard but implements the wrong thing → **Standards pass, Spec fail.**
 - Code that does exactly what the issue asked but breaks the project's conventions → **Spec pass, Standards fail.**
+- Code that passes both but blows up on one input → **Falsify fail.**
+- Code that passes all three but is a pass-through shell with concepts scattered → **Architecture fail.**
 
-Reporting them separately stops one axis from masking the other.
+Reporting them separately stops one axis from masking another — and lets a kickoff wave-end run (单轴: Falsify) or a final audit (all four) reuse the same contract.
