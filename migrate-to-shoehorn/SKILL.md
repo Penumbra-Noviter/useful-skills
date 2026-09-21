@@ -116,3 +116,4 @@ getUser(fromAny({ body: { id: 123 } }));
    - [ ] Replace `as unknown as Type` with `fromAny()`
    - [ ] Add imports from `@total-typescript/shoehorn`
    - [ ] Run type check to verify
+   - [ ] Run the affected test files (`npx vitest run <file>` / `npm test -- <file>` / 项目对应的测试运行器) to verify they still pass — type check passing only proves type compatibility; the migration rewrites the tests' own assertions, so the tests themselves are the true gate.
