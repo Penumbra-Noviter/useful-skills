@@ -130,10 +130,12 @@ When generating a PPT, adopt different production approaches for different user 
    - Run `scripts/export_images.py`. It loads the deck into the **local neo-ppt editor** (same offline mirror as `serve`), chooses 导出 → 图片, downloads the images ZIP, unzips it, and stitches all pages into one overview image. Needs Chromium via `agent-browser`, but **does not** call `www.kimi.com`.
 
      ```bash
-     python3 ~/.agents/skills/open-kimi-ppt/scripts/export_images.py \
+     python3 "<skill-root>/scripts/export_images.py" \
        /abs/path/project/deck.pptd \
        --output /abs/path/project/.qa-images
      ```
+
+     `<skill-root>` 是本 skill 的安装目录（`scripts/` 的父目录）——按当前 agent 环境的 skill 目录解析，不要硬编码本机绝对路径；`export_images.py` / `export_pptx.py` 都位于 `<skill-root>/scripts/` 下。正文其余处写 `scripts/…` 的即为相对本目录的同一脚本。
 
      The script prints a JSON summary mapping each stitched label (`P1`…`Pn`, 1-based page order) to its `.page` file.
    - Read the stitched overview image (`.qa-images/overview.jpg`) and check every page against this list:
@@ -177,12 +179,12 @@ When generating a PPT, adopt different production approaches for different user 
 
    ```bash
    # preferred: local patched WASM (offline)
-   python3 ~/.agents/skills/open-kimi-ppt/scripts/export_pptx.py \
+   python3 "<skill-root>/scripts/export_pptx.py" \
      /abs/path/project/deck.pptd \
      --output /abs/path/project/deck.pptx
 
    # optional: local neo-ppt browser UI (also offline)
-   python3 ~/.agents/skills/open-kimi-ppt/scripts/export_pptx.py \
+   python3 "<skill-root>/scripts/export_pptx.py" \
      /abs/path/project/deck.pptd \
      --output /abs/path/project/deck.pptx --browser
    ```
