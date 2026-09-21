@@ -25,6 +25,10 @@ Forty visual types. Semantic patterns describe behavior independently; type refe
 
 ---
 
+## Loading guide（选型先行，按型加载）
+
+本文件覆盖 40 种图型，触发后**不要顺序通读**：先在「语义模式 / 图型清单」处定位用户要的图型，再**只加载对应 `references/type-*.md`**（布局）与公共规则小节（连接器 / 复杂度预算 / 清单）；`references/` 的细节按 selected 加载，未命中当前图型的不读。导出 / 导入 / 迁移等步骤用到时再开对应 reference。
+
 ## 0. First-time setup — style guide gate
 
 **Before generating your first diagram in a new project, verify the style guide has been customized.**

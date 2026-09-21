@@ -7,6 +7,10 @@ description: Create, analyze, proofread, render, and modify Office documents (.d
 
 AI-friendly CLI for .docx, .xlsx, .pptx. Single binary, no dependencies, no Office installation needed.
 
+## Loading guide（命令参考，按需跳读）
+
+本文件是 CLI 参考手册，触发后**不要顺序通读**：先读 `## Strategy`（L1 read → L2 edit → L3 raw XML 分层）与 `## Help System`（不确定就 `officecli help` 或 `<cmd> --help`，**禁止猜语法**）；然后按当前任务跳读对应命令段（L1 / L2 / L3、Pivot、Watch & Interactive Selection 等）。开始任何文档工作前先查底部 `## Specialized Skills`——fundraising/academic/financial/dashboard/Morph 有专属 skill 需先 `load_skill`。末尾两节（本地扩展渲染循环、文档插件族内联契约）为本机专用，按需查阅。
+
 ## Install
 
 If `officecli` is not installed:
