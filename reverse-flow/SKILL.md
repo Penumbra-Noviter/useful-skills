@@ -111,6 +111,7 @@ Read only what is needed:
 - `references/evidence-reporting.md`: report templates, evidence tables, confidence language, and advisory format.
 - `references/vulnerability-review.md`: vulnerability classes, triage criteria, root-cause workflow, severity, and remediation structure.
 - `references/frida-cookbook.md`: Frida dynamic-instrumentation recipes (anti-debug bypass, hook patterns, iOS/Android) — vendored from reverse-skill (MIT).
+- `references/ghidra-cookbook.md`: Ghidra 实践速查——analyzeHeadless 批量工作流（静态批量分析主入口）与 Version Tracking 版本比对（补丁 diff）用法；本机工具已装于 `F:\tools\apps\ghidra`，参考源码在 `F:\tools\src\ghidra`（稀疏检出）。
 - `references/ollvm-deobfuscation.md`: OLLVM control-flow-flattening deobfuscation workflow (IDA/angr/Binary Ninja tools) — vendored from reverse-skill (MIT).
 - `references/apk-security-checklist.md`: APK static/dynamic security checklist (manifest, native layer, crypto, pinning) — vendored from reverse-skill (MIT).
 
