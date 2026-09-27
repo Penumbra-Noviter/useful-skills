@@ -1,6 +1,6 @@
 # useful-skills
 
-Claude Code / zcode 的个人技能库：**63 个可执行 skill（本仓库）+ 9 个插件族条目**，覆盖从立项、编码、质量到情报、内容生产、UI 设计、设备自动化的完整工程流。每个 skill 是一个自包含目录（`SKILL.md` + 可选 `references/` / `scripts/` / `examples/`），按触发词被模型自动调用或由用户显式 `/` 唤起。
+Claude Code / zcode 的个人技能库：**64 个可执行 skill（本仓库）+ 9 个插件族条目**，覆盖从立项、编码、质量到情报、内容生产、UI 设计、设备自动化的完整工程流。每个 skill 是一个自包含目录（`SKILL.md` + 可选 `references/` / `scripts/` / `examples/`），按触发词被模型自动调用或由用户显式 `/` 唤起。
 
 ## 快速开始
 
@@ -14,7 +14,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 
 ## 生态总览（9 域）
 
-本仓库 63 个 skill 按功能分成 9 个域；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
+本仓库 64 个 skill 按功能分成 9 个域；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
 
 ### 域 0 · Skill 生态自治
 
@@ -123,6 +123,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `wait-what` | 上一条没被理解：停下来重新表述 |
 | `teach` | 在本工作区教一个新技能/概念 |
 | `universal-exam-cram-coach` | 考前极速复习：解析大纲 → 知识库+题库 → 刷题判分 → 错题复盘 |
+| `life-decision-guide` | 人生决策咨询：按《高性价比人生指南》查条目、按性价比排序作答（不内联正文，按需取用） |
 
 ## 编排架构
 

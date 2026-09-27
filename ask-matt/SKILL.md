@@ -94,6 +94,7 @@ Off the main flow entirely.
 - **`/wait-what`** is the corrective for a message that didn't land. Use it mid-conversation, inside any other skill, and the agent re-pitches what it just said with the context you were missing, in plain English, using the `CONTEXT.md` vocabulary. It works after the fact; `/grill-with-docs` is the upfront cure, because a shared language agreed early is what stops the jargon arriving at all.
 - **`/teach`**: learn a concept over multiple sessions, using the current directory as a stateful workspace.
 - **`/universal-exam-cram-coach`**: structured last-minute exam prep — parse materials/outline into a wiki + question bank, drill with scoring, review mistakes. Reach for it when a deadline drives the learning, not the other way around.
+- **`/life-decision-guide`**: answer concrete life decisions from 《高性价比人生指南》— 该不该做、值不值、怎么选、出事先做什么、能领哪笔钱、犯不犯法。先查书再答，按成本×收益×证据等级排序，每条结论指回出处；查不到就直说书里没写。
 - **`/claude-handoff`** (distinct from `/handoff`): hands the **whole current conversation** to a fresh background agent that picks the work up immediately — forward progress without writing a portable file.
 - **`/skill-authoring`** is the reference for writing documents agents consume: skills, AGENTS.md, pointed-at docs.
 - **`/threat-model`**: pre-code STRIDE threat modeling for features involving auth, credentials, external input, multi-tenancy, or encryption — produces a verifiable security requirements checklist before you start building.

@@ -29,6 +29,8 @@
 | writing-humanizer | distilled | [op7418/Humanizer-zh](https://github.com/op7418/Humanizer-zh)（← blader/humanizer + stop-slop + 维基百科 Signs of AI writing） | MIT | — | 2026-09-01 | ✅ |
 | code-review（本地蒸馏补强） | distilled（补 2 机制） | [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code)（agents/code-reviewer + silent-failure-hunter） | MIT | — | 2026-09-01 | ✅ |
 | simple-logic | distilled（cangjie-tools v2.5.0 生成） | 《简单的逻辑学》(D. Q. McInerny) 经 [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill) 蒸馏 | 原书文本衍生 | v2.5.0（生成器） | 2026-09-16 | — |
+| ghidra-cookbook（reverse-flow 附加吸收） | distilled | [NationalSecurityAgency/ghidra](https://github.com/NationalSecurityAgency/ghidra)（依据本地参考 clone `F:\tools\src\ghidra` 提炼速查，非逐字复制） | Apache-2.0 | — | 2026-09-22 | ✅（文件头标注） |
+| life-decision-guide | distilled | [eternity4719/HowToLiveBetter](https://github.com/eternity4719/HowToLiveBetter)（《高性价比人生指南》自带 `skills/life-decision-guide/SKILL.md` 规则化，不复制正文） | Unlicense | — | 2026-09-22 | ✅（文件头标注） |
 
 ---
 
@@ -233,9 +235,27 @@
 - **定位**：AGENTS.md「对抗性自检」的执行层——Falsify/评审需要具名检查表时调用其能力卡（fallacy-detector / argument-evaluator / root-cause）；ask-matt 路由见其 Reasoning underneath 小节
 - **上游同步**：再生成/模板升级用同一 cangjie-tools 版本，勿手工混改「生成元数据」区
 
----
+### 19. life-decision-guide — distilled
 
-## 同步更新流程（按此执行）
+- **上游**：https://github.com/eternity4719/HowToLiveBetter（《高性价比人生指南》，仓库自带 `skills/life-decision-guide/SKILL.md`）
+- **License**：Unlicense（公有领域，可自由复制、修改、分发）
+- **导入**：2026-09-22
+- **本地形态**：只携带「怎么查、怎么排、怎么守边界」的规则，不内联任何条目标题/数字/法条——正文按需从上游仓库（本地 `README.md` + `book/`，或远程浅克隆/curl）取用；frontmatter 仅 `name` + `description`（含触发词：该不该/值不值/要不要/划不划算/怎么选/帮我决定/这样犯法吗/能领什么/先做什么/性价比）
+- **本地改动**：规则化改写（按 AGENTS.md 执行期交互协议风格组织执行流程/边界/验证）+ 新增 `examples/retest-prompts.md` 反测集
+- **验证**：frontmatter 结构合规（仅 name+description）；正测应能答出并指回「第 x 节第 y 条」，反测应触发第 0 步止损或明确说「书里没写」
+- **更新提示**：上游只更新正文（README + book/）时本文件无需改动；仅当上游改 `skills/life-decision-guide/SKILL.md` 的规则本身时才需对账
+
+### 20. ghidra-cookbook（reverse-flow 附加吸收）— distilled
+
+- **上游**：https://github.com/NationalSecurityAgency/ghidra（Apache-2.0）
+- **导入**：2026-09-22，依据本地参考 clone 提炼（`F:\tools\src\ghidra`，稀疏检出，HEAD `d6192cb`）
+- **本地形态**：`reverse-flow/references/ghidra-cookbook.md`（134 行），聚焦 analyzeHeadless 批量工作流 + Version Tracking 版本比对两条主线
+- **本地改动**：非逐字复制，系依官方文档（`GhidraDocs/GhidraClass/Intermediate/HeadlessAnalyzer.html` + 安装目录 `support/analyzeHeadlessREADME.html`）提炼的实践速查；文件头标注来源/吸收日期/本机工具路径（`F:\tools\apps\ghidra`，check-tools.py 已验证）
+- **接线**：`reverse-flow/SKILL.md`「Bundled resources」新增 1 行引用（本批次）
+- **验证**：本机 `F:\tools\apps\ghidra` 的 `analyzeHeadless` / `ghidraRun` 可用（check-tools.py 通过）；命令骨架与官方 README 一致
+- **更新提示**：上游更新时对账本文件即可；reverse-flow 为本地 skill，SKILL.md 勿整文件覆盖
+
+---
 
 1. **查本文件**对应条目 → 拿到上游 URL、本地版本、本地改动点
 2. **确认上游最新版本**（git clone / gh api / 上游 README）
