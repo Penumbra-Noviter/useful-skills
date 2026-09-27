@@ -15,7 +15,7 @@
 | skill-creator | vendored | mattpocock/skills（随批次导入；Apache 2.0 LICENSE.txt 系上游随附） | Apache 2.0 | — | 2026-08-06 | ✅（并入批次） |
 | vibehub | vendored | [oil-oil/vibe-hub-skill](https://github.com/oil-oil/vibe-hub-skill) | MIT | — | 2026-08-11 | ✅（config.json 已记） |
 | zine-ui | distilled | [Zeejay0/gathered-scenes-zine-skill](https://github.com/Zeejay0/gathered-scenes-zine-skill) + photo-abstract-editorial（Codex） | personal non-commercial | 1.0.0 | 2026-08-11 | ✅ |
-| diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.6.27 | 2026-08-13（未 commit） | ✅ |
+| diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.6.34 | 2026-08-13 · 2026-09-16 同步 · 2026-09-27 同步 | ✅ |
 | museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | wheel v0.7.2 | 2026-08-11 · 2026-09-27 更新 | ✅（wheel URL） |
 | vision | vendored + 改造 | [asuojun/claude-vision-skill](https://github.com/asuojun/claude-vision-skill) | — | — | 2026-08-06 | ✅（README 已记） |
 | finesse-ui | 自研 + 部分派生 | 派生自 taste-skill v2 / emilkowalski/skills / VoltAgent/awesome-design-md | MIT | 0.21.0 | 快照 2026-08-28 · v0.21.0，**非 mattpocock 内容** | 部分（仅派生源） |
@@ -98,6 +98,14 @@
   4. reference 文件为 CRLF 行尾，grep 校验需 `tr -d '\r'`
 - **frontmatter 改造**：本地加了 when_to_use/user-invocable/argument-hint，description 双语触发词，version 展平（现 2.6.27）
 - **更新提示**：assets 同名文件为本地保留版，下次同步前先 diff 判定归属；style-guide Inversion 修复与 gate 段为本地保护点
+- **2026-09-27 同步内容**（2.6.27 → 2.6.34，上游 main HEAD `cea465e`，monorepo 化后 skill 本体在上游 `skills/diagram-design/`）：
+  - **新增 heatmap 全套**：`references/type-heatmap.md` + 3 个 example（light/dark/full）；marimekko/streamgraph 规格并入 `type-treemap.md`/`type-line.md`（各 3 个 example）
+  - **output-spec 增 print-a3-landscape 预设**；`assets/template*.html` 补 Noto Sans/Serif KR·TC 字体栈（SVG 导出 CJK 字体修复落地）；`index.html` 功能大改（state-lifecycle tab、a11y 修复等）
+  - **gate 段升级为上游 6 分支 + profiles 机制**（本地 `references/profiles.md` 与上游一致，属接线补齐）；SKILL.md 40 型 → **41 型**，frontmatter version 2.6.34，双语触发词补 heatmap
+  - **style-guide**：取上游版（保留新增 `ink-strong` token）+ **重放本地 Inversion 修复**——上游 2.6.34 该行仍是旧皮肤色 `rgba(28,25,23)→rgba(250,247,242)`，本地修复版为 `rgba(45,49,66)→rgba(245,245,245)`（本次已重放）
+  - **assets 12 个 differ 经行尾归一化 diff 判定无本地定制痕迹 → 整取上游**（解除「无法判归属」困境）；verify-* 引用：新增 type 文档引用的仓库根 `scripts/verify-*.py` 不在 vendored 副本，验证路径保持 SKILL.md 指向 bundled `self_check.py`（既有惯例）
+  - 验证：`python3 scripts/self_check.py assets/example-heatmap.html` 通过；清理 `__pycache__`
+- **保护点现状（2026-09-27 复核）**：style-guide Inversion 修复仍需每次同步重放（上游持续未修）；gate 段本地 5 分支话术已被上游 6 分支 + profiles 取代并已采纳；assets 同名文件保护解除（本次整取）；`ink-strong` token 为上游新增保留
 
 ### 6. museon-cli — 封装
 

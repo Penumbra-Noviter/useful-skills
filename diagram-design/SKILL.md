@@ -1,11 +1,11 @@
 ---
 name: diagram-design
-description: '技术/产品示意图设计 — 40 种图型（架构、IT 现状、流程图、时序图、状态机、ER/数据模型、时间线、泳道、象限、雷达/蜘蛛、极坐标、循环/飞轮、嵌套、树、组织架构、分层、韦恩、金字塔/漏斗、矩形式树、柱状、瀑布、折线、甘特、散点、high-level、process、medallion、data flow、DP integration、DP security matrix、桑基、鱼骨、Wardley、看板、用户旅程、部署、依赖图、UML 类图、故事地图、数据库 schema）输出为内联 SVG 的独立 HTML 文件；可导入 draw.io (.drawio/.drawio.png/.drawio.svg)、Mermaid (.mmd/.mermaid/Markdown fence) 与 Excalidraw (.excalidraw) 重绘，按格式/画布/详细度导出 HTML/SVG/PNG。触发词：架构图, 流程图, 时序图, 状态机, ER 图, 数据模型, 泳道图, 甘特图, 象限图, 雷达图, 循环图, 飞轮图, 树形图, 组织架构图, 韦恩图, 金字塔图, 漏斗图, 数据流图, 桑基图, 鱼骨图, 看板图, 部署图, 依赖图, UML 类图, 画一张架构图, diagram, flowchart, architecture diagram, mermaid, drawio, excalidraw, /diagram。独立 skill（vendored 自 Cathryn Lavery 的 diagram-design，MIT），继承 finesse-ui universal craft floor + cheapness blacklist + a11y 门。'
+description: '技术/产品示意图设计 — 41 种图型（架构、IT 现状、流程图、时序图、状态机、ER/数据模型、时间线、泳道、象限、雷达/蜘蛛、极坐标、循环/飞轮、嵌套、树、组织架构、分层、韦恩、金字塔/漏斗、矩形式树、热力图、柱状、瀑布、折线、甘特、散点、high-level、process、medallion、data flow、DP integration、DP security matrix、桑基、鱼骨、Wardley、看板、用户旅程、部署、依赖图、UML 类图、故事地图、数据库 schema）输出为内联 SVG 的独立 HTML 文件；可导入 draw.io (.drawio/.drawio.png/.drawio.svg)、Mermaid (.mmd/.mermaid/Markdown fence) 与 Excalidraw (.excalidraw) 重绘，按格式/画布/详细度导出 HTML/SVG/PNG。触发词：架构图, 流程图, 时序图, 状态机, ER 图, 数据模型, 泳道图, 甘特图, 象限图, 雷达图, 循环图, 飞轮图, 树形图, 组织架构图, 韦恩图, 金字塔图, 漏斗图, 热力图, 数据流图, 桑基图, 鱼骨图, 看板图, 部署图, 依赖图, UML 类图, 画一张架构图, diagram, flowchart, architecture diagram, mermaid, drawio, excalidraw, /diagram。独立 skill（vendored 自 Cathryn Lavery 的 diagram-design，MIT），继承 finesse-ui universal craft floor + cheapness blacklist + a11y 门。'
 when_to_use: >
-  Fires when the deliverable is a diagram, not a page: architecture / IT current-state / flowchart / sequence / state machine / ER·data model / timeline / swimlane / quadrant / radar·spider / polar / loop·flywheel / nested / tree / org chart / layer stack / venn / pyramid·funnel / treemap / bar / waterfall / line / Gantt / scatter / high-level / process / medallion / data flow / DP integration / DP security matrix / Sankey / fishbone / Wardley / kanban / user journey / deployment / dependency / UML class / story map / database schema — standalone HTML files with inline SVG; or when the user hands over existing draw.io (.drawio, .drawio.png, .drawio.svg), Mermaid (.mmd, .mermaid, or Markdown fences) or Excalidraw (.excalidraw) sources to redraw; or asks to export a generated diagram to SVG/PNG. Chinese triggers: 架构图 · 流程图 · 时序图 · 状态机 · ER 图 · 数据模型 · 时间线 · 泳道图 · 象限图 · 雷达图 · 循环/飞轮图 · 嵌套图 · 树形图 · 组织架构图 · 分层图 · 韦恩图 · 金字塔/漏斗图 · 矩形式树图 · 柱状图 · 瀑布图 · 折线图 · 甘特图 · 散点图 · 桑基图 · 鱼骨图 · 看板图 · 用户旅程图 · 部署图 · 依赖图 · UML 类图 · 故事地图 · 数据库 schema 图 · 数据流图 · "画一张架构图" · mermaid · drawio · excalidraw. If a finesse-ui craft flow is also loaded, follow this skill for the diagram's own editorial design system (paper/ink/accent tokens, complexity budget, connector rules — `references/style-guide.md` + `references/type-*.md`) and finesse for the shared craft floor / blacklist / a11y full lists.
-version: 2.6.27
+  Fires when the deliverable is a diagram, not a page: architecture / IT current-state / flowchart / sequence / state machine / ER·data model / timeline / swimlane / quadrant / radar·spider / polar / loop·flywheel / nested / tree / org chart / layer stack / venn / pyramid·funnel / treemap / heatmap / bar / waterfall / line / Gantt / scatter / high-level / process / medallion / data flow / DP integration / DP security matrix / Sankey / fishbone / Wardley / kanban / user journey / deployment / dependency / UML class / story map / database schema — standalone HTML files with inline SVG; or when the user hands over existing draw.io (.drawio, .drawio.png, .drawio.svg), Mermaid (.mmd, .mermaid, or Markdown fences) or Excalidraw (.excalidraw) sources to redraw; or asks to export a generated diagram to SVG/PNG. Chinese triggers: 架构图 · 流程图 · 时序图 · 状态机 · ER 图 · 数据模型 · 时间线 · 泳道图 · 象限图 · 雷达图 · 循环/飞轮图 · 嵌套图 · 树形图 · 组织架构图 · 分层图 · 韦恩图 · 金字塔/漏斗图 · 矩形式树图 · 热力图 · 柱状图 · 瀑布图 · 折线图 · 甘特图 · 散点图 · 桑基图 · 鱼骨图 · 看板图 · 用户旅程图 · 部署图 · 依赖图 · UML 类图 · 故事地图 · 数据库 schema 图 · 数据流图 · "画一张架构图" · mermaid · drawio · excalidraw. If a finesse-ui craft flow is also loaded, follow this skill for the diagram's own editorial design system (paper/ink/accent tokens, complexity budget, connector rules — `references/style-guide.md` + `references/type-*.md`) and finesse for the shared craft floor / blacklist / a11y full lists.
+version: 2.6.34
 user-invocable: true
-argument-hint: "[architecture|flowchart|sequence|state|er|timeline|swimlane|quadrant|radar|polar|loop|nested|tree|org-chart|layers|venn|pyramid|treemap|bar|waterfall|line|gantt|scatter|high-level|process|medallion|data-flow|dp-integration|dp-security-matrix|sankey|fishbone|wardley|kanban|journey|deployment|dependency|uml-class|story-map|db-schema|import-drawio|import-mermaid|import-excalidraw|export] [subject]"
+argument-hint: "[architecture|flowchart|sequence|state|er|timeline|swimlane|quadrant|radar|polar|loop|nested|tree|org-chart|layers|venn|pyramid|treemap|heatmap|bar|waterfall|line|gantt|scatter|high-level|process|medallion|data-flow|dp-integration|dp-security-matrix|sankey|fishbone|wardley|kanban|journey|deployment|dependency|uml-class|story-map|db-schema|import-drawio|import-mermaid|import-excalidraw|export] [subject]"
 license: MIT
 ---
 
@@ -13,7 +13,7 @@ license: MIT
 
 Create visual diagrams as self-contained HTML files with inline SVG and CSS, following an opinionated editorial design system.
 
-Forty visual types. Semantic patterns describe behavior independently; type references describe layout. Details load from `references/` only when selected.
+Forty-one visual types. Semantic patterns describe behavior independently; type references describe layout. Details load from `references/` only when selected.
 
 > **Inherited constraints** (from finesse-ui, declared not copied — full lists in finesse-ui's `references/design-dna.md` §1 and `references/anti-cheap.md` if that skill is also loaded):
 > - **Universal craft floor:** tinted neutrals (no pure `#fff`/`#000`), translucent/hairline borders, tinted shadows, WCAG AA contrast floors — the diagram skin already embodies this (`references/style-guide.md` tokens).
@@ -33,21 +33,17 @@ Forty visual types. Semantic patterns describe behavior independently; type refe
 
 **Before generating your first diagram in a new project, verify the style guide has been customized.**
 
-Open [`references/style-guide.md`](references/style-guide.md) and check the default tokens. If they're still the shipped defaults (paper `#f5f5f5` white-smoke, ink `#2d3142` jet-black, accent `#eb6c36` atomic-tangerine), **pause and ask the user**:
+Do not silently ship default-skinned diagrams into a branded project.
 
-> *"This is your first Schematic in this project. The style guide is still at the default (cool editorial: white-smoke paper, jet-black ink, atomic-tangerine accent). Do you want to customize it to match your brand first? Options: (a) pull from your website URL, (b) extract from an installed skill, (c) extract from a local folder / design-system directory, (d) paste tokens manually, (e) proceed with the default for now."*
+First resolve any project `.diagram-design` marker per [`references/profiles.md`](references/profiles.md); a successfully resolved marker selects its profile and bypasses this gate. That reference owns failures, the protected default, and save behavior.
 
-Then branch:
+Open [`references/style-guide.md`](references/style-guide.md) and check the default tokens. If they are still the shipped defaults (paper `#f5f5f5`, ink `#2d3142`, accent `#eb6c36`), **pause and ask the user**:
 
-- **(a)** → follow [`references/onboarding.md § URL`](references/onboarding.md) to fetch the site, extract palette + fonts, propose a diff, and write `style-guide.md`.
-- **(b)** → follow [`references/onboarding.md § Skill`](references/onboarding.md) — ask which skill, read its SKILL.md / CSS / token files, map to semantic roles, propose diff.
-- **(c)** → follow [`references/onboarding.md § Folder`](references/onboarding.md) — ask for the path, glob for CSS/JSON/MD token files, map to semantic roles, propose diff.
-- **(d)** → accept the user's tokens and write them into `style-guide.md` under a new "Custom tokens" section.
-- **(e)** → proceed; optionally remind the user they can run onboarding later.
+> *"This is your first diagram in this project and the style guide is still default. Customize now? Options: (a) website URL, (b) installed skill, (c) local folder/design-system, (d) paste tokens, (e) keep default, (f) load saved profile."*
 
-**Once the style guide has been customized** (or the user explicitly opted for default), skip this gate on subsequent runs. A simple way to detect customization: if the `accent` value in `style-guide.md` differs from `#eb6c36`, assume custom.
+Then branch per the matching section of [`references/onboarding.md`](references/onboarding.md); for **(f)** follow [`references/profiles.md`](references/profiles.md).
 
-Don't silently ship default-skinned diagrams into a branded project — that's the failure mode this gate exists to prevent.
+**Once the style guide has been customized** (or the user explicitly chose default), skip this gate on later runs. A leading profile header names the copied-in active profile. Without a header, any semantic-role value or typography family differing from shipped defaults means **custom-unsaved**: skip the gate and offer to save it as a profile. All-default tokens with no marker/header trigger the gate. After onboarding, offer to save as a named client profile per `references/profiles.md`.
 
 ---
 
@@ -68,7 +64,7 @@ Applied to schematics:
 
 ## 2. When to Use
 
-Use for any of the 40 visual types (§3) when a reader will learn more from a visual than from prose, a table, or a bulleted list.
+Use for any of the 41 visual types (§3) when a reader will learn more from a visual than from prose, a table, or a bulleted list.
 
 **Don't use for:**
 
@@ -99,7 +95,7 @@ When behavior, state, enforcement, or risk carries the meaning, first load [`ref
 
 The pattern owns semantic primitives and its tighter budget; the type owns layout grammar. Use [`references/animation.md`](references/animation.md) only when motion is requested or materially clarifies ordered change; static remains the default.
 
-### Visual-type guide (40)
+### Visual-type guide (41)
 
 | If you're showing… | Use | Reference |
 |---|---|---|
@@ -124,6 +120,7 @@ The pattern owns semantic primitives and its tighter budget; the type owns layou
 | Quantitative comparison across categories | **Bar chart** | [type-bar.md](references/type-bar.md) |
 | A start total bridged to an end total by signed contributions (budget bridge, headcount deltas) | **Waterfall** | [type-waterfall.md](references/type-waterfall.md) |
 | Part-of-whole where the relative sizes are the story | **Treemap** | [type-treemap.md](references/type-treemap.md) |
+| Cross-tabulated data; fill encodes value per cell | **Heatmap** | [type-heatmap.md](references/type-heatmap.md) |
 | Continuous trends over time, change between exactly two states (slopegraph), one distribution per series (ridgeline), or rank movement across several snapshots (bump) | **Line chart** | [type-line.md](references/type-line.md) |
 | Tasks and phases on a timeline | **Gantt** | [type-gantt.md](references/type-gantt.md) |
 | Distribution and correlation between two variables, three with area-sized marks (bubble), or one variable with a dot per item (beeswarm) | **Scatter plot** | [type-scatter.md](references/type-scatter.md) |
@@ -565,7 +562,7 @@ Set these four import decisions **before** drawing. Full spec: [output-spec.md](
 | Dial | Options | Default |
 |---|---|---|
 | **Format** | `html` · `svg` · `png` · `html+png` | `html` |
-| **Size** | `doc-inline` · `doc-wide` · `slide-16x9` · `slide-4x3` · `social-og` · `social-square` · `print-a4-landscape` · `print-letter-landscape` · `fit` | `doc-inline` |
+| **Size** | `doc-inline` · `doc-wide` · `slide-16x9` · `slide-4x3` · `social-og` · `social-square` · `print-a4-landscape` · `print-a3-landscape` · `print-letter-landscape` · `fit` | `doc-inline` |
 | **Detail** | `faithful` (≤24 nodes, zoned) · `balanced` (≤12) · `simplified` (≤7) | `balanced` |
 | **Audience** | `engineer` · `mixed` · `executive` — governs wording, not count | `mixed` |
 
