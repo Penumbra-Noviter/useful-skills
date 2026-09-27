@@ -10,13 +10,13 @@
 
 | Skill | 类型 | 上游 | License | 本地版本 | 导入 | 可追踪更新 |
 |---|---|---|---|---|---|---|
-| cangjie-skill | vendored（官方 Release 包） | [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill) | MIT（v2.5.0 起） | 2.5.0 | 2026-08-27 → 2026-09-16 更新 | ✅ |
+| cangjie-skill | vendored（官方 Release 包）+ 手工合入 main 修复 | [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill) | MIT（v2.5.0 起） | 2.5.0（+main #31/#32） | 2026-08-27 → 2026-09-16 更新 · 2026-09-27 合入 #31/#32 | ✅ |
 | mattpocock 批次 ~46 个 skill | vendored | [mattpocock/skills](https://github.com/mattpocock/skills)（**用户 2026-08-13 确认**） | 见上游 | 无版本号 | 2026-08-06 | ✅ |
 | skill-creator | vendored | mattpocock/skills（随批次导入；Apache 2.0 LICENSE.txt 系上游随附） | Apache 2.0 | — | 2026-08-06 | ✅（并入批次） |
 | vibehub | vendored | [oil-oil/vibe-hub-skill](https://github.com/oil-oil/vibe-hub-skill) | MIT | — | 2026-08-11 | ✅（config.json 已记） |
 | zine-ui | distilled | [Zeejay0/gathered-scenes-zine-skill](https://github.com/Zeejay0/gathered-scenes-zine-skill) + photo-abstract-editorial（Codex） | personal non-commercial | 1.0.0 | 2026-08-11 | ✅ |
 | diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.6.27 | 2026-08-13（未 commit） | ✅ |
-| museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | wheel v0.6.0 | 2026-08-11 | ✅（wheel URL） |
+| museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | wheel v0.7.2 | 2026-08-11 · 2026-09-27 更新 | ✅（wheel URL） |
 | vision | vendored + 改造 | [asuojun/claude-vision-skill](https://github.com/asuojun/claude-vision-skill) | — | — | 2026-08-06 | ✅（README 已记） |
 | finesse-ui | 自研 + 部分派生 | 派生自 taste-skill v2 / emilkowalski/skills / VoltAgent/awesome-design-md | MIT | 0.21.0 | 快照 2026-08-28 · v0.21.0，**非 mattpocock 内容** | 部分（仅派生源） |
 | open-kimi-ppt | 自研（逆向） | 无（依赖 Moonshot PPTD 格式） | 无 | — | 2026-08-08 | ❌ |
@@ -105,6 +105,7 @@
 - **本地角色**：安装 + 操作指南外壳，非复制上游代码
 - **导入**：`fdc181e`（2026-08-11）
 - **2026-09-16 更新**：wheel pin v0.5.9 → **v0.6.0**（上游 2026-09-12 release，asset `museoncli-0.6.0-py3-none-any.whl`）
+- **2026-09-27 更新**：wheel pin v0.6.0 → **v0.7.2**（上游 09-21/09-22 releases：staff 运营读工具、Actor 批量复制/移动、campaign 周期快照；SKILL.md 仅改安装 URL，操作契约靠 `museoncli schema` 动态发现，无需改指南）
 
 ### 7. vision — vendored + 改造
 
@@ -193,14 +194,15 @@
 - **上游**：https://github.com/op7418/Humanizer-zh（"去中文 AI 味" skill；核心翻译自 blader/humanizer，实用部分参考 hardikpandya/stop-slop，知识基底为维基百科 [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)）
 - **License**：MIT，Copyright (c) 2026 歸藏
 - **导入**：2026-09-01，经 gh-proxy.com 克隆验证后蒸馏（github.com 直连被墙）
-- **吸收方式**：distilled 而非 vendored —— 保留 24 种 AI 写作模式的完整目录（词汇表/问题/改写示例 = 可移植机制）与五核心规则、质量评分表；改写为 writing 家族子 skill 格式（`disable-model-invocation: true` + `<what-to-do>/<supporting-info>`），新增与三件套的分工边界与触发词
+- **吸收方式**：distilled 而非 vendored —— 2026-09-27 起以线上游 09-23 修订为基底：编辑约束优先级层 + 31 条模式目录（A-F 分类、改写前/改写后/保留三栏示例 = 可移植机制）；改写为 writing 家族子 skill 格式（`disable-model-invocation: true` + `<what-to-do>/<supporting-info>`），新增与三件套的分工边界与触发词
 - **本地接线**：
   - 新增 `writing-humanizer/SKILL.md`（唯一文件）
   - `writing/SKILL.md`：Step 4 新增"成文后润色（去 AI 味）"路由 → writing-humanizer；description 补去 AI 味触发词；通过标准/边界同步更新
 - **放置决策**：并入 writing 家族作润色 pass（不是第四写作阶段，不路由进 ask-matt）
 - **验证**：dao-skill `quality_check.py` 结构检查通过（E1）；行为抽查含 5 核心规则 + 24 模式 + 质量评分自检
 - **2026-09-16 核对**：上游仅 README 安装方式更新（npx 一键安装），与本地 distilled 内容无关，无需更新
-- **更新提示**：上游更新时对账 24 模式清单与示例即可；writing-humanizer 为本地改写版，SKILL.md 勿整文件覆盖
+- **2026-09-27 对账（已合入）**：上游 09-23 commit `f4518a8`「preserve meaning and author voice」为结构性重写——新增编辑约束优先级层（保信息/保确定程度 > 编辑范围 > 作者声音 > 模式清单）、31 模式 A-F 分类（PR 39 结构）、输出/文件保护与受保护内容规则；本地 SKILL.md 正文以新结构为基底重放，保留本地触发词与写作家族分工边界；上游新增 `tests/`（check_structure.py + fixtures）未引入（本地单文件分布式）
+- **更新提示**：上游更新时对账 31 模式清单与编辑约束层即可；writing-humanizer 为本地改写版，SKILL.md 勿整文件覆盖
 
 ### 16. code-review（本地蒸馏补强）— distilled（dao-skill 模式 F 自化吸收）
 
@@ -223,7 +225,7 @@
 - **导入**：2026-08-26（本地 SKILL.md 时间戳）；PROVENANCE 首次登记于 2026-09-16
 - **本地形态**：skill 文档层（SKILL.md + 7 个 references：search/social/career/dev/web/video/finance），依赖用户独立安装上游 `agent-reach` CLI（pip/pipx）
 - **本地改动**：SKILL.md 双语触发词 + 路由表 + 零配置命令 + check-update 提醒；references 为上游 docs 的精简适配
-- **2026-09-16 核对**：上游 head `a19a171`（2026-09-15）新增 **Boss直聘 channel（#627）**，平台数 15→16，career 分类需更新（`channels/boss.py` + `references/career.md` 增补 + SKILL 平台数/路由）。**本次用户未选合入，待下轮执行**
+- **2026-09-16 核对**：上游 head `a19a171`（2026-09-15）新增 **Boss直聘 channel（#627）**，平台数 15→16，career 分类需更新（`channels/boss.py` + `references/career.md` 增补 + SKILL 平台数/路由）。**用户 2026-09-16 未选、2026-09-27 复核仍稳定但继续挂起，待下轮执行**
 - **更新提示**：合入时对账上游 `agent_reach/skill/` 的 SKILL.md 与 career.md，保留本地路由表/触发词结构
 
 ### 18. simple-logic — distilled（cangjie-tools v2.5.0 生成）

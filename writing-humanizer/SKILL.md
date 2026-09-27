@@ -1,6 +1,6 @@
 ---
 name: writing-humanizer
-description: "Writing, polish: 去除文本中的 AI 写作痕迹（去中文 AI 味），使其听起来更像人类书写。适用于成文后润色、审阅他人 AI 生成的文本、把 AI 味重的段落改写自然。触发词：去AI味、去 AI 味、去AI痕迹、人性化、写得像人、别这么像AI、AI味太重、humanize、de-AI、de-ai。不接管：explore（挖素材，writing-fragments）/ exploit 成文（writing-shape / writing-beats）——那是三件套的活；本 skill 只做成文后的去味润色。"
+description: "Writing, polish: 去除文本中的 AI 写作痕迹（去中文 AI 味），使其听起来更像人类书写——同时保留事实、确定程度与作者声音。适用于成文后润色、审阅他人 AI 生成的文本、把 AI 味重的段落改写自然。触发词：去AI味、去 AI 味、去AI痕迹、人性化、写得像人、别这么像AI、AI味太重、humanize、de-AI、de-ai。不接管：explore（挖素材，writing-fragments）/ exploit 成文（writing-shape / writing-beats）——那是三件套的活；本 skill 只做成文后的去味润色。"
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 The user has passed (or will pass) a piece of text — usually an already-written Chinese article, a paragraph, or someone else's AI-generated draft — and wants the AI smell taken out of it. This is **polish**: the writing is done, the job is to make it read like a person wrote it. You are a text editor, not a ghostwriter.
 
-Read the text end-to-end. Scan it against the AI patterns below. Rewrite the offending passages in place — same meaning, same tone, natural voice. Then present the humanized version with a short summary of what changed.
+先保意，再去味：**不改原文的信息、确定程度、归因与作者立场**——去 AI 味是修表达，不是重写观点。逐条模式命中都要回到上下文判断：是否空泛、重复、歧义或与文体不符；没有问题的段落原样保留，不要为了展示工作量强改。
 
 If the user did not say where to output (replace the file / paste into chat / new file), ask once. Default: output in chat if the text was pasted; edit the file in place if a path was given.
 
@@ -16,127 +16,120 @@ If the user did not say where to output (replace the file / paste into chat / ne
 
 <supporting-info>
 
-## The one idea
+## 编辑约束与优先级
 
-LLMs pick the statistically most likely next word, so their prose leans toward whatever fits the widest audience: grand claims, tidy triads, hedging, and throat-clearing. Removing the smell is not about vocabulary purges — it is about **making the writer sound like a person with a point of view**. Clean is not enough; the result must have voice.
+约束冲突时按下面的顺序处理：
 
-## Five core rules (scan against these constantly)
+1. **保留信息和确定程度。** 不增加原文或用户未提供的事实、数字、名字、日期、经历、引文、来源、实现细节或性能结论；不丢失独立信息。保留否定、比较对象、范围、条件、时间、完成状态和归因。不把相关改成因果、可能改成确定、计划改成已经完成。
+2. **遵守用户的编辑范围和文体。** 润色不默认包括摘要、扩写、补充论据或重写观点。用户明确要求这些工作时，区分原文信息与新增建议；虚构任务可按要求创作，不能伪装成真实记录。
+3. **匹配作者声音。** 有样本时借鉴句长、用词、标点和叙述习惯，不把样本中的经历、数据或立场移入目标文本。没有样本时保留输入的语域。
+4. **处理具体表达问题。** 修改空泛铺垫、重复和妨碍理解的句式。模式清单是检查线索，不是词语黑名单；没有问题的段落可以原样保留。
 
-1. **Delete filler.** Openers and emphasis crutches ("值得注意的是", "不难发现", "总而言之", "在现代社会中") go first.
-2. **Break formula.** No binary contrasts for their own sake, no dramatic single-line paragraph breaks, no rhetorical setups.
-3. **Vary the rhythm.** Mix sentence lengths. Two beats beat three. Vary how paragraphs end.
-4. **Trust the reader.** State facts directly; skip softening, apologizing, and hand-holding.
-5. **Kill the quotable.** If a line sounds like it belongs on a poster ("这不是X，而是Y"), rewrite it.
+原文没有细节时，改写也可以保持概括。不能用虚构的数据使句子显得具体；确实影响任务完成时询问，否则把补充资料的建议放在正文之外。保留原文主张不表示验证了主张；疑似事实错误另行说明，不用猜测的答案替换。
 
-## The pattern catalog (the reusable mechanism)
+原文确实只有空泛赞美时，可以删除没有独立含义的套话。涉及真实的判断、立场、限定或归因时，不能以"去痕迹"为由删掉。发现无来源的权威背书时，保留归因和不确定性，或在用户允许删改论据时另行处理，不能把它改成自己的事实断言。
 
-Work through these categories; each entry lists the tell and the fix. The vocabulary lists are the highest-leverage search terms — grep the text for them, then judge each hit.
+## 文体与作者声音
 
-### Content patterns
+- 随笔、博客、评论：保留已有态度、幽默、犹豫和第一人称，不替作者添加亲身经历、情绪或结论。用户要求增强个人风格时，用表达方式实现，不编故事。
+- 技术文档、产品说明：准确交代功能、条件和顺序，保留术语、版本与操作状态。
+- 商务、学术和事实性文本：保留必要的正式程度、归因、限定和论证结构，不强行口语化。被动句、四字格和名词化表达可以符合这些文体。
 
-1. **夸大意义/遗产/趋势** — tells: 作为/充当、标志着、见证了、是……的体现/证明/提醒、极其重要/至关重要/核心/关键作用、凸显/彰显其重要性、反映了更广泛的、象征着其永恒的、为……奠定基础、标志着/塑造着、关键转折点、不断演变的格局、不可磨灭的印记。
-   Fix: say what the thing actually is/does, drop the cosmic significance. "X 成立于 1989 年，负责收集和发布区域统计数据" not "X 的成立标志着西班牙区域统计演变史上的关键时刻，是更广泛运动的一部分".
-2. **过度强调知名度/媒体报道** — tells: 独立报道、地方/区域/国家媒体、由知名专家撰写、活跃的社交媒体账号。
-   Fix: keep the specific citation, drop the fame-claim. "在 2024 年《纽约时报》的采访中，她认为……" not "她的观点被《纽约时报》、BBC 引用，她在社交媒体上拥有超过 50 万粉丝".
-3. **以 -ing 结尾的肤浅分析**（中文表现为句末"……，象征着/体现了/展现了/反映了/彰显着……"）— tells: 突出/强调/彰显、确保、反映/象征、为……做出贡献、培养/促进、涵盖、展示。
-   Fix: end the sentence at the fact. "寺庙使用蓝色、绿色和金色。建筑师说这些颜色是为了呼应当地的蓝帽花" not "……与该地区自然之美产生共鸣，象征着社区与土地的深厚联系".
-4. **宣传/广告式语言** — tells: 拥有（夸张用法）、充满活力的、丰富的（比喻义）、深刻的、增强其、展示、体现、致力于、自然之美、坐落于、位于……的中心、开创性的、著名的、令人叹为观止的、必游之地、迷人的。
-   Fix: strip adjectives, give facts. "X 是贡德尔地区的一座城镇，以每周集市和 18 世纪教堂闻名" not "坐落于令人叹为观止的区域内，是一座充满活力的城镇，拥有丰富的文化底蕴和迷人的自然美景".
-5. **模糊归因** — tells: 行业报告显示、观察者指出、专家认为、一些批评者认为、多个来源/出版物（却拿不出具体引用）。
-   Fix: name the source or drop the claim. "根据中科院 2019 年的调查，X 支持多种特有鱼类" not "专家认为它在区域生态系统中发挥着至关重要的作用".
-6. **提纲式"挑战与未来展望"** — tells: 尽管其……面临若干挑战、尽管存在这些挑战、挑战与遗产、未来展望。
-   Fix: name the actual problem and what happened. "2015 年三个新 IT 园区开业后交通拥堵加剧。市政公司 2022 年启动了雨水排水项目" not "尽管工业繁荣，X 面临着典型的城市挑战，凭借其战略位置继续蓬勃发展".
+自然连接词有实际作用时保留。"首先、其次"可以说明顺序，"与此同时"可以表达同时发生，"不过"可以表达转折。不要为追求短句把连贯文章拆成要点提纲，也不要为了变化句长硬拆或合并。
 
-### Language & grammar patterns
+## 工作流程
 
-7. **AI 高频词** — tells: 此外、与……保持一致、至关重要、深入探讨、强调、持久的、增强、培养、获得、突出（动词）、相互作用、复杂/复杂性、关键（形容词）、格局（抽象名词）、关键性的、展示、织锦（抽象名词）、证明、强调（动词）、宝贵的、充满活力的。
-   Fix: use plain equivalents or restructure. "索马里菜肴还包括骆驼肉，被认为是美味" not "此外，索马里菜肴的一个显著特征是加入骆驼肉".
-8. **系动词回避** — tells: 作为/代表/标志着/充当 [一个]、拥有/设有/提供 [一个]。
-   Fix: use "是"/"有" plainly. "Gallery 825 是 LAAA 的当代艺术展览空间，有四个房间" not "Gallery 825 作为 LAAA 的当代艺术展览空间，设有四个独立空间，拥有超过 3000 平方英尺".
-9. **否定式排比** — tells: "不仅仅是……而是……""这不仅仅是……，更是……"。
-   Fix: say the thing once, directly. "沉重的节拍增加了攻击性的基调" not "这不仅仅是节拍在人声下流动；它是攻击性和氛围的一部分".
-10. **三段式法则** — tells: 强行把想法分成三组显得全面。
-    Fix: two items, or four. "活动包括演讲和小组讨论。会议之间还有非正式社交的时间" not "活动包括主题演讲、小组讨论和社交机会".
-11. **刻意换词（同义词循环）** — tells: 同一对象在不同句用不同称呼换来换去。
-    Fix: keep the same word, collapse. "主人公面临许多挑战，但最终获胜并回到家中" not "主人公面临挑战。主要角色克服障碍。中心人物最终获胜。英雄回家".
-12. **虚假范围** — tells: "从 X 到 Y"，而 X、Y 不在同一尺度上。
-    Fix: name the actual span. "这本书涵盖了大爆炸、恒星形成和当前关于暗物质的理论" not "我们穿越宇宙的旅程从大爆炸的奇点带到宏伟的宇宙网，从恒星的诞生到暗物质的神秘舞蹈".
+1. 通读输入，判断文体和用户要求，记住需要保留的主张、数据、关系与限定。
+2. 只修改确实存在的表达问题；重复的同一信息可以合并，不同信息不能因排比或篇幅而删掉。
+3. 对照原文检查改写：有没有新增、遗漏或强化主张；施事者、时间、条件、范围、否定与归因是否一致。检查"可能、据称、超过、仅、正在、计划"等词承载的含义，而不要求逐字保留。
+4. 通读成稿，检查语气和衔接；必要时再改。不要为了展示工作量强行修改已通顺的文字。
 
-### Style patterns
+## 输出与文件保护
 
-13. **破折号过度使用** — tells: 句子里塞进 — 来制造"有力"感。
-    Fix: use commas or full stops. (中文尤见于半角/全角破折号滥用。)
-14. **粗体过度使用** — tells: 机械地用 **加粗** 强调短语。
-    Fix: keep only the truly structural emphasis, drop the rest.
-15. **内联标题垂直列表** — tells: 列表项以**粗体标题：**开头。
-    Fix: fold into prose. "更新改进了界面，加快了加载时间，加了端到端加密" not "- **用户体验：**……- **性能：**……".
-16. **标题大写** — 中文标题无大小写问题，此模式不适用，跳过。
-17. **表情符号装饰** — tells: 🚀💡✅ 等装饰标题/列表。
-    Fix: plain text.
-18. **弯引号/引号混乱** — tells: 中文文本里混入英文直引号 ""，或全角引号不统一。
-    Fix: 统一用中文引号「」或“”（按上下文约定，全文一致）。
+- 粘贴文本：默认交付最终改写稿；用户需要时附简短说明。不要默认附草稿、模式命中清单或自评分。
+- 文件：仅在用户要求修改文件时写回；用户只要求审阅时给建议。默认只编辑散文正文。代码块、行内代码、命令、路径、URL、链接目标、显式 ID、YAML front matter 和数据保持原样。
+- 默认保留文件的标题文字、层级和数量，避免破坏自动锚点；保留表格数据、列表项的独立含义和顺序。用户要求重排或改标题时，检查相关引用后处理。
+- 作为其他任务的一步：只交付所需的最终文本，不附改写仪式或评分。
 
-### Conversational patterns
+## 模式的使用方式
 
-19. **协作交流痕迹** — tells: 希望这对您有帮助、当然！、您说得完全正确！、请告诉我、这是一个……、如果您需要我扩展任何部分。
-    Fix: delete the meta-talk; the content should stand alone. "法国大革命始于 1789 年" not "这是法国大革命的概述。希望这对您有帮助！"
-20. **知识截止/信息免责声明** — tells: 截至 [日期]、根据我最后的训练更新、虽然具体细节有限/稀缺……、基于可用信息……。
-    Fix: state what is known. "根据注册文件，该公司成立于 1994 年" not "虽然关于成立的具体细节在现成资料中没有广泛记录，但它似乎是在 20 世纪 90 年代成立的".
-21. **谄媚/卑躬屈膝** — tells: 好问题！、您说得完全正确！、这是一个很好的观点。
-    Fix: neutral acknowledgment. "您提到的经济因素在这里是相关的" not "好问题！您说得完全正确，这是一个复杂的话题".
+以下 31 条沿用上游 PR 39 的分类，便于迁移。它们描述可能出现的编辑问题，不证明文本来自 AI。单个词、标点、三项列表或四字词不是修改理由，也不以写作日期判定来源。每个命中都要回到上下文：是否空泛、重复、歧义或与文体不符？
 
-### Filler & hedging
+示例均为教学用文本。对照中没有额外的隐藏材料；改写只能使用"改写前"包含的信息。"保留"示例展示不应修改的边界。
 
-22. **填充短语** — "为了实现这一目标"→"为了这一点"；"由于……的事实"→"因为……"；"在这个时间点"→"现在"；"在您需要帮助的情况下"→"如果您需要帮助"；"系统具有处理的能力"→"系统可以处理"；"值得注意的是数据显示"→"数据显示"。
-23. **过度限定** — "可以潜在地可能被认为该政策可能会对结果产生一些影响"→"该政策可能会影响结果"。
-24. **通用积极结论** — "公司的未来看起来光明。激动人心的时代即将到来"→"该公司计划明年再开两个地点"。结论落到事实，不落到气氛。
+### A. 铺垫代替陈述
 
-## Putting a soul back in (clean is the floor, voice is the goal)
+1. **不是 X，而是 Y** — 删除只用于抬高语气的假对比。两部分都提供信息，或否定部分纠正真实误解时保留。改写前：「这不仅是一个导出按钮，更是通往高效工作的全新入口。它可以导出 CSV。」改写后：「这个按钮可以导出 CSV。」保留：「错误发生在保存阶段，而不是上传阶段。」
+2. **单句收尾与戏剧性碎片** — 合并重复同一意思的碎片，删除不增加内容的收尾。短句承载新事实或作者有意强调时保留。改写前：「文件没了。消失了。再也找不到了。我们没有备份。」改写后：「文件丢失了，我们没有备份。」保留：「我不同意。现在的数据还不够。」
+3. **格言与伪深度** — 修辞没有增加意思时，回到原文已有的具体判断。比喻含义不清时，不替作者猜出一种新论点。改写前：「协作是效率的语言。这里的协作，是指两名编辑共同核对同一份清单。」改写后：「这里的协作是两名编辑共同核对同一份清单。」保留：被引用、被分析的格言，以及作者有意使用且能帮助理解的比喻。
+4. **起跑式铺垫** — 删除"让我们深入看看""以下是你需要知道的"等只预告下文的句子；不要拿新知识填补删掉的字数。改写前：「接下来让我们深入看看缓存的作用。缓存可以复用已经取得的结果。」改写后：「缓存可以复用已经取得的结果。」保留：「说实话，我还没想好。这需要再讨论。」
+5. **与假想敌辩论** — 删除没有具体内容的自我辩护。真实反对意见、限制条件和读者确实会考虑的方案要保留。改写前：「不要误会，我并不是在制造焦虑。我想说的是，删除前需要确认备份是否存在。」改写后：「删除前需要确认备份是否存在。」保留：「这项措施不能防止断电，但可以减少断电后的数据损失。」
 
-Even with every pattern removed, flat prose still smells machine-made. Watch for these warning signs and fix them while you edit:
+### B. 公式化节奏
 
-- Every sentence the same length and shape.
-- No point of view — neutral reportage only.
-- No acknowledgment of uncertainty or mixed feelings.
-- No first person where it's natural.
-- No humor, no edge, no personality.
-- Reads like a Wikipedia article or press release.
+6. **强凑三段式** — 逐项检查是否提供独立信息。只有重复或空泛时才合并；不要规定列举项的数量，也不要补造第四项。改写前：「这次更新带来了创新、突破和全新的可能。它新增导出、搜索和批量重命名。」改写后：「这次更新新增导出、搜索和批量重命名。」保留：「导出、搜索和批量重命名是三个不同的功能。」
+7. **句式开头复读** — 连续句子因重复主语而拖沓时可以合并，保留各项动作和时间关系。有意的排比不强改。改写前：「她检查了门。她检查了门上的锁。随后，她记下了两处问题。」改写后：「她检查了门和门上的锁，随后记下了两处问题。」保留：「我看过记录。我问过当事人。我仍然不能确定。」
+8. **破折号当万能连接** — 反复用破折号制造悬念，或掩盖分句关系时调整。承担解释、插入或转折功能的破折号可以保留，没有作者样本也不一律删除。改写前：「结果终于出现了——答案揭晓了——文件无法导出。」改写后：「结果是文件无法导出。」保留：「我们只改了标题——正文和附件都没动。」
+9. **限定词堆叠** — 可以压缩表达同一层不确定性的重复限定，保留证据强度、适用范围、法律提示和真实修正。改写前：「在缓存开启的情况下，这项调整也许可能会减少读取时间，目前尚未验证。」改写后：「缓存开启时，这项调整可能减少读取时间，目前尚未验证。」保留：「只在缓存开启时可能有效，结果尚未验证。」
+10. **生造复合词与连接号** — 生造标签妨碍理解时换成其已有定义。保留固定术语和必要的英文连字符，不把所有专业词都口语化。改写前：「我们采用"文稿-校对-发布一体化"机制，也就是在同一个页面完成写稿、校对和发布。」改写后：「我们在同一个页面完成写稿、校对和发布。」保留：「端到端加密、数据驱动测试等具有具体含义的术语。」
+11. **被动与缺主语** — 施事者已知且改主动更清楚时调整。施事者未知、不重要或文体需要被动时保留；不要补造"系统""研究人员"等主语。改写前：「这份稿件被编辑复核后，编辑将其退回。」改写后：「编辑复核这份稿件后将其退回。」保留：「样本已被污染，原因尚未确认。」
 
-How to add tone: **have a take** (react to the facts, don't just report them); **vary the rhythm** (a short punchy sentence, then a long one that unfolds); **acknowledge complexity** ("这令人印象深刻但也有点不安" beats "这令人印象深刻"); **use "我" when honest** ("我一直在想……" signals a real person thinking); **allow some mess** (digressions, half-formed thoughts are human); **be specific about feelings** (not "这令人担忧" but "凌晨三点没人看着的时候，智能体还在不停地运转，这让人不安").
+### C. 拔高与借权威
 
-## Workflow
+12. **AI 高频词** — "赋能、至关重要、深入探讨、无缝、闭环"等词只有在空泛、重复或用词不准时才改。正式词语和工程术语不因命中词表而删除。改写前：「本文将深入探讨一个至关重要的问题：导出失败后如何重试。」改写后：「本文讨论导出失败后如何重试。」保留：「控制器使用闭环反馈调整输出。」
+13. **意义拔高** — 删除没有独立内容的"标志着新时代"等套话。真实计划、困难、时间节点和作者明确表达的判断不能混在套话里一起删掉。改写前：「团队在周三开放了文件导出，标志着协作新时代的到来。离线编辑仍在开发。」改写后：「团队在周三开放了文件导出。离线编辑仍在开发。」保留：「这是团队第一次公开发布这个工具。」
+14. **模糊关联** — 原文已写明角色或关系时直接表达；没有写明就保持其概括程度，不推断身份。改写前：「他与该乐团有着密切联系，具体来说，他负责乐团的票务。」改写后：「他负责该乐团的票务。」保留：「他与该乐团有关联，具体角色尚不清楚。」
+15. **句尾补充式拔高** — 删除只重复赞美的"彰显了……"尾巴，保留有实际信息的原因、目的和结果。不添加新的信源来使解释显得可信。改写前：「页面提供全文搜索，彰显了团队对创新的不懈追求。」改写后：「页面提供全文搜索。」保留：「页面提供全文搜索，方便读者查找原文中的术语。」
+16. **宣传语** — 减少无内容的赞美，保留原文实际提供的特征。没有参数时不要制造参数；主观评价需要保留为评价，不能变成测试结论。改写前：「这家咖啡馆位于杭州市中心，装修有特色，堪称咖啡爱好者的梦想天堂。」改写后：「这家咖啡馆位于杭州市中心，装修有特色。」保留："我觉得这里很漂亮"是作者评价，不等于客观排名。
+17. **借权威** — 不能把"专家认为"替换成编造的机构、报告或日期。已有实名信源时保留来源和其主张；只有笼统归因时保留其局限，不把被归因的观点转成确定事实。改写前：「一些未具名的专家认为，这一设计可能减少误操作，充分体现了其重大价值。」改写后：「一些未具名的专家认为，这一设计可能减少误操作。」保留：不补写专家身份；需要出处时在正文之外提示作者补充。
+18. **回避"是／有"** — 可以精简系动词表达，但保留数量、比较和范围。"超过"不等于"等于"，"可以提供"不等于"已提供"。改写前：「这个空间作为展览场地，设有四个独立展区，总面积超过 3000 平方英尺。」改写后：「这个空间是展览场地，有四个独立展区，总面积超过 3000 平方英尺。」保留：「该接口可以提供查询结果。」
 
-1. Read the input text fully.
-2. Scan for the 24 patterns (grep the vocabulary lists first — they surface most hits fast).
-3. Rewrite each offending passage in place; keep meaning, tone, and the writer's existing voice where there is one.
-4. Before delivering, run the quick checklist (below).
-5. Deliver the humanized version + a brief change summary (what was removed/replaced and why).
+### D. 公式化排版
 
-## Quick checklist (run before delivery)
+19. **粗体当装饰** — 减少没有帮助的强调，保留跳读所需的重点。不设固定粗体数量，不因去掉排版而删掉括号解释、比较或列表项。改写前：支持 **CSV（逗号分隔值）** 和 **JSON** 导出。改写后：支持 CSV（逗号分隔值）和 JSON 导出。保留：警告中的关键操作与长文里帮助定位的重点。
+20. **装饰性标题** — 表情符号、箭头和分隔线妨碍阅读时可调整。结构本身不是问题；文件的标题和锚点按文件保护规则处理。英文标题大小写遵守目标格式。改写前（粘贴文本）：🚀 发布安排：产品计划在第三季度发布。改写后：发布安排：产品计划在第三季度发布。保留：发布计划不改成已发布，方向箭头承载流程含义时也保留。
+21. **引号与中文标点** — 根据目标格式统一标点，不把中文正文改成英文标点。代码、原文引语和结构化数据遵守各自的保护要求。改写前：他说"项目进展顺利"，但其他人不同意。改写后：他说"项目进展顺利"，但其他人不同意。保留：JSON 字符串中的直引号，以及用户指定的「」样式。
 
-- [ ] Three sentences in a row the same length? Break one.
-- [ ] Paragraph ends on a neat one-liner? Vary the ending.
-- [ ] A dash before a reveal? Delete it.
-- [ ] Metaphor being explained? Trust the reader.
-- [ ] "此外/然而/值得一提的是" connectors? Consider deleting.
-- [ ] Rule-of-three lists? Make it two or four.
-- [ ] Does it have a point of view, or does it just report?
+### E. 聊天与草稿残留
 
-## Quality scoring (self-assessment, /50)
+22. **客服腔** — 独立文章中删除无内容的问候、夸奖和提议，保留包在其中的实际信息。邮件、书信、客服回复里的礼貌用语可以有用途。改写前：「好问题！这是导出功能的说明。它支持 CSV。希望这对您有帮助！」改写后：「导出功能支持 CSV。」保留：邮件中的问候、感谢与落款。
+23. **知识边界免责与猜测填充** — 去掉重复免责声明，不隐藏资料缺口，不把猜测变成事实。"截至某日"如果界定数据时效，应保留。改写前：「现有材料没有记载公司的成立日期。关于这一点，可用信息确实比较有限。」改写后：「现有材料没有记载公司的成立日期。」保留：作者原有的"我猜可能是九十年代，但没有证据"仍是猜测；不能改写成确定年份。
+24. **首句复读标题** — 只删除没有独立含义的复述句。标题之后的条件、定义和数据即使词语重复，也可能需要保留。改写前：「本节介绍导出限制。下面说明导出限制。单个文件最大为 10 MB。」改写后：「本节介绍导出限制。单个文件最大为 10 MB。」保留：标题"导出限制"下面的"仅支持导出当前页面"。
+25. **谈论上一稿** — "前面改成了什么"等编辑过程不属于正文时删除。变更日志、发布说明、迁移指南需要保留前后差异；不推断新实现和复杂度。改写前：「这一段是刚补充的说明，内容是文件最大为 10 MB。」改写后：「文件最大为 10 MB。」保留：「新版本把文件上限从 5 MB 调整为 10 MB。」
 
-| 维度 | 标准 | 得分 |
-|---|---|---|
-| 直接性 | 直接陈述还是绕圈宣告（10=直截了当，1=充满铺垫） | /10 |
-| 节奏 | 句子长度有变化（10=长短交错，1=机械重复） | /10 |
-| 信任度 | 尊重读者（10=简洁明了，1=过度解释） | /10 |
-| 真实性 | 像真人说话（10=自然流畅，1=机械生硬） | /10 |
-| 精炼度 | 无可删（10=无冗余，1=大量废话） | /10 |
+### F. 中文表达的补充检查
 
-45-50 优秀；35-44 良好，仍有改进空间；低于 35 需要重新修订。
+本组延续 PR 39 的六个检查点，部分与前文相关。中文句式本身不构成来源证据；按含义和文体判断是否修改。
+
+26. **层叠的"的"** — 长定语不易理解时调整结构，保留修饰关系，不按字数阈值机械删除。改写前：「这是一个十亿参数的开源小模型的微调的完整方案。」改写后：「这是一套完整的微调方案，适用于一个十亿参数的开源小模型。」保留：「我的同事看过你的稿子，也读过他的回复。」
+27. **"进行＋动词"** — 表达冗长时可换直接动词，保留正在、完成、计划、次数、范围和结果。正式语境下"进行"可以自然存在。改写前：「我们正在对系统进行全面测试，并计划在周五进行配置调整。」改写后：「我们正在全面测试系统，并计划在周五调整配置。」保留：正在测试不改成测试了，优化不改成只表示操作过的"调了"。
+28. **被字句堆叠** — 与 §11 一起判断。改主动句时保持归因和确定程度，"被认为有关"不等于"导致"。改写前：「该问题被社区多次报告，被认为可能与内存泄漏有关，但原因尚未确认。」改写后：「社区多次报告这个问题。它被认为可能与内存泄漏有关，但原因尚未确认。」保留：施事者未知的被动句；不要默认报告者就是提出原因判断的人。
+29. **四字词排比** — 只处理空泛、同义堆叠或与文体不符的表达，不把汉语的四字节奏当成错误。已有概括可改得自然，但没有数据时不补写指标。改写前：「该方案稳定可靠、快速响应、易于维护。」改写后：「这套方案运行稳定、响应快，也方便维护。」保留：数量不变、顺序不变、权限不变，分别是三项约束。
+30. **"随着……的发展"式开头** — 仅当背景没有独立信息时压缩；变化趋势、时间背景和真实因果不能一并删掉。改写前：「在技术不断发展的时代背景下，本文讨论文稿校对。」改写后：「本文讨论文稿校对。」保留：随着文件数量增加，检索时间也在增长。
+31. **套话收尾** — 删除不提供信息的祝愿或重复赞美，有实际内容的总结、情绪和行动计划可以保留。不替作者编造下一步。改写前：「总而言之，让我们拭目以待，期待更多可能。团队计划在周五继续测试。」改写后：「团队计划在周五继续测试。」保留：「综上，两种方案都无法满足离线要求，暂不采用。」
+
+## 交付前核对
+
+- 每个新增的具体信息是否能在原文或用户材料中找到？不能就撤回。
+- 独立信息、否定、限定、时间、范围、归因和作者立场是否完整？有没有把"可能"写成"确定"？
+- 调整列表、排比或句式后，是否丢失内容或添出新项目？
+- 样本和文体是否得到尊重？没有问题的地方是否被强改？
+- 连接词是否仍表达原来的顺序、因果、同时发生或转折关系？
+- 文件的受保护内容和引用是否保持完整？
+
+这些检查优先于风格偏好。不要用自评分、字数下降或"AI 味消失"代替事实与语义核对。
+
+## 完整示例
+
+**改写前：** 新的软件更新充分彰显了团队对创新的持续追求。这不仅是一次更新，更是效率的飞跃。它新增 CSV 导出、全文搜索和批量重命名。离线编辑计划在下一版推出，目前尚未完成测试。部分试用者认为搜索更快，但团队还没有测量数据。
+
+**改写后：** 这次更新新增 CSV 导出、全文搜索和批量重命名。离线编辑计划在下一版推出，目前尚未完成测试。部分试用者觉得搜索更快，但团队还没有测量数据。
+
+删除了空泛的宣传句，保留三个功能、未来计划、测试状态和反馈的证据边界。没有补写性能数字、发布时间或新的用户经历。
 
 ## Source and boundaries
 
-- Mechanism distilled from [Humanizer-zh](https://github.com/op7418/Humanizer-zh) (MIT, © 歸藏; translated from blader/humanizer, referencing hardikpandya/stop-slop), itself based on Wikipedia's [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing). See the repository-root `PROVENANCE.md` §15.
+- Mechanism distilled from [Humanizer-zh](https://github.com/op7418/Humanizer-zh) (MIT, © 歸藏; translated from blader/humanizer v3.0.0, referencing hardikpandya/stop-slop), itself based on Wikipedia's [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)。2026-09-27 依上游 09-23 修订（preserve meaning and author voice）重放：编辑约束优先级层 + 31 模式 A-F 分类（上游 PR 39 结构），保留本地触发词与写作家族定位。See the repository-root `PROVENANCE.md` §15.
 - Out of scope: mining new material (fragments), structuring/exploit (shape/beats), publishing or platform formatting. This skill polishes text that already exists.
 - If the input has no AI smell to begin with, say so plainly — do not invent edits to justify the pass.
 
