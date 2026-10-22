@@ -111,7 +111,7 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 - **`/writing-humanizer`**: the polish stage after the writing three-piece — strip the AI fingerprint from finished prose (去 AI 味): rewrite stiff passages to read human. It only does post-draft humanizing; explore/exploit stay with the three-piece.
 - **`/finesse-ui`**: high-craft web interfaces — brand surfaces, product UI, workflow UI, AI-assistant UI. Anti-slop; routes diagram requests to `/diagram-design`.
 - **`/zine-ui`**: paper-zine visual language for photo/poetic briefs (拾景纸刊): photo collage, image distillation, abstract memory panels. "把这张照片做成页面" → here.
-- **`/diagram-design`**: 40 diagram types (architecture, flow, sequence, ER, timeline, swimlane, quadrant, sankey, fishbone, Wardley…) rendered as inline-SVG HTML, importable to draw.io/Mermaid/Excalidraw.
+- **`/diagram-design`**: 45 diagram types (architecture, flow, sequence, ER, timeline, swimlane, quadrant, sankey, fishbone, Wardley, service blueprint, architecture delta, exploded, axonometric plan…) rendered as inline-SVG HTML, importable to draw.io/Mermaid/Excalidraw.
 - **`/open-kimi-ppt`**: presentations — create/edit/replicate/export, delivering a PPTD project folder plus a local .pptx.
 - **`/officecli`**: CLI for Office documents (.docx/.xlsx/.pptx) — create, inspect, proofread, add charts, render to PNG for visual check, no Office install. Collaborates with the document plugins (below): loads their design specs, then executes and renders.
 - **`/obsidian-vault`**: search, create, and organize notes in the Obsidian vault with wikilinks and index notes.

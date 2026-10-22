@@ -99,7 +99,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `writing-shape` | 写作收束：素材线性排成文章 |
 | `writing-beats` | 写作叙事：素材排成节拍旅程 |
 | `writing-humanizer` | 去 AI 味润色，让文本像人写的 |
-| `diagram-design` | 40 种示意图 → 内联 SVG HTML，可导入 draw.io/Mermaid/Excalidraw |
+| `diagram-design` | 45 种示意图 → 内联 SVG HTML，可导入 draw.io/Mermaid/Excalidraw |
 | `obsidian-vault` | Obsidian 笔记搜索/创建/整理（wikilink + 索引） |
 
 ### 域 6 · UI 设计
