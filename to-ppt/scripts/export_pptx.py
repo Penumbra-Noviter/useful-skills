@@ -18,6 +18,7 @@ import base64
 import json
 import mimetypes
 import os
+import posixpath
 import re
 import shutil
 import socket
@@ -51,6 +52,31 @@ PPTX_CONTENT_TYPE = (
 FADE_TRANSITION_XML = (
     '<p:transition spd="fast" advClick="1"><p:fade/></p:transition>'
 )
+
+# --- page narration audio (TD-007) -----------------------------------------
+AUDIO_EXTENSION_MIME = {
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".m4a": "audio/mp4",
+    ".aac": "audio/aac",
+    ".ogg": "audio/ogg",
+}
+AUDIO_EXTENSIONS = frozenset(AUDIO_EXTENSION_MIME)
+# Per-file cap for a single page narration audio; reuses the existing embedded
+# media budget constant (200 MiB) as the per-file limit.
+MAX_AUDIO_FILE_BYTES = MAX_EMBEDDED_MEDIA_BYTES
+AUDIO_DOWNLOAD_CHUNK_BYTES = 64 * 1024
+AUDIO_DOWNLOAD_TIMEOUT_SECONDS = 120
+AUDIO_MEDIA_PART_RE = re.compile(r"ppt/media/audio(\d+)\.(\w+)$")
+
+P_NS = "http://schemas.openxmlformats.org/presentationml/2006/main"
+A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+RELS_NS = "http://schemas.openxmlformats.org/package/2006/relationships"
+AUDIO_REL_TYPE = f"{R_NS}/audio"
+ET.register_namespace("p", P_NS)
+ET.register_namespace("a", A_NS)
+ET.register_namespace("r", R_NS)
 MIN_AGENT_BROWSER_VERSION = (0, 33, 2)
 MIN_NODE_MAJOR = 18
 NODE_INSTALL_HINT = "Install Node.js 18+ from https://nodejs.org, then retry."
@@ -756,6 +782,605 @@ def validate_transition_order(slide_xml: bytes, transition: str) -> None:
             raise ExportError(f"{required_after} appears before transition")
 
 
+def local_name(tag: Any) -> str:
+    """Return the local (namespace-stripped) part of an XML tag name."""
+    return str(tag).rsplit("}", 1)[-1]
+
+
+def _sub(parent: ET.Element, tag: str, ns: str, attrib: Optional[Dict[str, str]] = None) -> ET.Element:
+    """Append a namespaced child element to ``parent`` and return it."""
+    child = ET.Element(f"{{{ns}}}{tag}", attrib or {})
+    parent.append(child)
+    return child
+
+
+def _root_child(element: Optional[ET.Element], name: str) -> Optional[ET.Element]:
+    """Return the first direct child of ``element`` whose local name is ``name``."""
+    if element is None:
+        return None
+    return next((child for child in element if local_name(child.tag) == name), None)
+
+
+def collect_page_audio(deck: Path) -> List[Dict[str, Any]]:
+    """Return per-page narration-audio declarations in slide order.
+
+    Parses the PPTD manifest and each page; maps the 1-based page index (which
+    matches ``slide{n}.xml`` numbering) to the raw ``audio`` value. Pages
+    without an ``audio`` string are skipped; a non-string ``audio`` value is a
+    deck contract violation and raises ``ExportError``.
+    """
+    manifest = find_manifest(deck)
+    root = manifest.parent
+    _, data = read_yaml_mapping(manifest)
+    page_entries = data.get("pages")
+    if not isinstance(page_entries, list):
+        return []
+    declared: List[Dict[str, Any]] = []
+    for index, entry in enumerate(page_entries, start=1):
+        page_path = safe_project_path(root, entry)
+        if not page_path.is_file():
+            continue
+        _, page_data = read_yaml_mapping(page_path)
+        value = page_data.get("audio")
+        if value is None or (isinstance(value, str) and not value.strip()):
+            continue
+        if not isinstance(value, str):
+            raise ExportError(f"page audio must be a string: {page_path}")
+        declared.append({"slide": index, "value": value.strip()})
+    return declared
+
+
+def audio_extension_mime(value: str) -> Optional[Tuple[str, str]]:
+    """Return ``(extension, mime)`` for a supported audio value, else ``None``.
+
+    The extension is taken from the path part of the value so http(s) URLs with
+    query strings still resolve (e.g. ``https://host/a.mp3?t=1`` → ``.mp3``).
+    """
+    parsed = urlparse(value)
+    path = parsed.path if parsed.scheme else value
+    extension = Path(path).suffix.lower()
+    if extension not in AUDIO_EXTENSION_MIME:
+        return None
+    return extension, AUDIO_EXTENSION_MIME[extension]
+
+
+def download_audio(url: str) -> bytes:
+    """Download remote narration audio, enforcing the 200 MiB per-file limit.
+
+    Raises ``ExportError`` when the request fails (DNS/connect/timeout/non-2xx)
+    or when the payload exceeds ``MAX_AUDIO_FILE_BYTES``.
+    """
+    try:
+        with urllib.request.urlopen(url, timeout=AUDIO_DOWNLOAD_TIMEOUT_SECONDS) as response:
+            length = response.headers.get("Content-Length")
+            if length:
+                try:
+                    if int(length) > MAX_AUDIO_FILE_BYTES:
+                        raise ExportError(
+                            f"audio exceeds the 200 MiB per-file limit: {url} "
+                            f"(Content-Length={length})"
+                        )
+                except (TypeError, ValueError):
+                    pass
+            chunks: List[bytes] = []
+            total = 0
+            while True:
+                chunk = response.read(AUDIO_DOWNLOAD_CHUNK_BYTES)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_AUDIO_FILE_BYTES:
+                    raise ExportError(
+                        f"audio download exceeds the 200 MiB per-file limit: {url}"
+                    )
+                chunks.append(chunk)
+    except ExportError:
+        raise
+    except OSError as exc:
+        raise ExportError(f"failed to download audio {url}: {exc}") from exc
+    return b"".join(chunks)
+
+
+def resolve_audio_source(deck_root: Path, value: str) -> Optional[Tuple[bytes, str, str]]:
+    """Resolve a ``Page.audio`` value to ``(payload, extension, mime)``.
+
+    Contract (spec Implementation Decisions, TD-007):
+
+    - relative path → resolved against the deck root (the ``.pptd`` directory);
+    - http(s) URL → downloaded at export time;
+    - base64 ``data:`` URIs, non-http(s) schemes, missing local files, failed
+      downloads, and payloads over the 200 MiB per-file limit raise
+      ``ExportError``;
+    - unsupported / unknown extensions return ``None`` (the caller warns and
+      skips that page's audio).
+    """
+    if value.startswith("data:"):
+        raise ExportError(
+            "base64 audio data URIs are not supported; use a relative path or "
+            f"an http(s) URL: {value[:80]}"
+        )
+    extension_mime = audio_extension_mime(value)
+    if extension_mime is None:
+        return None
+    extension, mime = extension_mime
+    parsed = urlparse(value)
+    if parsed.scheme in ("http", "https"):
+        payload = download_audio(value)
+    elif parsed.scheme:
+        raise ExportError(f"audio must be a relative path or an http(s) URL: {value}")
+    else:
+        path = safe_project_path(deck_root, value)
+        if not path.is_file():
+            raise ExportError(f"audio file not found: {value}")
+        payload = path.read_bytes()
+    if len(payload) > MAX_AUDIO_FILE_BYTES:
+        raise ExportError(f"audio exceeds the 200 MiB per-file limit: {value}")
+    return payload, extension, mime
+
+
+def build_audio_shape(spid: int, r_id: str) -> ET.Element:
+    """Build the hidden 1px audio shape (``p:sp``) that references ``r_id``.
+
+    The shape is 1x1px, fill-free, and carries ``p:audioFile`` with an
+    ``r:embed`` relation inside ``p:nvPr`` — the structure PowerPoint uses for
+    narration audio placeholders; it stays out of the visual layer.
+    """
+    sp = ET.Element(f"{{{P_NS}}}sp")
+    nv_sp_pr = _sub(sp, "nvSpPr", P_NS)
+    c_nv_pr = _sub(nv_sp_pr, "cNvPr", P_NS, {"id": str(spid), "name": f"Audio Placeholder {spid}"})
+    _sub(c_nv_pr, "hlinkClick", A_NS, {f"{{{R_NS}}}id": r_id, "action": "ppaction://media"})
+    _sub(nv_sp_pr, "cNvSpPr", P_NS)
+    nv_pr = _sub(nv_sp_pr, "nvPr", P_NS)
+    _sub(nv_pr, "audioFile", P_NS, {f"{{{R_NS}}}embed": r_id})
+    sp_pr = _sub(sp, "spPr", P_NS)
+    xfrm = _sub(sp_pr, "xfrm", A_NS)
+    _sub(xfrm, "off", A_NS, {"x": "1", "y": "1"})
+    _sub(xfrm, "ext", A_NS, {"cx": "1", "cy": "1"})
+    prst_geom = _sub(sp_pr, "prstGeom", A_NS, {"prst": "rect"})
+    _sub(prst_geom, "avLst", A_NS)
+    _sub(sp_pr, "noFill", A_NS)
+    tx_body = _sub(sp, "txBody", P_NS)
+    _sub(tx_body, "bodyPr", A_NS)
+    _sub(tx_body, "lstStyle", A_NS)
+    _sub(tx_body, "p", A_NS)
+    return sp
+
+
+def build_narration_par(spid: int, first_id: int) -> ET.Element:
+    """Build the narration ``p:par`` block (``playFrom(0)`` auto-play).
+
+    Mirrors Microsoft's embed_audio.py golden reference: the ``p:cmd`` call is
+    wrapped in ``p:cBhvr`` with a ``p:spTgt`` whose ``spid`` targets the hidden
+    audio shape. Ids are ``first_id .. first_id+2`` so callers can renumber
+    when merging into an existing timing tree.
+    """
+    par = ET.Element(f"{{{P_NS}}}par")
+    c_tn = _sub(par, "cTn", P_NS, {"id": str(first_id), "fill": "hold"})
+    st_cond = _sub(c_tn, "stCondLst", P_NS)
+    _sub(st_cond, "cond", P_NS, {"delay": "0"})
+    child_lst = _sub(c_tn, "childTnLst", P_NS)
+    inner_par = _sub(child_lst, "par", P_NS)
+    inner_ct = _sub(inner_par, "cTn", P_NS, {"id": str(first_id + 1), "fill": "hold"})
+    st_cond_2 = _sub(inner_ct, "stCondLst", P_NS)
+    _sub(st_cond_2, "cond", P_NS, {"delay": "0"})
+    inner_child = _sub(inner_ct, "childTnLst", P_NS)
+    cmd = _sub(inner_child, "cmd", P_NS, {"type": "call", "cmd": "playFrom(0)"})
+    c_bhvr = _sub(cmd, "cBhvr", P_NS)
+    _sub(c_bhvr, "cTn", P_NS, {"id": str(first_id + 2), "dur": "0", "fill": "hold"})
+    tgt_el = _sub(c_bhvr, "tgtEl", P_NS)
+    _sub(tgt_el, "spTgt", P_NS, {"spid": str(spid)})
+    return par
+
+
+def _slide_cond(evt: str) -> ET.Element:
+    """Build a ``p:cond`` targeting the whole slide (prev/next navigation)."""
+    cond = ET.Element(f"{{{P_NS}}}cond", {"evt": evt, "delay": "0"})
+    tgt_el = _sub(cond, "tgtEl", P_NS)
+    _sub(tgt_el, "sldTgt", P_NS)
+    return cond
+
+
+def build_narration_timing(spid: int) -> ET.Element:
+    """Build a root-level ``p:timing`` narration template for ``spid``.
+
+    Follows the Microsoft embed_audio.py golden reference: a single
+    ``mainSeq`` whose first parallel par is the ``playFrom(0)`` call, so the
+    narration auto-plays when the slide is shown.
+    """
+    timing = ET.Element(f"{{{P_NS}}}timing")
+    tn_lst = _sub(timing, "tnLst", P_NS)
+    root_par = _sub(tn_lst, "par", P_NS)
+    root_ct = _sub(
+        root_par, "cTn", P_NS,
+        {"id": "1", "dur": "indefinite", "restart": "never", "nodeType": "tmRoot"},
+    )
+    root_child = _sub(root_ct, "childTnLst", P_NS)
+    seq = _sub(root_child, "seq", P_NS, {"concurrent": "1", "nextAc": "seek"})
+    seq_ct = _sub(seq, "cTn", P_NS, {"id": "2", "dur": "indefinite", "nodeType": "mainSeq"})
+    seq_child = _sub(seq_ct, "childTnLst", P_NS)
+    seq_child.append(build_narration_par(spid, 3))
+    prev_cond = _sub(seq, "prevCondLst", P_NS)
+    prev_cond.append(_slide_cond("onPrev"))
+    next_cond = _sub(seq, "nextCondLst", P_NS)
+    next_cond.append(_slide_cond("onNext"))
+    return timing
+
+
+def _max_timing_id(timing: ET.Element) -> int:
+    """Return the largest numeric ``p:cTn`` id in a timing tree (0 if none)."""
+    ids = []
+    for element in timing.iter():
+        if local_name(element.tag) == "cTn":
+            try:
+                ids.append(int(element.get("id")))
+            except (TypeError, ValueError):
+                pass
+    return max(ids, default=0)
+
+
+def merge_narration_timing(timing: ET.Element, spid: int) -> Optional[ET.Element]:
+    """Merge the narration ``playFrom(0)`` par into an existing ``p:timing``.
+
+    The narration is inserted as the first parallel ``p:par`` of the first
+    ``p:seq``'s main sequence, so authored element animations stay intact and
+    the slide keeps exactly one root-level ``p:timing``. Returns the (mutated)
+    timing element, or ``None`` when the expected ``tmRoot → seq → childTnLst``
+    structure is absent — the caller then degrades to replace + warning.
+    """
+    tn_lst = _root_child(timing, "tnLst")
+    root_par = _root_child(tn_lst, "par") if tn_lst is not None else None
+    root_ct = _root_child(root_par, "cTn") if root_par is not None else None
+    if root_ct is None or root_ct.get("nodeType") != "tmRoot":
+        return None
+    root_child = _root_child(root_ct, "childTnLst")
+    if root_child is None:
+        return None
+    seq = next((child for child in root_child if local_name(child.tag) == "seq"), None)
+    if seq is None:
+        return None
+    seq_ct = _root_child(seq, "cTn")
+    seq_child = _root_child(seq_ct, "childTnLst") if seq_ct is not None else None
+    if seq_child is None:
+        return None
+    narration = build_narration_par(spid, _max_timing_id(timing) + 1)
+    seq_child.insert(0, narration)
+    return timing
+
+
+def _max_shape_id(root: ET.Element) -> int:
+    """Return the largest numeric ``p:cNvPr`` shape id in a slide (0 if none)."""
+    ids = []
+    for element in root.iter():
+        if local_name(element.tag) == "cNvPr":
+            try:
+                ids.append(int(element.get("id")))
+            except (TypeError, ValueError):
+                pass
+    return max(ids, default=0)
+
+
+def place_timing(root: ET.Element, timing: ET.Element) -> None:
+    """Insert a root-level ``p:timing`` in CT_Slide order.
+
+    ``p:timing`` belongs after ``cSld → clrMapOvr? → transition`` and before the
+    optional ``p:extLst``, per the CT_Slide sequence enforced elsewhere by
+    ``validate_transition_order``.
+    """
+    names = [local_name(child.tag) for child in root]
+    anchor_index = names.index("transition") if "transition" in names else -1
+    if anchor_index < 0:
+        anchor_index = names.index("clrMapOvr") if "clrMapOvr" in names else -1
+    if anchor_index < 0:
+        anchor_index = names.index("cSld") if "cSld" in names else -1
+    if anchor_index < 0:
+        raise ExportError("slide XML has no timing insertion anchor")
+    root.insert(anchor_index + 1, timing)
+
+
+def patch_slide_audio(slide_xml: bytes, r_id: str) -> Tuple[bytes, int]:
+    """Inject the hidden audio shape and narration timing into one slide.
+
+    Returns the patched slide XML and the hidden shape's ``spid``. An existing
+    root-level ``p:timing`` (element animations) is merged first; on merge
+    failure it is replaced by the narration template and a warning is logged.
+    """
+    try:
+        root = ET.fromstring(slide_xml)
+    except ET.ParseError as exc:
+        raise ExportError(f"invalid slide XML: {exc}") from exc
+    c_sld = _root_child(root, "cSld")
+    sp_tree = _root_child(c_sld, "spTree") if c_sld is not None else None
+    if sp_tree is None:
+        raise ExportError("slide XML has no spTree")
+    spid = _max_shape_id(root) + 1
+    sp_tree.append(build_audio_shape(spid, r_id))
+
+    existing = _root_child(root, "timing")
+    if existing is not None and merge_narration_timing(existing, spid) is None:
+        log("warning: failed to merge narration timing into the existing animation "
+            "timing; replacing the slide timing")
+        root.remove(existing)
+        existing = None
+    if existing is None:
+        place_timing(root, build_narration_timing(spid))
+
+    # Keep the final timing (merged or fresh) in valid CT_Slide order.
+    names = [local_name(child.tag) for child in root]
+    timing_index = names.index("timing") if "timing" in names else -1
+    anchor_names = {"cSld", "clrMapOvr", "transition"}
+    out_of_order = any(
+        name in anchor_names and names.index(name) > timing_index
+        for name in anchor_names
+        if name in names and timing_index >= 0
+    )
+    if out_of_order:
+        timing = root[timing_index]
+        root.remove(timing)
+        place_timing(root, timing)
+    return ET.tostring(root, encoding="utf-8", xml_declaration=True), spid
+
+
+def _ct_part_name(media_name: str) -> str:
+    """Normalize a media part name to ``[Content_Types].xml`` form (leading slash)."""
+    return "/" + media_name.lstrip("/")
+
+
+def add_audio_content_type_overrides(content_types_xml: bytes, overrides: Dict[str, str]) -> bytes:
+    """Append ``<Override>`` entries to ``[Content_Types].xml``.
+
+    New Overrides are inserted before the closing ``</Types>`` so the required
+    Defaults-then-Overrides sequence is preserved; an existing Override for the
+    same part name is never duplicated.
+    """
+    text = content_types_xml.decode("utf-8")
+    close_index = text.rfind("</Types>")
+    if close_index == -1:
+        raise ExportError("[Content_Types].xml has no closing </Types>")
+    existing_names = set(re.findall(r'PartName="([^"]+)"', text))
+    additions = "".join(
+        f'<Override PartName="{_ct_part_name(name)}" ContentType="{mime}"/>'
+        for name, mime in overrides.items()
+        if _ct_part_name(name) not in existing_names
+    )
+    text = text[:close_index] + additions + text[close_index:]
+    return text.encode("utf-8")
+
+
+def add_audio_relationship(rels_xml: Optional[bytes], media_name: str) -> Tuple[bytes, str]:
+    """Append an audio Relationship to a slide rels part.
+
+    The new ``rId`` is the max numeric relationship id in the file plus one
+    (``rId1`` for a freshly created rels part). Returns the rels bytes and the
+    new id.
+    """
+    target = f"../../media/{Path(media_name).name}"
+    if rels_xml is None:
+        text = (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            f'<Relationships xmlns="{RELS_NS}"></Relationships>'
+        )
+        max_id = 0
+    else:
+        text = rels_xml.decode("utf-8")
+        numeric_ids = [int(match) for match in re.findall(r'Id="rId(\d+)"', text)]
+        if numeric_ids:
+            max_id = max(numeric_ids)
+        else:
+            max_id = len(re.findall(r"<Relationship\b", text))
+    r_id = f"rId{max_id + 1}"
+    close_index = text.rfind("</Relationships>")
+    if close_index == -1:
+        raise ExportError("slide rels has no closing </Relationships>")
+    entry = f'<Relationship Id="{r_id}" Type="{AUDIO_REL_TYPE}" Target="{target}"/>'
+    text = text[:close_index] + entry + text[close_index:]
+    return text.encode("utf-8"), r_id
+
+
+def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
+    """Add page narration audio to an exported PPTX via pure-ZIP post-processing.
+
+    Parses the PPTD deck, resolves each page's ``audio`` value to bytes, then
+    rewrites the PPTX ZIP in place: a media part under ``ppt/media/audio{n}.``,
+    a ``[Content_Types].xml`` Override, a slide-rels audio Relationship, a
+    hidden 1px audio shape, and a root-level ``p:timing`` narration template
+    (``playFrom(0)`` auto-play). Slides that already carry an animation
+    ``p:timing`` get the narration merged in; on merge failure the timing is
+    replaced and a warning is logged.
+
+    Returns ``{"audioSlides", "audioParts", "audioSkippedUnknownExtensions"}``.
+    """
+    sources = collect_page_audio(deck)
+    if not sources:
+        return {"audioSlides": 0, "audioParts": 0, "audioSkippedUnknownExtensions": 0}
+    deck_root = find_manifest(deck).parent
+
+    packs: List[Dict[str, Any]] = []
+    skipped = 0
+    for source in sources:
+        resolved = resolve_audio_source(deck_root, source["value"])
+        if resolved is None:
+            skipped += 1
+            log(
+                f"warning: page {source['slide']} audio has an unsupported "
+                f"extension; skipping: {source['value']}"
+            )
+            continue
+        data, extension, mime = resolved
+        packs.append({
+            "slide": source["slide"],
+            "value": source["value"],
+            "data": data,
+            "ext": extension,
+            "mime": mime,
+        })
+    if not packs:
+        return {"audioSlides": 0, "audioParts": 0, "audioSkippedUnknownExtensions": skipped}
+
+    temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with zipfile.ZipFile(pptx, "r") as source_zip, zipfile.ZipFile(temporary, "w") as target_zip:
+            target_zip.comment = source_zip.comment
+            existing_names = set(source_zip.namelist())
+            if "[Content_Types].xml" not in existing_names:
+                raise ExportError("exported PPTX has no [Content_Types].xml")
+            existing_numbers = [
+                int(match.group(1))
+                for name in existing_names
+                for match in [AUDIO_MEDIA_PART_RE.match(name)]
+                if match
+            ]
+            next_audio_number = max(existing_numbers, default=0) + 1
+            for pack in packs:
+                pack["media_name"] = f"ppt/media/audio{next_audio_number}{pack['ext']}"
+                next_audio_number += 1
+
+            rels_cache: Dict[int, bytes] = {}
+            for pack in packs:
+                rels_name = f"ppt/slides/_rels/slide{pack['slide']}.xml.rels"
+                existing_rels = source_zip.read(rels_name) if rels_name in existing_names else None
+                new_rels, r_id = add_audio_relationship(existing_rels, pack["media_name"])
+                pack["r_id"] = r_id
+                rels_cache[pack["slide"]] = new_rels
+
+            content_types = source_zip.read("[Content_Types].xml")
+            patched_content_types = add_audio_content_type_overrides(
+                content_types,
+                {pack["media_name"]: pack["mime"] for pack in packs},
+            )
+            rels_names_to_write = {
+                f"ppt/slides/_rels/slide{pack['slide']}.xml.rels": pack["slide"]
+                for pack in packs
+            }
+            slide_numbers = {pack["slide"] for pack in packs}
+
+            for info in source_zip.infolist():
+                data = source_zip.read(info.filename)
+                if info.filename == "[Content_Types].xml":
+                    data = patched_content_types
+                elif info.filename in rels_names_to_write:
+                    data = rels_cache[rels_names_to_write[info.filename]]
+                elif re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
+                    match = re.fullmatch(r"ppt/slides/slide(\d+)\.xml", info.filename)
+                    slide_number = int(match.group(1))
+                    if slide_number in slide_numbers:
+                        pack = next(p for p in packs if p["slide"] == slide_number)
+                        data, _spid = patch_slide_audio(data, pack["r_id"])
+                target_zip.writestr(info, data, compress_type=info.compress_type)
+
+            for pack in packs:
+                target_zip.writestr(
+                    pack["media_name"], pack["data"], compress_type=zipfile.ZIP_STORED
+                )
+            for rels_name, slide_number in rels_names_to_write.items():
+                if rels_name not in existing_names:
+                    target_zip.writestr(rels_name, rels_cache[slide_number])
+        temporary.replace(pptx)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+    return {
+        "audioSlides": len(packs),
+        "audioParts": len(packs),
+        "audioSkippedUnknownExtensions": skipped,
+    }
+
+
+def _resolve_rel_target(rels_name: str, target: str) -> str:
+    """Resolve a rels ``Target`` (relative to the rels part's folder) to a part name."""
+    return posixpath.normpath(posixpath.join(posixpath.dirname(rels_name), target))
+
+
+def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str, Any]:
+    """Assert a declared-audio slide's packaging is complete.
+
+    Verifies exactly one root-level ``p:timing`` with a ``playFrom(0)``
+    narration command whose ``spTgt`` spid matches the hidden audio shape, that
+    shape's ``r:embed`` resolves through the slide rels to an audio
+    Relationship, and that the media part + ``[Content_Types].xml`` Override
+    exist. Returns the part name / rId / spid; raises ``ExportError`` on any
+    violation.
+    """
+    rels_name = f"ppt/slides/_rels/slide{slide_number}.xml.rels"
+    if rels_name not in archive.namelist():
+        raise ExportError(f"audio slide {slide_number} has no rels part")
+    slide_xml = archive.read(f"ppt/slides/slide{slide_number}.xml")
+    rels_xml = archive.read(rels_name)
+    try:
+        root = ET.fromstring(slide_xml)
+    except ET.ParseError as exc:
+        raise ExportError(f"invalid slide XML: {exc}") from exc
+
+    names = [local_name(child.tag) for child in root]
+    if names.count("timing") != 1:
+        raise ExportError(f"audio slide {slide_number} must have exactly one root-level timing")
+    commands = [
+        element
+        for element in root.iter()
+        if local_name(element.tag) == "cmd" and element.get("cmd") == "playFrom(0)"
+    ]
+    if not commands:
+        raise ExportError(f"audio slide {slide_number} has no playFrom(0) narration command")
+    sp_tgt = next(
+        (element for element in commands[0].iter() if local_name(element.tag) == "spTgt"),
+        None,
+    )
+    if sp_tgt is None or not sp_tgt.get("spid"):
+        raise ExportError(f"audio slide {slide_number} narration command has no spTgt spid")
+    spid = sp_tgt.get("spid")
+
+    audio_file = None
+    for sp in (element for element in root.iter() if local_name(element.tag) == "sp"):
+        nv_sp_pr = _root_child(sp, "nvSpPr")
+        nv_pr = _root_child(nv_sp_pr, "nvPr") if nv_sp_pr is not None else None
+        candidate = _root_child(nv_pr, "audioFile") if nv_pr is not None else None
+        if candidate is None:
+            continue
+        c_nv_pr = _root_child(nv_sp_pr, "cNvPr")
+        if c_nv_pr is None or c_nv_pr.get("id") != spid:
+            continue
+        audio_file = candidate
+        break
+    if audio_file is None:
+        raise ExportError(
+            f"audio slide {slide_number} has no hidden audio shape matching spid {spid}"
+        )
+    r_id = audio_file.get(f"{{{R_NS}}}embed")
+    if not r_id:
+        raise ExportError(f"audio slide {slide_number} audio shape has no r:embed")
+
+    try:
+        rels_root = ET.fromstring(rels_xml)
+    except ET.ParseError as exc:
+        raise ExportError(f"invalid slide rels XML: {exc}") from exc
+    relationship = None
+    for element in rels_root:
+        if local_name(element.tag) != "Relationship":
+            continue
+        if element.get("Id") == r_id:
+            relationship = element
+            break
+    if relationship is None:
+        raise ExportError(f"audio slide {slide_number} relationship {r_id} is missing")
+    if not str(relationship.get("Type", "")).endswith("/audio"):
+        raise ExportError(f"audio slide {slide_number} relationship {r_id} has the wrong Type")
+    target = relationship.get("Target")
+    if not target:
+        raise ExportError(f"audio slide {slide_number} relationship {r_id} has no Target")
+    part_name = _resolve_rel_target(rels_name, target)
+    if part_name not in archive.namelist():
+        raise ExportError(f"audio slide {slide_number} media part missing: {part_name}")
+
+    extension = Path(part_name).suffix.lower()
+    expected_mime = AUDIO_EXTENSION_MIME.get(extension)
+    if expected_mime is None:
+        raise ExportError(f"audio part has an unknown extension: {part_name}")
+    content_types = archive.read("[Content_Types].xml").decode("utf-8")
+    ct_part = _ct_part_name(part_name)
+    if f'PartName="{ct_part}"' not in content_types or f'ContentType="{expected_mime}"' not in content_types:
+        raise ExportError(f"audio part has no [Content_Types].xml Override: {part_name}")
+    return {"part": part_name, "rId": r_id, "spid": spid}
+
+
 def patch_transitions(pptx: Path, transition: str) -> int:
     temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
     slide_count = 0
@@ -776,7 +1401,12 @@ def patch_transitions(pptx: Path, transition: str) -> int:
     return slide_count
 
 
-def verify_output(pptx: Path, transition: str, expect_fonts: bool) -> Dict[str, Any]:
+def verify_output(
+    pptx: Path,
+    transition: str,
+    expect_fonts: bool,
+    deck: Optional[Path] = None,
+) -> Dict[str, Any]:
     if not is_pptx(pptx):
         raise ExportError(f"output is not a valid PPTX ZIP: {pptx}")
     with zipfile.ZipFile(pptx) as archive:
@@ -803,12 +1433,57 @@ def verify_output(pptx: Path, transition: str, expect_fonts: bool) -> Dict[str, 
             log(
                 "warning: embed-fonts was enabled, but the official writer produced no font part"
             )
+        audio_parts = sorted(
+            name for name in archive.namelist() if AUDIO_MEDIA_PART_RE.match(name)
+        )
+        audio_slides = 0
+        for slide_name in slide_names:
+            rels_name = (
+                f"ppt/slides/_rels/{Path(slide_name).name}.rels"
+            )
+            if rels_name not in archive.namelist():
+                continue
+            rels_root = ET.fromstring(archive.read(rels_name))
+            if any(
+                local_name(element.tag) == "Relationship"
+                and str(element.get("Type", "")).endswith("/audio")
+                for element in rels_root
+            ):
+                audio_slides += 1
+        if deck is not None:
+            for source in collect_page_audio(deck):
+                if audio_extension_mime(source["value"]) is None:
+                    # Unknown-extension pages are deliberately skipped at patch
+                    # time with a warning; do not fail verification for them.
+                    continue
+                verify_audio_slide(archive, source["slide"])
         return {
             "slides": len(slide_names),
             "fadeTransitions": transition_hits,
             "fontParts": len(fonts),
+            "audioSlides": audio_slides,
+            "audioParts": len(audio_parts),
             "bytes": pptx.stat().st_size,
         }
+
+
+def postprocess_pptx(
+    output: Path,
+    project_dir: Path,
+    transition: str,
+    expect_fonts: bool,
+) -> Dict[str, Any]:
+    """Shared post-export pipeline used by both export paths.
+
+    Fixed order: ``patch_transitions`` → ``patch_audio`` → ``verify_output``.
+    ``project_dir`` is the deck root used to resolve ``Page.audio`` values and
+    against which ``verify_output`` cross-checks the packaged audio.
+    """
+    slide_count = patch_transitions(output, transition)
+    patch_audio(output, project_dir)
+    summary = verify_output(output, transition, expect_fonts, deck=project_dir)
+    summary["transitionPatchedSlides"] = slide_count
+    return summary
 
 
 def resolve_editor_root() -> Path:
@@ -963,9 +1638,7 @@ def export_pptx_local(
             f"local WASM export failed ({process.returncode}):\n{process.stdout[-4000:]}"
         )
 
-    slide_count = patch_transitions(output, transition)
-    summary = verify_output(output, transition, expect_fonts=False)
-    summary["transitionPatchedSlides"] = slide_count
+    summary = postprocess_pptx(output, manifest.parent, transition, expect_fonts=False)
     summary["output"] = str(output)
     summary["exporter"] = "local-wasm-patched"
     log(f"local export ok: {output} ({output.stat().st_size} bytes)")
@@ -1071,9 +1744,7 @@ def export_pptx(
             # 即清理（成功/失败都执行），代价是下次冷启动一次 Chrome。
             kill_debug_chrome()
 
-    slide_count = patch_transitions(output, transition)
-    summary = verify_output(output, transition, embed_fonts)
-    summary["transitionPatchedSlides"] = slide_count
+    summary = postprocess_pptx(output, manifest.parent, transition, embed_fonts)
     summary["output"] = str(output)
     summary["exporter"] = "browser-local-editor"
     return summary
