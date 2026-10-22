@@ -1,6 +1,6 @@
 # useful-skills
 
-Claude Code / zcode 的个人技能库：**64 个可执行 skill（本仓库）+ 9 个插件族条目**，覆盖从立项、编码、质量到情报、内容生产、UI 设计、设备自动化的完整工程流。每个 skill 是一个自包含目录（`SKILL.md` + 可选 `references/` / `scripts/` / `examples/`），按触发词被模型自动调用或由用户显式 `/` 唤起。
+Claude Code / zcode 的个人技能库：**67 个可执行 skill（本仓库）+ 9 个插件族条目**，覆盖从立项、编码、质量到情报、内容生产、UI 设计、设备自动化的完整工程流。每个 skill 是一个自包含目录（`SKILL.md` + 可选 `references/` / `scripts/` / `examples/`），按触发词被模型自动调用或由用户显式 `/` 唤起。
 
 ## 快速开始
 
@@ -14,7 +14,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 
 ## 生态总览（9 域）
 
-本仓库 64 个 skill 按功能分成 9 个域；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
+本仓库 67 个 skill 按功能分成 9 个域；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
 
 ### 域 0 · Skill 生态自治
 
@@ -48,6 +48,8 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | Skill | 用途 |
 |---|---|
 | `implement` | 按 spec/tickets 实现：TDD 垂直切片 + 类型检查 + 全量测试 + 自审 |
+| `implement-spec` | 整个 spec 一次实现：任务图 + implementer 子智能体并行 + 单集成分支 |
+| `pr` | PR 正文模板：最小可视摘要 + 前后证据 + 单向/双向门 |
 | `tdd` | 测试驱动开发（red-green-refactor） |
 | `prototype` | 一次性原型回答设计问题，答完即弃 |
 | `setup-pre-commit` | Husky pre-commit：格式化 + 类型检查 + 测试 |
@@ -67,6 +69,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `simplify-codebase` | 基于证据的简化审计：删死代码、去重、拆冗余抽象 |
 | `code-review` | 定点 diff 多轴评审（Standards + Spec 并行，Falsify 按需第三轴；kickoff 期末审核语境为四轴，含 Architecture 模块结构评估） |
 | `diagnosing-bugs` | 疑难 bug / 性能回归诊断闭环 |
+| `retro` | 会话回顾 → 环境改进候选（导航/自动检查/编码标准/工具经济） |
 | `resolving-merge-conflicts` | 解决进行中的 git merge/rebase 冲突 |
 | `git-guardrails-claude-code` | 给 Claude Code 装 git 安全钩子，拦危险命令 |
 | `triage` | issue/外部 PR 状态机：分类、验证、写 agent-ready 简报 |

@@ -15,8 +15,8 @@
 | skill-creator | vendored | mattpocock/skills（随批次导入；Apache 2.0 LICENSE.txt 系上游随附） | Apache 2.0 | — | 2026-08-06 | ✅（并入批次） |
 | vibehub | vendored | [oil-oil/vibe-hub-skill](https://github.com/oil-oil/vibe-hub-skill) | MIT | — | 2026-08-11 | ✅（config.json 已记） |
 | zine-ui | distilled | [Zeejay0/gathered-scenes-zine-skill](https://github.com/Zeejay0/gathered-scenes-zine-skill) + photo-abstract-editorial（Codex） | personal non-commercial | 1.0.0 | 2026-08-11 | ✅ |
-| diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.6.34 | 2026-08-13 · 2026-09-16 同步 · 2026-09-27 同步 | ✅ |
-| museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | wheel v0.7.2 | 2026-08-11 · 2026-09-27 更新 | ✅（wheel URL） |
+| diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.6.119 | 2026-08-13 · 2026-09-16 同步 · 2026-09-27 同步 · 2026-10-23 同步 | ✅ |
+| museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | wheel v0.14.0 | 2026-08-11 · 2026-09-27 更新 · 2026-10-23 更新 | ✅（wheel URL） |
 | vision | vendored + 改造 | [asuojun/claude-vision-skill](https://github.com/asuojun/claude-vision-skill) | — | — | 2026-08-06 | ✅（README 已记） |
 | finesse-ui | 自研 + 部分派生 | 派生自 taste-skill v2 / emilkowalski/skills / VoltAgent/awesome-design-md | MIT | 0.21.0 | 快照 2026-08-28 · v0.21.0，**非 mattpocock 内容** | 部分（仅派生源） |
 | open-kimi-ppt | 自研（逆向） | 无（依赖 Moonshot PPTD 格式） | 无 | — | 2026-08-08 | ❌ |
@@ -31,6 +31,9 @@
 | simple-logic | distilled（cangjie-tools v2.5.0 生成） | 《简单的逻辑学》(D. Q. McInerny) 经 [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill) 蒸馏 | 原书文本衍生 | v2.5.0（生成器） | 2026-09-16 | — |
 | ghidra-cookbook（reverse-flow 附加吸收） | distilled | [NationalSecurityAgency/ghidra](https://github.com/NationalSecurityAgency/ghidra)（依据本地参考 clone `F:\tools\src\ghidra` 提炼速查，非逐字复制） | Apache-2.0 | — | 2026-09-22 | ✅（文件头标注） |
 | life-decision-guide | distilled | [eternity4719/HowToLiveBetter](https://github.com/eternity4719/HowToLiveBetter)（《高性价比人生指南》自带 `skills/life-decision-guide/SKILL.md` 规则化，不复制正文） | Unlicense | — | 2026-09-22 | ✅（文件头标注） |
+| implement-spec | vendored | mattpocock/skills（v1.3 毕业，`skills/engineering/implement-spec/`） | 见上游 | — | 2026-10-23 | ✅（并入批次） |
+| pr | vendored | mattpocock/skills（`skills/engineering/pr/`，源头 Humanlayer show-me，CREDITS.md 已随附） | 见上游 | — | 2026-10-23 | ✅（并入批次） |
+| retro | vendored + 本地化改写 | mattpocock/skills（`skills/engineering/retro/`） | 见上游 | — | 2026-10-23 | ✅（并入批次） |
 
 ---
 
@@ -57,6 +60,21 @@
   - 本地已删除者未恢复：writing-for-agents（上游仍有，本地有意删）、writing-great-skills、skill-creator（上游均已删）
   - **2026-08-29 用户决定**：删除 batch-grill-me、design-an-interface、edit-article、find-skills、qa、request-refactor-plan、ubiquitous-language（7 个，未 commit，git 可恢复）；保留 improve-python-architecture、obsidian-vault；上游新增的 implement-spec、retro **用户决定暂不引入**（依赖本地已删的 writing-for-agents / 任务图体系，尚属 in-progress）
 - **2026-09-16 核对**：上游 head `959a8e9`（2026-09-15）。自上次同步点 `6654f6b` 后上游仅两处变动：retro deterministic-checks（本地未引入，维持原决定）、link-skills misc 收录逻辑（本地无此 skill）。**34 个共有 skill 无内容变更，无需重新同步。**
+- **2026-09-27 复核**：上游 09-15 后 13 个提交逐一核对文件面——全部集中在新增的 `skills/in-progress/pr/SKILL.md`（pr skill，09-17 加入当日即移入 in-progress）与 `skills/in-progress/retro/SKILL.md`（retro，本地未引入）；唯一触及 ask-matt 的提交 `4cfa4cd2` 是移除 pr 登记（本地 ask-matt 无 `/pr` 行，无交集）。**本地 34 个共有 skill 零内容变更，维持不引入；pr/retro 依既有 in-progress 不引入决定挂起。**
+- **2026-10-23 复核**：上游 v1.3（09-29）将 implement-spec / pr / retro 从 in-progress 毕业为正式（`skills/engineering/`）。10-06~10-19 共 54 个提交，触及本地共有 skill 的修复全部**定点合入**（每个 skill 保留本地定制）：
+  - wizard：`template.sh` 取上游修复版（readline 移除、.env 引号、symlink、EOF、opener warning；SKILL.md 零差异）
+  - diagnosing-bugs：步 2 补 #1209 强制变异落地验证句（`CONTEXT.md` 保留本地约定）
+  - tdd：补 #1192 seam 取舍句（`CONTEXT.md` 保留本地约定）
+  - teach：补 #1183 workspace 路径锚定 + quiz 答案位置多样句
+  - grilling：补 #706 «Word each question so "yes" accepts...» 句（钢人模式等本地内容保留）
+  - wayfinder：补 #1181 四处纪律说明（仅 wayfinder 标签 / 真实 id 交叉引用 / research 不开 PR / 按 label 解析 ticket 类型）
+  - ask-matt：补 #1206 机制句（先读目标 skill 的 SKILL.md 再断言/跳过）；9 域路由、CONTEXT 化等本地定制保留
+  - to-tickets：补「Omit this section when blockers were set as native edges」句（本地切片上限定制保留，sub-issue 语义本地已含）
+  - implement：补 #1196 ticket reference 句 + #1198 Skill tool 调用二处（本地栈级坑/交付标准/四状态保留）
+  - setup-matt-pocock-skills：补 #1197 label 创建句；`issue-tracker-github.md`/`issue-tracker-gitlab.md` 取上游修复版（gh 命令简化、外部 PR 走 `gh pr list`、sub-issues endpoint）；`domain.md` 的 CONTEXT 化、triage-labels 本地措辞、Done-when 保留
+  - handoff / claude-handoff：本地定制已覆盖上游 #272/#562 修复（固定落盘路径 / 无 shell 插值传参），**零改动**
+  - code-review：本地深度定制版（credibility gate / manifest / 单轴 / 四轴 / negative checklists / falsify-pitfalls）为上游 #1208 的超集，**零改动**
+  - 毕业三件评估见 §21。
 
 ### 2. skill-creator — vendored
 
@@ -106,6 +124,16 @@
   - **assets 12 个 differ 经行尾归一化 diff 判定无本地定制痕迹 → 整取上游**（解除「无法判归属」困境）；verify-* 引用：新增 type 文档引用的仓库根 `scripts/verify-*.py` 不在 vendored 副本，验证路径保持 SKILL.md 指向 bundled `self_check.py`（既有惯例）
   - 验证：`python3 scripts/self_check.py assets/example-heatmap.html` 通过；清理 `__pycache__`
 - **保护点现状（2026-09-27 复核）**：style-guide Inversion 修复仍需每次同步重放（上游持续未修）；gate 段本地 5 分支话术已被上游 6 分支 + profiles 取代并已采纳；assets 同名文件保护解除（本次整取）；`ink-strong` token 为上游新增保留
+- **2026-10-23 同步内容**（2.6.34 → 2.6.119，上游 192 提交，skill 目录 287 文件）：
+  - **新图型 4 个（41 → 45 型）**：service blueprint（#360，visibility line 语法）、architecture delta（Before/After + Changes ledger）、exploded axonometric（分解轴测，AI-stack/keyboard/phone/unboxing 等 example）、axonometric plan（轴测平面，campus/coffee-shop/warehouse example）；architecture containment 并入 type-architecture（scope 语义）
+  - **新增 bundled 导出脚本**：`scripts/export_svg.py` + `scripts/export_png.py`（#354 Playwright PNG 渲染器打包）；`references/export.md` 重写为导出流程所有权文档（本地此前无 export 通道脚本）
+  - **新增 references**：`primitives-core.md`（markup 与连接器规则长文，SKILL.md 正文瘦身迁出）、`layout-budget.md`（4px 网格/每型复杂度预算明细，SKILL.md 仅留通用预算表）、4 个新 type 文档；SKILL.md 从展开版改回引用式（细节由 refs 承担）
+  - **皮肤迁移**：上游 accent `#eb6c36` → **`#bf4520`**（burnt-tangerine，4.5:1 达标）、soft/link 派生值更新、verify-contrast 校验；gate 检测值随迁（本地旧 gate 段 `#eb6c36` 检测已随之更新）；style-guide 取上游新版后**重放本地 Inversion 修复**（上游 L53 仍 `rgba(28,25,23)→rgba(250,247,242)`，本地版 `rgba(45,49,66)→rgba(245,245,245)`）
+  - **import 大批修复**：Mermaid（分号头、invisible links、单行 state notes、whitespace pipe、BOM、fence 内样例）、Excalidraw（嵌套深度报错）、draw.io（visible=0 隐藏单元格）；export 修复（svg-only/png-only 排除规则、CSS media 条件保留、RGBA alpha 合成、CDATA 解包、嵌套 icon、CSS 选择器字面量保留、CSS paint 引用转义）
+  - **self_check 增强**：viewBox 外内容检测（#408）、doctor 默认 headless Chromium 探测（#434）、gallery 导航折叠（#361）
+  - 本地定制层保留：frontmatter 双语 45 型触发词（description/when_to_use/argument-hint 补 4 新型）、version 2.6.119、Inherited constraints、Origin & license、Loading guide（45 型）；assets 全域整取上游（无本地定制痕迹，与上轮判定一致）
+  - 验证：5 个 example（service-blueprint/exploded/architecture-delta/axonometric-plan/heatmap）`self_check.py` 全过；SKILL.md 引用 refs 全存在（finesse-ui 的 design-dna/anti-cheap 为跨 skill 声明引用，非本目录缺失）
+- **保护点现状（2026-10-23 复核）**：style-guide Inversion 修复已再次重放（上游 2.6.119 仍未修）；gate 段随上游新皮肤值更新；assets 全域整取后无独立保护点；下次同步只需重放 Inversion + 跟随 SKILL 基底重放本地定制层
 
 ### 6. museon-cli — 封装
 
@@ -114,6 +142,7 @@
 - **导入**：`fdc181e`（2026-08-11）
 - **2026-09-16 更新**：wheel pin v0.5.9 → **v0.6.0**（上游 2026-09-12 release，asset `museoncli-0.6.0-py3-none-any.whl`）
 - **2026-09-27 更新**：wheel pin v0.6.0 → **v0.7.2**（上游 09-21/09-22 releases：staff 运营读工具、Actor 批量复制/移动、campaign 周期快照；SKILL.md 仅改安装 URL，操作契约靠 `museoncli schema` 动态发现，无需改指南）
+- **2026-10-23 更新**：wheel pin v0.7.2 → **v0.14.0**（上游 10-10~10-17 五个 release：publish 域大扩展——排程发布已完成视频、TikTok 图集、复用帖内声音作 BGM，另有 schedule/账号批量操作等；SKILL.md 仍仅改安装 URL，操作契约靠 `museoncli schema` 动态发现）
 
 ### 7. vision — vendored + 改造
 
@@ -234,6 +263,7 @@
 - **本地形态**：skill 文档层（SKILL.md + 7 个 references：search/social/career/dev/web/video/finance），依赖用户独立安装上游 `agent-reach` CLI（pip/pipx）
 - **本地改动**：SKILL.md 双语触发词 + 路由表 + 零配置命令 + check-update 提醒；references 为上游 docs 的精简适配
 - **2026-09-16 核对**：上游 head `a19a171`（2026-09-15）新增 **Boss直聘 channel（#627）**，平台数 15→16，career 分类需更新（`channels/boss.py` + `references/career.md` 增补 + SKILL 平台数/路由）。**用户 2026-09-16 未选、2026-09-27 复核仍稳定但继续挂起，待下轮执行**
+- **2026-10-23 核对**：上游 10-07 四个提交（SKILL.md conda env 泄漏修复 / 删仓库 CLAUDE.md / 停止推荐无关 PyPI 包）——本地 SKILL.md 系改写版、grep 无 conda/私有路径泄漏，均无交集；**Boss直聘 channel 用户于 2026-10-23 仍未选，继续挂起**（本次批次未执行）
 - **更新提示**：合入时对账上游 `agent_reach/skill/` 的 SKILL.md 与 career.md，保留本地路由表/触发词结构
 
 ### 18. simple-logic — distilled（cangjie-tools v2.5.0 生成）
@@ -255,7 +285,20 @@
 - **验证**：frontmatter 结构合规（仅 name+description）；正测应能答出并指回「第 x 节第 y 条」，反测应触发第 0 步止损或明确说「书里没写」
 - **更新提示**：上游只更新正文（README + book/）时本文件无需改动；仅当上游改 `skills/life-decision-guide/SKILL.md` 的规则本身时才需对账
 
-### 20. ghidra-cookbook（reverse-flow 附加吸收）— distilled
+### 20. v1.3 毕业三件（implement-spec / pr / retro）— vendored + 本地化改写
+
+- **上游**：mattpocock/skills v1.3（2026-09-29 将三件从 in-progress 毕业为 `skills/engineering/` 正式 skill；此前 09-16/09-27 两轮均因「in-progress 不引入」挂起）
+- **用户 2026-10-23 拍板**：三个全引入，retro 做本地化改写
+- **导入**：2026-10-23，随 mattpocock 批次从上游 HEAD 复制
+- **本地改动**：
+  - `implement-spec`（40 行）：原样 vendored，零改写——调 Skill tool `tdd`/`code-review` 与 `/setup-matt-pocock-skills` 均为本地已有 skill，依赖闭合
+  - `pr`（170 行）：仅 1 处本地化——`GLOSSARY.md` → `CONTEXT.md`（本地领域文档约定）；`CREDITS.md` 保留（Humanlayer show-me 来源）
+  - `retro`（44 行）本地化改写 3 处：① 第 1 步 `Call the Skill tool with writing-for-agents` → 读仓库 AGENTS.md 约定 + 需要时调 `/skill-authoring`（本地已删 writing-for-agents，#1240 上游仍硬依赖，故改写而非原样引入）；② `CLAUDE.md`/`AGENTS.md` → 仅 `AGENTS.md`（本地约定不保留 CLAUDE.md）；③ Files 节 writing-for-agents 建议 → 仓库自身 AGENTS.md 约定 + skill-authoring 文档风格。7 类环境改进候选（导航/自动检查/编码标准/全局 AGENTS.md/工具经济/no-ops/信息访问）与 Implementation vs Review 机制原样保留
+- **本地接线**：ask-matt 四处——main flow Yes 分支补 `/implement-spec`、closout 段补 `/pr` 与 `/retro`、Context hygiene 补 retro 运行时机、diagnosing-bugs 段恢复 retro post-mortem；README 域 2 加 implement-spec/pr、域 3 加 retro，总数 64→67；PROVENANCE 本条目
+- **验证**：三件 frontmatter 解析合规（retro/pr/implement-spec 均 `disable-model-invocation: true` 或适用）；ask-matt 四处插入位置正确且无 retro 死引用（writing-for-agents 零残留于三件）
+- **更新提示**：上游 retro 仍依赖 writing-for-agents，后续同步须重放本 §21 的三处改写；implement-spec/pr 可整文件跟随上游
+
+### 21. ghidra-cookbook（reverse-flow 附加吸收）— distilled
 
 - **上游**：https://github.com/NationalSecurityAgency/ghidra（Apache-2.0）
 - **导入**：2026-09-22，依据本地参考 clone 提炼（`F:\tools\src\ghidra`，稀疏检出，HEAD `d6192cb`）
