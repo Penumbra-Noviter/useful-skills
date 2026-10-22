@@ -54,6 +54,7 @@ __all__ = [
     "OP_FRAGMENT",
     "OPERATIONS",
     "ELLIPSE_STEPS",
+    "MAX_COORD",
     "parse_geometries",
     "compute_paths",
     "to_svg_path",
@@ -77,6 +78,11 @@ OPERATIONS: Tuple[str, ...] = (
 # Number of sample points used to approximate an ellipse as a polygon.
 ELLIPSE_STEPS = 64
 
+# Sane coordinate bound in PPTD px. Coordinates beyond this are rejected up
+# front: their 1-decimal formatting would otherwise overflow into illegal
+# "inf" / "1e+308" output (review F1/F2).
+MAX_COORD = 1_000_000.0
+
 
 class BooleanPathError(ValueError):
     """Raised for invalid CLI/JSON input or degenerate geometry."""
@@ -99,10 +105,16 @@ def require_shapely() -> None:
 
 
 def _num(value: Any, what: str) -> float:
-    """Coerce a JSON number, rejecting booleans / strings / None."""
+    """Coerce a JSON number, rejecting booleans / strings / None and any
+    non-finite or out-of-range value (review F1/F2)."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise BooleanPathError(f"{what} must be a number, got {value!r}")
-    return float(value)
+    result = float(value)
+    if not math.isfinite(result) or abs(result) > MAX_COORD:
+        raise BooleanPathError(
+            f"{what} must be a finite number within ±{MAX_COORD:g}, got {value!r}"
+        )
+    return result
 
 
 def _frame_of(spec: Dict[str, Any], kind: str) -> Tuple[float, float, float, float]:
@@ -279,6 +291,42 @@ def to_svg_path(poly: Polygon, dx: float = 0.0, dy: float = 0.0) -> str:
     return "".join(parts)
 
 
+def _shoelace_area(pts: Sequence[Tuple[float, float]]) -> float:
+    """Absolute shoelace area of an open ring of points (all edges incl. wrap)."""
+    n = len(pts)
+    if n < 3:
+        return 0.0
+    return 0.5 * abs(
+        sum(
+            pts[i][0] * pts[(i + 1) % n][1] - pts[(i + 1) % n][0] * pts[i][1]
+            for i in range(n)
+        )
+    )
+
+
+def _rounded_ring(ring: Any, dx: float, dy: float) -> Optional[List[Tuple[float, float]]]:
+    """Round + translate one ring and judge it against the post-rounding
+    degenerate-ring contract (review F3).
+
+    A ring is degenerate — and returns ``None`` — when, after translation and
+    rounding to one decimal, it has fewer than three distinct points or a zero
+    shoelace area (e.g. a >=3-point zig-zag that is collinear after rounding).
+    Such rings must be dropped, never serialized as zero-area paths.
+    """
+    pts = [(_round1(c[0] - dx), _round1(c[1] - dy)) for c in ring.coords]
+    if len(pts) > 1 and pts[0] == pts[-1]:
+        pts = pts[:-1]
+    uniq: List[Tuple[float, float]] = []
+    for pt in pts:
+        if not uniq or pt != uniq[-1]:
+            uniq.append(pt)
+    if len(set(uniq)) < 3:
+        return None
+    if _shoelace_area(uniq) <= 0.0:
+        return None
+    return uniq
+
+
 # Rings whose area is at or below this (in square units) are considered
 # degenerate after the 1-decimal rounding and dropped with a stderr warning.
 EPS_AREA = 1e-6
@@ -309,7 +357,8 @@ _WARNED: List[str] = []
 
 
 def _warn(message: str) -> None:
-    """Emit a one-time stderr warning (printed once per unique message)."""
+    """Emit a stderr warning, deduplicated within one computation so repeated
+    degenerate rings do not spam the same message."""
     if message not in _WARNED:
         _WARNED.append(message)
         print(f"boolean_path: warning: {message}", file=sys.stderr)
@@ -380,6 +429,7 @@ def compute_paths(geometries: Any, op: str) -> Dict[str, Any]:
         raise BooleanPathError(
             f"unknown operation {op!r}; expected one of {', '.join(OPERATIONS)}"
         )
+    _WARNED.clear()  # warnings are deduplicated within one computation
     polygons = parse_geometries(geometries)
     if op == OP_SUBTRACT and len(polygons) < 2:
         raise BooleanPathError(
@@ -394,15 +444,39 @@ def compute_paths(geometries: Any, op: str) -> Dict[str, Any]:
 
     minx = min(c[0] for p in out_polys for r in (p.exterior, *p.interiors) for c in r.coords)
     miny = min(c[1] for p in out_polys for r in (p.exterior, *p.interiors) for c in r.coords)
-    maxx = max(c[0] for p in out_polys for r in (p.exterior, *p.interiors) for c in r.coords)
-    maxy = max(c[1] for p in out_polys for r in (p.exterior, *p.interiors) for c in r.coords)
 
-    paths = [to_svg_path(p, minx, miny) for p in out_polys]
+    # Round to one decimal and drop rings that degenerate after rounding
+    # (fewer than 3 distinct points or zero shoelace area — review F3).
+    built: List[Polygon] = []
+    for poly in out_polys:
+        exterior = _rounded_ring(poly.exterior, minx, miny)
+        if exterior is None:
+            _warn("dropped a degenerate ring (zero area after rounding)")
+            continue
+        interiors: List[List[Tuple[float, float]]] = []
+        for ring in poly.interiors:
+            rounded = _rounded_ring(ring, minx, miny)
+            if rounded is None:
+                _warn("dropped a degenerate ring (zero area after rounding)")
+            else:
+                interiors.append(rounded)
+        built.append(Polygon(exterior, interiors))
+
+    if not built:
+        _warn("all output rings degenerated after rounding; output is empty")
+        return {"paths": [], "viewBox": [0.0, 0.0]}
+
+    # viewBox: bounds of the final RETAINED (post-rounding) rings only, so a
+    # dropped ring never inflates it (review F4).
+    xs = [c[0] for p in built for r in (p.exterior, *p.interiors) for c in r.coords]
+    ys = [c[1] for p in built for r in (p.exterior, *p.interiors) for c in r.coords]
+    view_box = [_round1(max(xs) - min(xs)), _round1(max(ys) - min(ys))]
+
+    paths = [to_svg_path(p) for p in built]
     paths = [p for p in paths if p]
     if not paths:
         _warn("all output rings degenerated after rounding; output is empty")
         return {"paths": [], "viewBox": [0.0, 0.0]}
-    view_box = [_round1(maxx - minx), _round1(maxy - miny)]
     return {"paths": paths, "viewBox": [float(v) for v in view_box]}
 
 
