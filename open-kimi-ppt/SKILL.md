@@ -124,6 +124,22 @@ When generating a PPT, adopt different production approaches for different user 
 - Do not use common AI phrasing such as “not X, but Y,” “X is Y,” “why / based on what / how,” “key takeaway,” or “N battlefronts / paths”
 - Do not use overly colloquial expressions such as “where should the ammunition go,” “the Nth thing,” “can't pick the right one,” or “cannot be used as X”
 
+### Blank-PPTX rebuild safeguard
+
+When deeply redesigning an existing PPTX while preserving its content, **do not use a copy-and-overlay workflow**. Do not copy the original PPTX and then delete or cover its shapes with new objects: complex slides may retain stale `timing`, `custDataLst`, `extLst`, group, relationship, or placeholder nodes, causing PowerPoint repair prompts, unreadable content, or duplicated text.
+
+Use this safe route instead:
+
+1. Treat the original PPTX as read-only source material for text, images, and visual reference.
+2. Create a genuinely blank PPTX (or a fresh PPTD project) and add new slides and objects from scratch.
+3. Rebuild text as explicit text boxes and compare content at `slide → shape → paragraph → run → text` granularity. Do not validate preservation only by shape count or a flattened text list.
+4. Reuse source images only by extracting/copying their media bytes into new picture relationships. Do not copy whole slide XML or stale `.rels` files.
+5. Keep one centralized design-token palette. Do not mix retained legacy colors with new design colors unless the legacy color is part of an image's intrinsic content.
+6. Before delivery, run structural validation, render every slide to PNG, inspect the images, and open the generated PPTX in PowerPoint. A file that can be parsed by a custom reader but cannot open in PowerPoint is not deliverable.
+7. If raw OOXML parts are added, removed, or renamed, update `[Content_Types].xml` and all package/slide relationships together. Preserve extension nodes only when intentionally carrying the corresponding part; otherwise omit them from a fresh package.
+
+For a blank-PPTX route using officecli, prefer `officecli create`, `add --type slide`, `add --type shape|picture|connector`, `view screenshot`, and `validate`. For a PPTD route, prefer the normal `pages/` + `media/` project workflow and export only after PPTD validation and visual QA. The original PPTX must remain untouched.
+
 ### step4. PPT validation
 1. Validate the generated pptd against the format definition in `reference/pptd.md` (required fields, types, bounds, theme tokens, resource paths, etc.) and repair issues over multiple rounds
 2. Visual review with exported page images — **required before PPTX export when the model supports image input (multimodal)**:
