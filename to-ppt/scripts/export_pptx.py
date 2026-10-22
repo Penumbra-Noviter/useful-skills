@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import http.client
 import json
 import mimetypes
 import os
@@ -847,9 +848,13 @@ def audio_extension_mime(value: str) -> Optional[Tuple[str, str]]:
 def download_audio(url: str) -> bytes:
     """Download remote narration audio, enforcing the 200 MiB per-file limit.
 
-    Raises ``ExportError`` when the request fails (DNS/connect/timeout/non-2xx)
-    or when the payload exceeds ``MAX_AUDIO_FILE_BYTES``.
+    Raises ``ExportError`` when the request fails (DNS / connect / timeout /
+    truncated body, including ``http.client.IncompleteRead`` / non-2xx) or when
+    the payload exceeds ``MAX_AUDIO_FILE_BYTES``. On a mid-stream failure the
+    error carries the number of bytes received before it broke off.
     """
+    chunks: List[bytes] = []
+    total = 0
     try:
         with urllib.request.urlopen(url, timeout=AUDIO_DOWNLOAD_TIMEOUT_SECONDS) as response:
             length = response.headers.get("Content-Length")
@@ -862,8 +867,6 @@ def download_audio(url: str) -> bytes:
                         )
                 except (TypeError, ValueError):
                     pass
-            chunks: List[bytes] = []
-            total = 0
             while True:
                 chunk = response.read(AUDIO_DOWNLOAD_CHUNK_BYTES)
                 if not chunk:
@@ -876,8 +879,9 @@ def download_audio(url: str) -> bytes:
                 chunks.append(chunk)
     except ExportError:
         raise
-    except OSError as exc:
-        raise ExportError(f"failed to download audio {url}: {exc}") from exc
+    except (OSError, http.client.HTTPException) as exc:
+        progress = f" (received {total} bytes before failure)" if total else ""
+        raise ExportError(f"failed to download audio {url}: {exc}{progress}") from exc
     return b"".join(chunks)
 
 
@@ -1216,6 +1220,31 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     if not packs:
         return {"audioSlides": 0, "audioParts": 0, "audioSkippedUnknownExtensions": skipped}
 
+    # TD-010 G2: a declared audio page must have a matching slide part in the
+    # exported package. Skip missing slides with a warning instead of writing
+    # dangling rels / media parts / Content-Types Overrides.
+    with zipfile.ZipFile(pptx) as probe:
+        present_slides = {
+            int(match.group(1))
+            for name in probe.namelist()
+            for match in [re.fullmatch(r"ppt/slides/slide(\d+)\.xml", name)]
+            if match
+        }
+    absent_packs = [pack for pack in packs if pack["slide"] not in present_slides]
+    for pack in absent_packs:
+        log(
+            f"warning: page {pack['slide']} declares audio but has no slide "
+            f"part in the exported PPTX; skipping: {pack['value']}"
+        )
+    if absent_packs:
+        packs = [pack for pack in packs if pack["slide"] in present_slides]
+        if not packs:
+            return {
+                "audioSlides": 0,
+                "audioParts": 0,
+                "audioSkippedUnknownExtensions": skipped,
+            }
+
     temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
     try:
         with zipfile.ZipFile(pptx, "r") as source_zip, zipfile.ZipFile(temporary, "w") as target_zip:
@@ -1303,7 +1332,10 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     rels_name = f"ppt/slides/_rels/slide{slide_number}.xml.rels"
     if rels_name not in archive.namelist():
         raise ExportError(f"audio slide {slide_number} has no rels part")
-    slide_xml = archive.read(f"ppt/slides/slide{slide_number}.xml")
+    try:
+        slide_xml = archive.read(f"ppt/slides/slide{slide_number}.xml")
+    except KeyError as exc:
+        raise ExportError(f"audio slide {slide_number} has no slide XML part") from exc
     rels_xml = archive.read(rels_name)
     try:
         root = ET.fromstring(slide_xml)

@@ -529,6 +529,51 @@ class AudioPackagingTests(unittest.TestCase):
         self.assertEqual(summary["audioSlides"], 2)
         self.assertEqual(summary["audioParts"], 2)
 
+    def test_audio_page_without_slide_part_is_skipped(self):
+        # G2: page 3 declares audio but the exported zip only contains slides
+        # 1 and 2 → skip with a warning; no dangling rels/media/Override for
+        # the missing slide, no raw KeyError.
+        deck_root = self.root / "deck-3p"
+        make_deck(deck_root, [
+            {"audio": "media/beep.mp3"},
+            {"audio": "media/beep.mp3"},
+            {"audio": "media/beep.wav"},
+        ])
+        out = self.root / "out-3p.pptx"
+        make_pptx(out, {1: xml_slide(), 2: xml_slide()})
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            result = MODULE.patch_audio(out, deck_root)
+        self.assertEqual(result["audioSlides"], 2)
+        self.assertEqual(result["audioParts"], 2)
+        with zipfile.ZipFile(out) as archive:
+            names = archive.namelist()
+            self.assertIn("ppt/media/audio1.mp3", names)
+            self.assertIn("ppt/media/audio2.mp3", names)
+            self.assertFalse(any(name.startswith("ppt/media/audio3") for name in names))
+            self.assertNotIn("ppt/slides/_rels/slide3.xml.rels", names)
+            ct = archive.read("[Content_Types].xml").decode("utf-8")
+            self.assertNotIn("/ppt/media/audio3", ct)
+        self.assertIn("no slide part", err.getvalue())
+
+    def test_audio_all_pages_without_slide_parts_return_zero(self):
+        # G2 degenerate case: every declared audio page lacks a slide part →
+        # nothing written, zero summary, warning for each skipped page.
+        deck_root = self.root / "deck-allmissing"
+        make_deck(deck_root, [{"audio": "media/beep.mp3"}])
+        out = self.root / "out-allmissing.pptx"
+        make_pptx(out, {2: xml_slide()})  # zip has slide2 only; page 1 has no slide part
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            result = MODULE.patch_audio(out, deck_root)
+        self.assertEqual(result["audioSlides"], 0)
+        self.assertEqual(result["audioParts"], 0)
+        with zipfile.ZipFile(out) as archive:
+            names = archive.namelist()
+            self.assertFalse(any(name.startswith("ppt/media/audio") for name in names))
+            self.assertNotIn("ppt/slides/_rels/slide1.xml.rels", names)
+        self.assertIn("no slide part", err.getvalue())
+
 
 class AudioTimingTests(unittest.TestCase):
     """AC7-4 隐藏 shape / AC7-5 timing 结构与顺序."""
@@ -763,6 +808,26 @@ class AudioBadInputTests(unittest.TestCase):
     def test_audio_url_invalid_content_length_header_ignored(self, _urlopen):
         result, out = self._run_patch("https://media.example.com/a.mp3")
         self.assertEqual(result["audioParts"], 1)
+
+    @patch.object(MODULE.urllib.request, "urlopen")
+    def test_audio_url_incomplete_read_is_wrapped(self, urlopen):
+        # A truncated body raises http.client.IncompleteRead (HTTPException),
+        # which must be wrapped into ExportError with the bytes-received context
+        # instead of escaping raw to the CLI handler.
+        import http.client
+
+        class BrokenResponse(_FakeResponse):
+            def read(self, size=-1):
+                if self._pos > 0:
+                    raise http.client.IncompleteRead(b"partial", 100)
+                self._pos = 4
+                return b"PART"
+
+        urlopen.return_value = BrokenResponse(b"PARTIAL-DATA")
+        with self.assertRaisesRegex(
+                MODULE.ExportError, "failed to download audio.*received 4 bytes"
+        ):
+            self._run_patch("https://media.example.com/truncated.mp3")
 
 
 class AudioVerifyTests(unittest.TestCase):
@@ -1185,6 +1250,12 @@ class VerifyAudioSlideFailureTests(unittest.TestCase):
     def test_verify_missing_rels_part(self):
         with self.assertRaisesRegex(MODULE.ExportError, "no rels part"):
             self._verify(self._tampered(drops={"ppt/slides/_rels/slide1.xml.rels"}))
+
+    def test_verify_missing_slide_xml_raises_export_error(self):
+        # G3: archive.read() KeyError for a missing slide part must surface as
+        # ExportError, not leak a bare KeyError.
+        with self.assertRaisesRegex(MODULE.ExportError, "no slide XML part"):
+            self._verify(self._tampered(drops={"ppt/slides/slide1.xml"}))
 
     def test_verify_invalid_slide_xml(self):
         with self.assertRaisesRegex(MODULE.ExportError, "invalid slide XML"):
