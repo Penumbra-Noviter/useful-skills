@@ -818,7 +818,7 @@ def resolve_editor_root() -> Path:
     if env:
         candidates.append(Path(env).expanduser().resolve())
     candidates.append(SKILL_DIR / "editor")
-    # monorepo / npm package: skills/open-kimi-ppt → package root
+    # monorepo / npm package: skills/to-ppt → package root
     candidates.append(SKILL_DIR.parent.parent / "editor")
     for candidate in candidates:
         if (candidate / "index.html").is_file():
