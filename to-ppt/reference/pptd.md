@@ -739,6 +739,7 @@ interface Shape extends ElementBase {
 - `path`: SVG path string, supporting the `M / L / H / V / C / S / Q / A / Z` commands.
 - Multi-segment paths are supported for shapes such as hollow-outs: make the outer contour **clockwise** (`sweep=1`) and the inner contour **counterclockwise** (`sweep=0`) to achieve a hollow cutout
 - **Scaling and aspect ratio**: changing `bounds` resizes the shape (the path needs no rewriting); but the viewBox is stretched independently to bounds — when the ratios differ, the shape distorts. To keep the ratio, require `viewBoxW : viewBoxH = bounds.w : bounds.h`.
+> Boolean-path generation (union / combine / intersect / subtract / fragment) is scripted by `scripts/boolean_path.py` — see [boolean_shapes.md](./boolean_shapes.md) for CLI usage and sample paths.
 
 **Common shapes**
 
