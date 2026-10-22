@@ -164,6 +164,39 @@ class GeometryParsingTests(unittest.TestCase):
                 [{"type": "polygon", "points": [[0, 0], [1, 1], [2, 2]]}]
             )
 
+    def test_non_finite_frame_rejected(self):
+        # review F1: NaN / Inf coordinates must not reach shapely (GEOSException)
+        for frame in (
+            [0, 0, float("nan"), 10],
+            [0, 0, 10, float("nan")],
+            [float("inf"), 0, 10, 10],
+            [0, 0, float("-inf"), 10],
+        ):
+            with self.assertRaises(MODULE.BooleanPathError):
+                MODULE.parse_geometries([{"type": "rect", "frame": frame}])
+
+    def test_non_finite_polygon_point_rejected(self):
+        with self.assertRaises(MODULE.BooleanPathError):
+            MODULE.parse_geometries(
+                [{"type": "polygon", "points": [[0, 0], [math.inf, 1], [2, 2], [0, 2]]}]
+            )
+        with self.assertRaises(MODULE.BooleanPathError):
+            MODULE.parse_geometries(
+                [{"type": "polygon", "points": [[0, 0], [float("nan"), 1], [2, 2], [0, 2]]}]
+            )
+
+    def test_out_of_range_finite_coordinate_rejected(self):
+        # review F2: huge finite coordinates (1e308 / 1e309) would format as
+        # "inf"/"1e+308" in the output; they must be rejected up front
+        with self.assertRaises(MODULE.BooleanPathError):
+            MODULE.parse_geometries([{"type": "rect", "frame": [0, 0, 1e308, 10]}])
+        with self.assertRaises(MODULE.BooleanPathError):
+            MODULE.parse_geometries([{"type": "rect", "frame": [0, 0, 10, 2_000_000]}])
+        with self.assertRaises(MODULE.BooleanPathError):
+            MODULE.parse_geometries(
+                [{"type": "polygon", "points": [[0, 0], [1e309, 1], [2, 2], [0, 2]]}]
+            )
+
     def test_require_shapely_raises_when_missing(self):
         with patch.object(MODULE, "HAS_SHAPELY", False):
             with self.assertRaises(MODULE.ShapelyMissingError) as ctx:
@@ -277,6 +310,55 @@ class ComputePathTests(unittest.TestCase):
         self.assertEqual(len(result["paths"]), 2)
         total = sum(parse_path(p).area for p in result["paths"])
         self.assertAlmostEqual(total, 5000.0, delta=0.05)
+
+    def test_subpixel_slivers_dropped_with_warning(self):
+        # review F3: subtract leaves two 0.02-wide slivers that collapse to
+        # zero area after 1-decimal rounding -> must be dropped + warned,
+        # never emitted as degenerate zero-area paths
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            result = MODULE.compute_paths(
+                [
+                    {"type": "rect", "frame": [0, 0, 10, 10]},
+                    {"type": "rect", "frame": [0.02, 0, 9.96, 10]},
+                ],
+                "subtract",
+            )
+        self.assertEqual(result, {"paths": [], "viewBox": [0.0, 0.0]})
+        self.assertIn("degenerate", err.getvalue())
+
+    def test_collinear_zigzag_ring_dropped_with_warning(self):
+        # review F3: a >=3-point zig-zag that is collinear after rounding has
+        # zero shoelace area and must not be serialized as a path
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            result = MODULE.compute_paths(
+                [
+                    {"type": "rect", "frame": [0, 0, 10, 10]},
+                    {"type": "rect", "frame": [2, 0, 3.96, 10]},
+                ],
+                "subtract",
+            )
+        for path in result["paths"]:
+            self.assertGreater(parse_path(path).area, 0.0)
+        self.assertNotEqual(result["paths"], [])
+
+    def test_viewbox_uses_retained_paths_only(self):
+        # review F4: a dropped sliver must not inflate the viewBox; viewBox is
+        # derived from the final retained (post-rounding) paths
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            result = MODULE.compute_paths(
+                [
+                    {"type": "rect", "frame": [0, 0, 10, 10]},
+                    {"type": "rect", "frame": [10.06, 0, 0.01, 10]},
+                ],
+                "union",
+            )
+        self.assertEqual(len(result["paths"]), 1)
+        self.assertAlmostEqual(parse_path(result["paths"][0]).area, 100.0, delta=0.05)
+        self.assertEqual(result["viewBox"], [10.0, 10.0])
+        self.assertIn("degenerate", err.getvalue())
 
     def test_subtract_needs_at_least_two_geometries(self):
         with self.assertRaises(MODULE.BooleanPathError):
@@ -427,6 +509,44 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("empty", err)
 
+    def test_nan_json_exits_2_cleanly(self):
+        # review F1: raw JSON with a NaN coordinate -> exit 2, clean error,
+        # no GEOSException traceback (which would exit 1)
+        code, out, err = self.run_main(
+            ["--op", "union"], '[{"type":"rect","frame":[0,0,NaN,10]}]'
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("finite", err)
+        self.assertNotIn("Traceback", err)
+
+    def test_huge_json_exits_2_without_inf_leak(self):
+        # review F1/F2: 1e309 parses to inf; must exit 2 with clean message and
+        # never leak "inf"/"nan" into stdout
+        code, out, err = self.run_main(
+            ["--op", "union"], '[{"type":"polygon","points":[[0,0],[1e309,1],[2,2],[0,2]]}]'
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("finite", err)
+        self.assertNotIn("Traceback", err)
+        self.assertNotIn("inf", out.lower())
+        self.assertNotIn("nan", out.lower())
+
+    def test_subpixel_sliver_cli_warns_and_outputs_empty(self):
+        # review F3 at the CLI seam: degenerate sliver output carries a warning
+        # and no zero-area path on stdout
+        code, out, err = self.run_main(
+            ["--op", "subtract"],
+            json.dumps(
+                [
+                    {"type": "rect", "frame": [0, 0, 10, 10]},
+                    {"type": "rect", "frame": [0.02, 0, 9.96, 10]},
+                ]
+            ),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out), {"paths": [], "viewBox": [0.0, 0.0]})
+        self.assertIn("degenerate", err)
+
     def test_main_returns_3_when_shapely_missing_in_process(self):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
@@ -475,6 +595,41 @@ class SvgSerializationEdgeTests(unittest.TestCase):
         path = MODULE.to_svg_path(poly)
         self.assertNotIn("-0.0", path)
         self.assertTrue(path.startswith("M0.0,0.0"))
+
+    def test_rounded_ring_rejects_both_degenerate_criteria(self):
+        # review F3 regression lock: the ring validator drops rings via either
+        # criterion — fewer than 3 distinct points, or zero shoelace area
+        collinear = MODULE._rounded_ring(
+            Polygon([(0, 0), (0.1, 0.1), (0.2, 0.2)]).exterior, 0, 0
+        )
+        self.assertIsNone(collinear)  # 3 distinct points but zero shoelace area
+        collapsed = MODULE._rounded_ring(
+            Polygon([(0, 0), (0.04, 0), (0.04, 0.04), (0, 0.04)]).exterior, 0, 0
+        )
+        self.assertIsNone(collapsed)  # fewer than 3 distinct points after rounding
+        kept = MODULE._rounded_ring(
+            Polygon([(0, 0), (10, 0), (10, 10), (0, 10)]).exterior, 0, 0
+        )
+        self.assertIsNotNone(kept)
+
+    def test_subpixel_hole_dropped_but_donut_kept(self):
+        # review F3: a hole that collapses after rounding is dropped with a
+        # warning while the outer ring (the donut) is still emitted
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            result = MODULE.compute_paths(
+                [
+                    {"type": "ellipse", "frame": [0, 0, 200, 200]},
+                    {"type": "ellipse", "frame": [99.98, 99.98, 0.02, 0.02]},
+                ],
+                "subtract",
+            )
+        self.assertEqual(len(result["paths"]), 1)
+        poly = parse_path(result["paths"][0])
+        self.assertEqual(len(poly.interiors), 0)  # collapsing hole removed
+        self.assertGreater(poly.area, 30000.0)
+        self.assertEqual(result["viewBox"], [200.0, 200.0])
+        self.assertIn("degenerate", err.getvalue())
 
 
 class SoftDependencyTests(unittest.TestCase):
