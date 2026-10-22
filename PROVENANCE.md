@@ -19,7 +19,7 @@
 | museon-cli | 封装 | [Museon-AI/museon-cli](https://github.com/Museon-AI/museon-cli) | — | wheel v0.14.0 | 2026-08-11 · 2026-09-27 更新 · 2026-10-23 更新 | ✅（wheel URL） |
 | vision | vendored + 改造 | [asuojun/claude-vision-skill](https://github.com/asuojun/claude-vision-skill) | — | — | 2026-08-06 | ✅（README 已记） |
 | finesse-ui | 自研 + 部分派生 | 派生自 taste-skill v2 / emilkowalski/skills / VoltAgent/awesome-design-md | MIT | 0.21.0 | 快照 2026-08-28 · v0.21.0，**非 mattpocock 内容** | 部分（仅派生源） |
-| open-kimi-ppt | 自研（逆向） | 无（依赖 Moonshot PPTD 格式） | 无 | — | 2026-08-08 | ❌ |
+| to-ppt（原 open-kimi-ppt） | 自研（逆向）+ 机制吸收 | 无主上游（Moonshot PPTD 格式；规划/原生深度机制吸收自 [hugohe3/ppt-master](https://github.com/hugohe3/ppt-master)，MIT） | MIT 机制部分（吸收来源） | — | 2026-08-08 · 2026-10-23 更名+吸收 | ❌（机制部分可追踪） |
 | neat-freak | vendored + 本地化 | [KKKKhazix/khazix-skills](https://github.com/KKKKhazix/khazix-skills)（neat-freak/，用户 2026-08-13 确认） | — | 3.0.0（上游同版） | 2026-08-11 | ✅ |
 | context-monitor | 自研（推断）／已移除 2026-09-20 | 无 | 无 | — | 2026-08-06 | — |
 | project-kickoff | 自研 | 无（符号链接 → `.cc-switch/skills/project-kickoff/`） | 无 | 有 REVISIONS.md | 独立维护 | ❌ |
@@ -164,11 +164,13 @@
 - **本地版本**：0.21.0（演进自导入时的初版；快照 2026-08-28）
 - **更新提示**：taste-skill 只影响两个 reference 文件（dials.md、page-skeleton.md），其余为本地演化；上游更新时**不要整文件覆盖**
 
-### 9. open-kimi-ppt — 自研（逆向）
+### 9. to-ppt（原 open-kimi-ppt）— 自研（逆向）+ 机制吸收
 
-- **无上游 repo**：`756d46d`（2026-08-08）"逆向 Kimi 制作 PPT 的能力"
+- **无上游 repo**：`756d46d`（2026-08-08）"逆向 Kimi 制作 PPT 的能力"；2026-10-23 更名 `to-ppt`（`git mv`，300 文件全量跟踪）
 - **依赖**：Moonshot AI 的 PPTD 格式 + neo-ppt 浏览器编辑器（`editor/neo-ppt/` 为离线镜像）；官方 PPTX 导出 WASM 本地打补丁（`scripts/local-export/export-pptd.mjs --no-sign`）
-- **License**：无
+- **License**：本体无（自研逆向）；**2026-10-23 吸收 PPT Master 规划机制（MIT © 2025-2026 Hugo He）**：新增 `reference/planning-communication-contract.md`（六问沟通契约 + 阅读模式 + 素材偏离度/事实溯源）与 `reference/native-depth-checklist.md`（原生深度可编辑优先 + 交付验证），均蒸馏改写为 PPTD 语境，文件头标注来源；SKILL.md 接线两处（step2 后 communication contract planning gate、step3 前 native depth editable-first）+ frontmatter 名称/触发词通用化（去 Kimi 绑定，补中文触发词）
+- **更名登记**：ask-matt `/open-kimi-ppt` → `/to-ppt`（Content & design 段）、README 域 5 行替换、PROVENANCE 总览行更新；`npx open-kimi-ppt-skill serve` 的 npm 发布包名**保留旧名**（外部发布物，未重发，正文引用不变）
+- **未吸收**：ppt-master 的 SVG→DrawingML 管线、preset_shape_svg/shape_boolean helpers、workflows/profiles 体系（与 PPTD DSL 生成路线冲突，引入 13K 文件工程不划算）；其 13106 文件仓库仅作机制参考（临时 clone `D:\tmp\ppt-master` 可删）
 
 ### 10. neat-freak — vendored + 本地化（来源已确认）
 

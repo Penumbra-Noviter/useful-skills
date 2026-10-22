@@ -112,7 +112,7 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 - **`/finesse-ui`**: high-craft web interfaces — brand surfaces, product UI, workflow UI, AI-assistant UI. Anti-slop; routes diagram requests to `/diagram-design`.
 - **`/zine-ui`**: paper-zine visual language for photo/poetic briefs (拾景纸刊): photo collage, image distillation, abstract memory panels. "把这张照片做成页面" → here.
 - **`/diagram-design`**: 45 diagram types (architecture, flow, sequence, ER, timeline, swimlane, quadrant, sankey, fishbone, Wardley, service blueprint, architecture delta, exploded, axonometric plan…) rendered as inline-SVG HTML, importable to draw.io/Mermaid/Excalidraw.
-- **`/open-kimi-ppt`**: presentations — create/edit/replicate/export, delivering a PPTD project folder plus a local .pptx.
+- **`/to-ppt`**: presentations — create/edit/replicate/export, delivering a PPTD project folder plus a local .pptx. 做 PPT / 演示文稿 / 汇报 / 课件 / 海报 → here.
 - **`/officecli`**: CLI for Office documents (.docx/.xlsx/.pptx) — create, inspect, proofread, add charts, render to PNG for visual check, no Office install. Collaborates with the document plugins (below): loads their design specs, then executes and renders.
 - **`/obsidian-vault`**: search, create, and organize notes in the Obsidian vault with wikilinks and index notes.
 - **`/cangjie-skill`**: distill a book/video/podcast/course into an executable skill set (拆书/蒸馏).

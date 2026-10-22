@@ -92,7 +92,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 
 | Skill | 用途 |
 |---|---|
-| `open-kimi-ppt` | 演示文稿创建/编辑/复刻/导出（PPTD 工程 + 本地 .pptx） |
+| `to-ppt` | 演示文稿创建/编辑/复刻/导出（PPTD 工程 + 本地 .pptx，规划契约 + 原生深度） |
 | `officecli` | Office 文档 CLI：创建/检查/排版/渲染 docx/xlsx/pptx |
 | `writing` | 长篇写作编排入口 → 路由三件套正确阶段 |
 | `writing-fragments` | 写作探索：挖原始素材碎片 |

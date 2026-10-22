@@ -1,12 +1,12 @@
 ---
-name: open-kimi-ppt
-description: 'Create, edit, replicate, read, and export presentations. Every PPT task delivers a PPTD project folder (.pptd + pages/media) AND a local .pptx (embedded fonts, fade transitions). Triggers: presentation, PowerPoint, PPT/PPTX, slide deck, PPTD.'
+name: to-ppt
+description: 'Create, edit, replicate, read, and export presentations. Every PPT task delivers a PPTD project folder (.pptd + pages/media) AND a local .pptx (embedded fonts, fade transitions). Triggers: presentation, PowerPoint, PPT/PPTX, slide deck, PPTD, 演示文稿, 做 PPT, PPT 模板, 汇报 PPT, 路演, 课件, 海报, infographic.'
 when_to_use: >
-  Use for any presentation, PowerPoint, PPT/PPTX, slide deck, PPTD, infographic, or poster task unless the user explicitly requests another format. Default deliverables for every PPT task: (1) a self-contained PPTD project folder containing the .pptd manifest plus pages/media dependencies; (2) a locally generated .pptx with embedded fonts and fade slide transitions. Deliver with normal local file/folder links using absolute paths.
+  Use for any presentation, PowerPoint, PPT/PPTX, slide deck, PPTD, infographic, or poster task — 中文触发：做 PPT、做演示文稿、汇报 PPT、路演 PPT、课件、海报、信息图、PPT 模板复刻 — unless the user explicitly requests another format. Default deliverables for every PPT task: (1) a self-contained PPTD project folder containing the .pptd manifest plus pages/media dependencies; (2) a locally generated .pptx with embedded fonts and fade slide transitions. Deliver with normal local file/folder links using absolute paths.
 ---
 
 # Definition
-open-kimi-ppt is a presentation creation and export skill built around Moonshot AI's PPTD format and browser-side PPTX writer. It defines a YAML-format intermediate DSL (`.pptd`) that abstracts OOXML and keeps each page self-contained.
+to-ppt is a presentation creation and export skill built around Moonshot AI's PPTD format and browser-side PPTX writer. It defines a YAML-format intermediate DSL (`.pptd`) that abstracts OOXML and keeps each page self-contained. Planning discipline（沟通契约 / 阅读模式 / 论证先行 / 原生深度）吸收自 PPT Master（hugohe3/ppt-master，MIT）的规划机制——先塑形论证，再设计页面。
 
 **The default output is not PPTD-only.** Unless the user explicitly opts out, always produce both:
 
@@ -68,9 +68,15 @@ When any of the following situations arise, resolve them by asking the user (use
 3. Unable to determine the user's requirements on your own
 - When the purpose, design direction, input type, page count, etc. are hard to determine by yourself
 
+#### Communication contract (planning gate)
+Before generating, answer the six communication-contract questions and pick the reading mode and material divergence — `audience` / `communication_intent` / `audience_outcome` / `core_message` / `delivery_context` / `artifact_afterlife`; `text` / `balanced` / `presentation`; `stay close` / `balanced` / `free` (see `reference/planning-communication-contract.md`). The outline shaped by these answers is the **invariant baseline**: after the user confirms it, do not silently add, drop, merge, split, or reorder pages. Facts and figures stay sourced; invented demo numbers are marked `Data class: scenario`.
+
 ### step3. Generate the presentation based on the user's requirements
 
 Before generating, first read `reference/pptd.md` to understand the pptd format definition and constraints.
+
+#### Native depth (editable-first)
+Deliver presentations that stay editable in PowerPoint/WPS: real charts (PPTD `Chart`), real tables (`Table`), semantic shapes and connectors — not flat text blocks, not template fill-ins. Run the checklist in `reference/native-depth-checklist.md` before generating and before delivery; argument first, then design.
 
 #### Replicating a PPT
 - Analyze the images to estimate element positions, fonts and sizes, etc., and **replicate 1:1 as closely as possible**.
