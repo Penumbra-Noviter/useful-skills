@@ -9,6 +9,12 @@ description: 按 AGENTS.md 3.5 知识库闭环约定，把本次会话的经验�
 
 ## 步骤
 
+0. **拉取经验候选（参考输入）**：从 coding 摄入实例（19528）拉取近期的 coding 经验候选，作为蒸馏参考输入（仅展示参考，自动写库仍由下述人工确认流程把关）：
+   - 请求：`curl -s -m 10 -X POST http://127.0.0.1:19528/api/v1/search -H "Content-Type: application/json" -d '{"query":"coding session lesson","scene":"coding","user_id":"local","include_sources":["dsh"],"limit":8}'`
+   - 解析响应的 `experiences` 数组，按 `updated_at` 降序展示前 8 条（服务端按相关度排序，展示时以近期优先）；每条一行：`task` 摘要（≤60 字）+ `solution` 摘要（≤80 字，换行压平为空格）+ `confidence` + `workspace_id`，字段缺失标 `-`；条目含已入库标记（如 `meta` 值）时追加标注。
+   - 实例不可达（curl 退出非 0 或 HTTP 非 200）：提示「编码摄入实例 19528 不可达，跳过经验候选拉取」，继续下方流程，不报错不阻塞。
+   - 拉取为空（`experiences` 为空数组）：显示「暂无经验候选」空态，照常继续蒸馏。
+
 1. **读模板**：读取 `模板/经验模板.md`，严格按其 frontmatter 字段与章节结构写笔记。
 
 2. **盘点教训**：回顾本次会话，列出可迁移的教训。判定标准：根因非显然、换项目仍可能踩、有防复发措施。**无教训则明确回复「无教训，不写」并结束，不制造噪音。**
