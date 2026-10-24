@@ -477,6 +477,7 @@ interface Page {
   pageType?: "cover" | "table_of_contents" | "chapter" | "content" | "final" | string;  // default: none; category label (does not affect rendering); preset values are recognized as the corresponding page type, arbitrary custom strings are also allowed
   background?: Fill;               // default: {type: solid, color: "#FFFFFF"} (white solid fill)
   notes?: string;                  // default: none; speaker notes; plain text
+  audio?: string;                  // default: none; page narration — relative path (from deck root, e.g. media/narration.mp3) or http(s) URL; exported as a hidden playback shape plus a root p:timing narration sequence (playFrom(0)), merged with any element-animation timing
   elements: Element[];             // the later an element, the higher its layer
   animations?: Animation[];        // default: none; orchestrated in array order; see [Animations](#6-animations)
 }

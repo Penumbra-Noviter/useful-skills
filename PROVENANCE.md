@@ -171,6 +171,11 @@
 - **License**：本体无（自研逆向）；**2026-10-23 吸收 PPT Master 规划机制（MIT © 2025-2026 Hugo He）**：新增 `reference/planning-communication-contract.md`（六问沟通契约 + 阅读模式 + 素材偏离度/事实溯源）与 `reference/native-depth-checklist.md`（原生深度可编辑优先 + 交付验证），均蒸馏改写为 PPTD 语境，文件头标注来源；SKILL.md 接线两处（step2 后 communication contract planning gate、step3 前 native depth editable-first）+ frontmatter 名称/触发词通用化（去 Kimi 绑定，补中文触发词）
 - **更名登记**：ask-matt `/open-kimi-ppt` → `/to-ppt`（Content & design 段）、README 域 5 行替换、PROVENANCE 总览行更新；`npx open-kimi-ppt-skill serve` 的 npm 发布包名**保留旧名**（外部发布物，未重发，正文引用不变）
 - **未吸收**：ppt-master 的 SVG→DrawingML 管线、preset_shape_svg/shape_boolean helpers、workflows/profiles 体系（与 PPTD DSL 生成路线冲突，引入 13K 文件工程不划算）；其 13106 文件仓库仅作机制参考（临时 clone `D:\tmp\ppt-master` 可删）
+- **2026-10-23 kickoff 消费（TD-007/TD-008，四轴期末 0 阻断）**：
+  - **音频旁白**（`eaf5098` + `79f8958`）：`Page.audio?` 字段（相对路径/URL、禁 base64、200MiB 上限）→ `patch_audio` 纯 zip 后处理（media part/CT Override 五 MIME 映射/slide rels/1px 隐藏播放 shape/根级 `p:timing` playFrom(0) 叙述模板）——与元素动画既有 timing 优先合并、降级替换+告警（WASM 会为动画写根级 timing 已实测锁定）；`postprocess_pptx` 统一两条导出路径（patch_transitions→patch_audio→verify_output）；`verify_output` 增 audioSlides/audioParts 断言；异常防御（IncompleteRead 包装/slide 存在性前置/KeyError 归一）
+  - **布尔运算**（`e17855d` + `f02ae04`）：`scripts/boolean_path.py` CLI 五操作（union/combine/intersect/subtract/fragment，shapely unary_union/XOR/intersection/difference/polygonize）+ JSON 几何输入（rect/ellipse/polygon 对齐 PPTD bounds）+ 输出 `{paths,viewBox}` 直写 PPTD `shapeName:"custom"`；`orient(p,-1)` 外环 CW/内环 CCW 对齐镂空约定；坐标 1 位小数；±1e6 有限性校验（F1/F2 修）；退化环丢弃+告警（F3 修）；viewBox=保留路径包围盒（F4 修）；shapely soft 依赖 exit 3+提示；新增 `reference/boolean_shapes.md`（五操作/CLI/schema/样例）+ pptd.md custom path 指针 + shapes.md 指针
+  - **文档接线**（期末）：SKILL.md step3「Page audio & scripted shapes」+ step5 音频验证项；pptd.md Page 接口补 `audio` 字段
+  - 验证：音频 84 测试 + 布尔 63 测试（147 全绿），真实导出 zip 深断言 + 布尔 CLI 实测 + PowerShell/Office 打开冒烟为开放项（本机无 PowerPoint）；四轴期末审核 0 阻断（非阻断 10 条落债 TD-011~020 + 4 项文档增量）
 
 ### 10. neat-freak — vendored + 本地化（来源已确认）
 

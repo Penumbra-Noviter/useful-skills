@@ -27,9 +27,16 @@ PPTD `shapeName: "custom"` 的 SVG path 与 viewBox。用于脚本化构造圆�
 - 空几何数组 → 报错（exit 2）。
 - 结果无剩余面积（如两相同矩形相减）→ 输出 `{"paths": [], "viewBox": [0, 0]}` 并在 stderr 告警。
 - `fragment` 的输出每条 path 是一个独立碎片，可分别写入不同 shape，或拼接进同一个
-  `path` 字段。
+  `path` 字段。**拼接约束**：五操作输出面互不相交，拼接仅适用于不相交结果（nonzero
+  规则下安全）；内环（孔，CCW）必须与所属外环留在同一 path 中，**勿把 CCW 孔环单独
+  作为独立 shape**。
 
 ## CLI 用法
+
+> 示例中的 `python scripts/boolean_path.py` 为相对本 skill 目录的简写；实际调用按
+> SKILL.md 的 `<skill-root>` 解析约定展开为 `python "<skill-root>/scripts/boolean_path.py"`。
+> Windows 官方安装器通常只有 `python` / `py`，`python3` 与 `python` 均可用（与
+> export_pptx.py 命令同一约定）。
 
 ```bash
 # stdin 输入

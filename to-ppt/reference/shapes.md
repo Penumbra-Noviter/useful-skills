@@ -1,3 +1,7 @@
+> 需要镂空 / 布尔组合的自造路径（圆环、缺角卡片、中空、组合箭头等）时，见
+> [`boolean_shapes.md`](boolean_shapes.md)（`scripts/boolean_path.py` CLI：JSON 几何 →
+> PPTD custom path）。本文件只列预置 shapeName 参数。
+
 ## Parameter Value Conventions
 
 * The `adjustments` parameters are described in the order and quantity defined by OOXML
