@@ -632,6 +632,207 @@ class SvgSerializationEdgeTests(unittest.TestCase):
         self.assertIn("degenerate", err.getvalue())
 
 
+class RingDegeneracyContractTests(unittest.TestCase):
+    """TD-016: one degeneracy criterion for every ring-serializing caller.
+
+    Seam under test: the public ``to_svg_path`` plus the single pre-agreed
+    internal helper ``_normalize_ring``. Expected values are written as literal
+    strings / booleans derived from the documented contract (distinct points
+    < 3 OR zero shoelace area), never recomputed from the implementation.
+    """
+
+    def test_collinear_three_point_ring_serializes_to_empty_string(self):
+        # The pre-batch reproduction: three distinct but collinear points have
+        # zero shoelace area, so no path may be emitted.
+        poly = Polygon([(0, 0), (1, 0), (2, 0)])
+        self.assertAlmostEqual(poly.area, 0.0)
+        self.assertEqual(MODULE.to_svg_path(poly), "")
+
+    def test_two_distinct_point_ring_skipped_after_adjacent_dedupe(self):
+        # A,B,A -> closing point removed, adjacent dedupe leaves 3 points but
+        # only 2 are distinct: degenerate even though the list is long enough.
+        poly = Polygon([(0, 0), (10, 0), (0, 0)])
+        self.assertEqual(len(set(list(poly.exterior.coords)[:-1])), 2)
+        self.assertEqual(MODULE.to_svg_path(poly), "")
+
+    def test_normalize_ring_applies_both_criteria(self):
+        # Literal expectations, one per criterion:
+        #  collinear  -> 3 distinct points, shoelace 0   -> None
+        #  A,B,A      -> 2 distinct points, shoelace 0   -> None
+        #  square     -> 4 distinct points, shoelace 100 -> kept
+        collinear = Polygon([(0, 0), (1, 0), (2, 0)])
+        aba = Polygon([(0, 0), (10, 0), (0, 0)])
+        square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+        self.assertIsNone(MODULE._normalize_ring(collinear.exterior, 0, 0))
+        self.assertIsNone(MODULE._normalize_ring(aba.exterior, 0, 0))
+        self.assertEqual(
+            MODULE._normalize_ring(square.exterior, 0, 0),
+            [(0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)],
+        )
+
+    def test_svg_path_and_normalize_ring_agree_on_degeneracy(self):
+        # Anti-duplication lock: the public serializer and the single helper
+        # must reach the same verdict for every ring (no second criterion).
+        cases = {
+            "collinear3": (Polygon([(0, 0), (1, 0), (2, 0)]), True),
+            "aba": (Polygon([(0, 0), (10, 0), (0, 0)]), True),
+            "tiny": (Polygon([(0, 0), (0.04, 0), (0.04, 0.04)]), True),
+            "square": (Polygon([(0, 0), (10, 0), (10, 10), (0, 10)]), False),
+            "triangle": (Polygon([(0, 0), (100, 0), (50, 80)]), False),
+        }
+        for name, (poly, expected_degenerate) in cases.items():
+            with self.subTest(case=name):
+                dropped = MODULE._normalize_ring(poly.exterior, 0, 0) is None
+                self.assertEqual(dropped, expected_degenerate)
+                self.assertEqual(MODULE.to_svg_path(poly) == "", expected_degenerate)
+
+    def test_degeneracy_judged_after_translation_and_rounding(self):
+        # The criterion applies to the shifted, 1-decimal-rounded ring.
+        poly = Polygon([(0, 0), (1, 0), (2, 0)])
+        self.assertEqual(MODULE.to_svg_path(poly, 100.0, 250.0), "")
+        self.assertIsNone(MODULE._normalize_ring(poly.exterior, 100.0, 250.0))
+
+    def test_collinear_vertex_on_area_bearing_ring_is_kept(self):
+        # Falsify the over-eager direction: an extra collinear vertex does not
+        # make the ring zero-area, so the ring must survive byte-identically.
+        poly = Polygon([(0, 0), (5, 0), (10, 0), (10, 10), (0, 10)])
+        self.assertEqual(
+            MODULE.to_svg_path(poly),
+            "M0.0,0.0L5.0,0.0L10.0,0.0L10.0,10.0L0.0,10.0Z",
+        )
+
+    def test_legal_polygon_paths_are_byte_identical(self):
+        # TD-016 acceptance 3: legal polygons keep their exact pre-change bytes.
+        expected = {
+            "square": (
+                Polygon([(0, 0), (10, 0), (10, 10), (0, 10)]),
+                "M0.0,0.0L10.0,0.0L10.0,10.0L0.0,10.0Z",
+            ),
+            "square_cw": (
+                Polygon([(0, 0), (0, 10), (10, 10), (10, 0)]),
+                "M0.0,0.0L0.0,10.0L10.0,10.0L10.0,0.0Z",
+            ),
+            "triangle": (
+                Polygon([(0, 0), (100, 0), (50, 80)]),
+                "M0.0,0.0L100.0,0.0L50.0,80.0Z",
+            ),
+            "decimal": (
+                Polygon([(0.44, 0.67), (10.77, 0.67), (10.77, 7.89), (0.44, 7.89)]),
+                "M0.4,0.7L10.8,0.7L10.8,7.9L0.4,7.9Z",
+            ),
+            "donut": (
+                Polygon(
+                    [(0, 0), (100, 0), (100, 100), (0, 100)],
+                    [[(30, 30), (30, 70), (70, 70), (70, 30)]],
+                ),
+                "M0.0,0.0L100.0,0.0L100.0,100.0L0.0,100.0Z"
+                "M30.0,30.0L30.0,70.0L70.0,70.0L70.0,30.0Z",
+            ),
+        }
+        for name, (poly, path) in expected.items():
+            with self.subTest(case=name):
+                self.assertEqual(MODULE.to_svg_path(poly), path)
+
+
+    def test_degenerate_hole_dropped_before_serialization(self):
+        # The ring-drop branch of the orientation step: a zero-area hole is
+        # removed with the shared warning instead of reaching the serializer.
+        poly = Polygon(
+            [(0, 0), (10, 0), (10, 10), (0, 10)],
+            [[(2, 2), (4, 2), (6, 2), (2, 2)]],  # collinear -> zero-area hole
+        )
+        self.assertEqual(len(poly.interiors), 1)
+        seen: set[str] = set()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            oriented = MODULE._orient_polygon(poly, seen)
+            MODULE._orient_polygon(poly, seen)  # same container -> deduplicated
+        self.assertEqual(len(oriented.interiors), 0)
+        self.assertEqual(err.getvalue().count("dropped a degenerate ring"), 1)
+        self.assertEqual(seen, {"dropped a degenerate ring (zero area after rounding)"})
+        path = MODULE.to_svg_path(oriented)
+        self.assertEqual(path.count("M"), 1)  # only the exterior survives
+        self.assertAlmostEqual(parse_path(path).area, 100.0)  # 10 x 10 shell
+        self.assertLess(signed_area(parse_path(path)), 0)  # exterior is CW
+
+
+class _ReentrantStderr:
+    """stderr stand-in that runs an unrelated ``compute_paths`` during its
+    first write, emulating a nested computation inside a longer one."""
+
+    def __init__(self) -> None:
+        self.chunks: list[str] = []
+        self.reentered = False
+        self.inner_result = None
+
+    def write(self, text: str) -> int:
+        self.chunks.append(text)
+        if not self.reentered:
+            self.reentered = True
+            self.inner_result = MODULE.compute_paths(
+                [{"type": "rect", "frame": [0, 0, 10, 10]}], "union"
+            )
+        return len(text)
+
+    def flush(self) -> None:
+        return None
+
+    def getvalue(self) -> str:
+        return "".join(self.chunks)
+
+
+class WarningStateIsolationTests(unittest.TestCase):
+    """TD-019: warning de-duplication state is owned per computation.
+
+    Seam under test: the public ``compute_paths`` warning channel (stderr) and
+    the module namespace, plus the explicit ``seen`` argument that ``_warn``
+    now requires. No module-level mutable de-dup state may exist.
+    """
+
+    SLIVER = [
+        {"type": "rect", "frame": [0, 0, 10, 10]},
+        {"type": "rect", "frame": [0.02, 0, 9.96, 10]},
+    ]
+
+    def test_module_has_no_warning_dedup_state(self):
+        self.assertFalse(hasattr(MODULE, "_WARNED"))
+
+    def test_warn_requires_a_caller_owned_seen_container(self):
+        # Two independent containers -> the message is emitted once per
+        # container; a shared container -> emitted once in total.
+        first, second = set(), set()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            MODULE._warn("probe", first)
+            MODULE._warn("probe", first)
+            self.assertEqual(err.getvalue().count("probe"), 1)
+            MODULE._warn("probe", second)
+            self.assertEqual(err.getvalue().count("probe"), 2)
+        self.assertEqual(first, {"probe"})
+        self.assertEqual(second, {"probe"})
+        with self.assertRaises(TypeError):
+            MODULE._warn("probe")  # no implicit module-level container
+
+    def test_repeated_degenerate_warning_emitted_once_per_computation(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            result = MODULE.compute_paths(self.SLIVER, "subtract")
+        self.assertEqual(result, {"paths": [], "viewBox": [0.0, 0.0]})
+        self.assertEqual(err.getvalue().count("dropped a degenerate ring"), 1)
+
+    def test_nested_computation_does_not_reset_outer_dedupe(self):
+        # An unrelated compute_paths running mid-warning must not clear (or
+        # otherwise reach into) the outer computation's de-dup state, or the
+        # outer run would re-emit the same warning a second time.
+        stream = _ReentrantStderr()
+        with contextlib.redirect_stderr(stream):
+            result = MODULE.compute_paths(self.SLIVER, "subtract")
+        self.assertEqual(result, {"paths": [], "viewBox": [0.0, 0.0]})
+        self.assertTrue(stream.reentered)
+        self.assertEqual(stream.inner_result["viewBox"], [10.0, 10.0])
+        self.assertEqual(stream.getvalue().count("dropped a degenerate ring"), 1)
+
+
 class SoftDependencyTests(unittest.TestCase):
     """Slice 4: shapely missing -> clear error + install hint, no traceback."""
 
