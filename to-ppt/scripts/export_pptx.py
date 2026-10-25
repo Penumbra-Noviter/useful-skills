@@ -34,7 +34,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 from urllib.parse import urlparse
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
@@ -1252,6 +1252,31 @@ def add_audio_relationship(rels_xml: Optional[bytes], media_name: str) -> Tuple[
     return text.encode("utf-8"), r_id
 
 
+def _rewrite_zip(
+    pptx: Path,
+    mutator: Callable[[zipfile.ZipFile, zipfile.ZipFile, Set[str]], None],
+) -> None:
+    """Rewrite a PPTX ZIP in place through a ``mutator`` callback.
+
+    Owns only the mechanical frame shared by every in-place patch: a sibling
+    temp path, the source archive comment, a ``finally`` cleanup and the atomic
+    ``replace`` landing. ``mutator`` receives the open source/target archives
+    and the set of existing part names, and decides which entries to transform
+    and which to append.
+
+    Exceptions from ``mutator`` (including ``ExportError``) propagate untouched:
+    the temp file is still removed and the original PPTX is left as it was.
+    """
+    temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with zipfile.ZipFile(pptx, "r") as source_zip, zipfile.ZipFile(temporary, "w") as target_zip:
+            target_zip.comment = source_zip.comment
+            mutator(source_zip, target_zip, set(source_zip.namelist()))
+        temporary.replace(pptx)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     """Add page narration audio to an exported PPTX via pure-ZIP post-processing.
 
@@ -1347,67 +1372,67 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
             "audioSkippedAlreadyInjected": len(injected_slides),
         }
 
-    temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
-    try:
-        with zipfile.ZipFile(pptx, "r") as source_zip, zipfile.ZipFile(temporary, "w") as target_zip:
-            target_zip.comment = source_zip.comment
-            existing_names = set(source_zip.namelist())
-            if "[Content_Types].xml" not in existing_names:
-                raise ExportError("exported PPTX has no [Content_Types].xml")
-            existing_numbers = [
-                int(match.group(1))
-                for name in existing_names
-                for match in [AUDIO_MEDIA_PART_RE.match(name)]
-                if match
-            ]
-            next_audio_number = max(existing_numbers, default=0) + 1
-            for pack in packs:
-                pack["media_name"] = f"ppt/media/audio{next_audio_number}{pack['ext']}"
-                next_audio_number += 1
+    def mutator(
+        source_zip: zipfile.ZipFile,
+        target_zip: zipfile.ZipFile,
+        existing_names: Set[str],
+    ) -> None:
+        """Write audio media parts, rels entries and patched slides into the new ZIP."""
+        if "[Content_Types].xml" not in existing_names:
+            raise ExportError("exported PPTX has no [Content_Types].xml")
+        existing_numbers = [
+            int(match.group(1))
+            for name in existing_names
+            for match in [AUDIO_MEDIA_PART_RE.match(name)]
+            if match
+        ]
+        next_audio_number = max(existing_numbers, default=0) + 1
+        for pack in packs:
+            pack["media_name"] = f"ppt/media/audio{next_audio_number}{pack['ext']}"
+            next_audio_number += 1
 
-            rels_cache: Dict[int, bytes] = {}
-            for pack in packs:
-                rels_name = f"ppt/slides/_rels/slide{pack['slide']}.xml.rels"
-                existing_rels = source_zip.read(rels_name) if rels_name in existing_names else None
-                new_rels, r_id = add_audio_relationship(existing_rels, pack["media_name"])
-                pack["r_id"] = r_id
-                rels_cache[pack["slide"]] = new_rels
+        rels_cache: Dict[int, bytes] = {}
+        for pack in packs:
+            rels_name = f"ppt/slides/_rels/slide{pack['slide']}.xml.rels"
+            existing_rels = source_zip.read(rels_name) if rels_name in existing_names else None
+            new_rels, r_id = add_audio_relationship(existing_rels, pack["media_name"])
+            pack["r_id"] = r_id
+            rels_cache[pack["slide"]] = new_rels
 
-            content_types = source_zip.read("[Content_Types].xml")
-            patched_content_types = add_audio_content_type_overrides(
-                content_types,
-                {pack["media_name"]: pack["mime"] for pack in packs},
+        content_types = source_zip.read("[Content_Types].xml")
+        patched_content_types = add_audio_content_type_overrides(
+            content_types,
+            {pack["media_name"]: pack["mime"] for pack in packs},
+        )
+        rels_names_to_write = {
+            f"ppt/slides/_rels/slide{pack['slide']}.xml.rels": pack["slide"]
+            for pack in packs
+        }
+        slide_numbers = {pack["slide"] for pack in packs}
+
+        for info in source_zip.infolist():
+            data = source_zip.read(info.filename)
+            if info.filename == "[Content_Types].xml":
+                data = patched_content_types
+            elif info.filename in rels_names_to_write:
+                data = rels_cache[rels_names_to_write[info.filename]]
+            elif re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
+                match = re.fullmatch(r"ppt/slides/slide(\d+)\.xml", info.filename)
+                slide_number = int(match.group(1))
+                if slide_number in slide_numbers:
+                    pack = next(p for p in packs if p["slide"] == slide_number)
+                    data, _spid = patch_slide_audio(data, pack["r_id"])
+            target_zip.writestr(info, data, compress_type=info.compress_type)
+
+        for pack in packs:
+            target_zip.writestr(
+                pack["media_name"], pack["data"], compress_type=zipfile.ZIP_STORED
             )
-            rels_names_to_write = {
-                f"ppt/slides/_rels/slide{pack['slide']}.xml.rels": pack["slide"]
-                for pack in packs
-            }
-            slide_numbers = {pack["slide"] for pack in packs}
+        for rels_name, slide_number in rels_names_to_write.items():
+            if rels_name not in existing_names:
+                target_zip.writestr(rels_name, rels_cache[slide_number])
 
-            for info in source_zip.infolist():
-                data = source_zip.read(info.filename)
-                if info.filename == "[Content_Types].xml":
-                    data = patched_content_types
-                elif info.filename in rels_names_to_write:
-                    data = rels_cache[rels_names_to_write[info.filename]]
-                elif re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
-                    match = re.fullmatch(r"ppt/slides/slide(\d+)\.xml", info.filename)
-                    slide_number = int(match.group(1))
-                    if slide_number in slide_numbers:
-                        pack = next(p for p in packs if p["slide"] == slide_number)
-                        data, _spid = patch_slide_audio(data, pack["r_id"])
-                target_zip.writestr(info, data, compress_type=info.compress_type)
-
-            for pack in packs:
-                target_zip.writestr(
-                    pack["media_name"], pack["data"], compress_type=zipfile.ZIP_STORED
-                )
-            for rels_name, slide_number in rels_names_to_write.items():
-                if rels_name not in existing_names:
-                    target_zip.writestr(rels_name, rels_cache[slide_number])
-        temporary.replace(pptx)
-    finally:
-        temporary.unlink(missing_ok=True)
+    _rewrite_zip(pptx, mutator)
 
     return {
         "audioSlides": len(packs),
@@ -1564,22 +1589,30 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
 
 
 def patch_transitions(pptx: Path, transition: str) -> int:
-    temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
+    """Rewrite every slide part with the requested transition.
+
+    Returns the number of patched slide parts; raises ``ExportError`` when the
+    PPTX holds no slide XML at all (the original file is left untouched).
+    """
     slide_count = 0
-    try:
-        with zipfile.ZipFile(pptx, "r") as source, zipfile.ZipFile(temporary, "w") as target:
-            target.comment = source.comment
-            for info in source.infolist():
-                data = source.read(info.filename)
-                if re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
-                    data = replace_transition(data, transition)
-                    slide_count += 1
-                target.writestr(info, data, compress_type=info.compress_type)
+
+    def mutator(
+        source: zipfile.ZipFile,
+        target: zipfile.ZipFile,
+        _existing_names: Set[str],
+    ) -> None:
+        """Copy every entry, replacing the transition in slide parts."""
+        nonlocal slide_count
+        for info in source.infolist():
+            data = source.read(info.filename)
+            if re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
+                data = replace_transition(data, transition)
+                slide_count += 1
+            target.writestr(info, data, compress_type=info.compress_type)
         if slide_count == 0:
             raise ExportError("exported PPTX contains no slide XML")
-        temporary.replace(pptx)
-    finally:
-        temporary.unlink(missing_ok=True)
+
+    _rewrite_zip(pptx, mutator)
     return slide_count
 
 

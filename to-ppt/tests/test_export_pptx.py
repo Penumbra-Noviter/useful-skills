@@ -1811,5 +1811,63 @@ class AudioVerifyContractTests(unittest.TestCase):
             MODULE.verify_output(tampered, "fade", False, deck=self.deck_root)
 
 
+# --------------------------------------------------------------------------
+# T-04: one ZIP rewrite frame for every in-place patch (TD-017)
+# --------------------------------------------------------------------------
+class ZipRewriteSkeletonTests(unittest.TestCase):
+    """``patch_transitions`` / ``patch_audio`` must not repeat the tmp-frame."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.deck_root = self.root / "deck"
+        make_deck(self.deck_root, [{"audio": "media/beep.mp3"}])
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _temp_files(self):
+        return [path.name for path in self.root.iterdir() if path.name.endswith(".tmp")]
+
+    def test_patch_helpers_do_not_repeat_the_zip_frame(self):
+        for name in ("patch_transitions", "patch_audio"):
+            source = inspect.getsource(getattr(MODULE, name))
+            for banned in ("uuid.uuid4().hex", "temporary.replace", ".tmp"):
+                self.assertNotIn(banned, source, f"{name} still repeats {banned!r}")
+
+    def test_patch_transitions_export_error_cleans_temp(self):
+        pptx = self.root / "no-slides.pptx"
+        with zipfile.ZipFile(pptx, "w") as archive:
+            archive.writestr("[Content_Types].xml", base_content_types(0))
+            archive.writestr("ppt/presentation.xml", '<p:presentation xmlns:p="urn:x"/>')
+        before = pptx.read_bytes()
+        with self.assertRaisesRegex(MODULE.ExportError, "no slide XML"):
+            MODULE.patch_transitions(pptx, "fade")
+        self.assertEqual(self._temp_files(), [])
+        self.assertEqual(pptx.read_bytes(), before, "original PPTX was modified")
+
+    def test_patch_audio_export_error_cleans_temp(self):
+        out = self.root / "no-content-types.pptx"
+        with zipfile.ZipFile(out, "w") as archive:
+            archive.writestr("ppt/slides/slide1.xml", xml_slide())
+        before = out.read_bytes()
+        with self.assertRaisesRegex(MODULE.ExportError, "Content_Types"):
+            MODULE.patch_audio(out, self.deck_root)
+        self.assertEqual(self._temp_files(), [])
+        self.assertEqual(out.read_bytes(), before, "original PPTX was modified")
+
+    def test_zip_comment_survives_the_rewrite(self):
+        pptx = self.root / "commented.pptx"
+        make_pptx(pptx, {1: xml_slide()})
+        with zipfile.ZipFile(pptx, "a") as archive:
+            archive.comment = b"open-kimi-ppt export"
+        MODULE.patch_transitions(pptx, "fade")
+        with zipfile.ZipFile(pptx) as archive:
+            self.assertEqual(archive.comment, b"open-kimi-ppt export")
+        MODULE.patch_audio(pptx, self.deck_root)
+        with zipfile.ZipFile(pptx) as archive:
+            self.assertEqual(archive.comment, b"open-kimi-ppt export")
+
+
 if __name__ == "__main__":
     unittest.main()
