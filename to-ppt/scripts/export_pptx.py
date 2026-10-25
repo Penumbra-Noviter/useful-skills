@@ -1422,6 +1422,29 @@ def _resolve_rel_target(rels_name: str, target: str) -> str:
     return posixpath.normpath(posixpath.join(posixpath.dirname(rels_name), target))
 
 
+def _content_type_override(
+    content_types_xml: bytes, part_name: str
+) -> Optional[str]:
+    """Return the ``ContentType`` an ``Override`` declares for ``part_name``.
+
+    Resolves the ``Override`` *element* whose ``PartName`` equals ``part_name``
+    and reads its own ``ContentType`` attribute, so the MIME answer belongs to
+    that part. Matching the two attributes as independent substrings of the
+    whole document can pair a part name with another part's content type
+    (TD-011). Returns ``None`` when no ``Override`` targets ``part_name``.
+    """
+    try:
+        root = ET.fromstring(content_types_xml)
+    except ET.ParseError as exc:
+        raise ExportError(f"invalid [Content_Types].xml: {exc}") from exc
+    for element in root:
+        if local_name(element.tag) != "Override":
+            continue
+        if element.get("PartName") == part_name:
+            return element.get("ContentType")
+    return None
+
+
 def _containing_seq(command: ET.Element, timing: ET.Element) -> Optional[ET.Element]:
     """Return the ``p:seq`` whose ``childTnLst`` subtree contains ``command``."""
     for seq in (
@@ -1528,10 +1551,15 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     expected_mime = AUDIO_EXTENSION_MIME.get(extension)
     if expected_mime is None:
         raise ExportError(f"audio part has an unknown extension: {part_name}")
-    content_types = archive.read("[Content_Types].xml").decode("utf-8")
     ct_part = _ct_part_name(part_name)
-    if f'PartName="{ct_part}"' not in content_types or f'ContentType="{expected_mime}"' not in content_types:
+    actual_mime = _content_type_override(archive.read("[Content_Types].xml"), ct_part)
+    if actual_mime is None:
         raise ExportError(f"audio part has no [Content_Types].xml Override: {part_name}")
+    if actual_mime != expected_mime:
+        raise ExportError(
+            f"audio part {part_name} has [Content_Types].xml ContentType "
+            f"{actual_mime!r}, expected {expected_mime!r}"
+        )
     return {"part": part_name, "rId": r_id, "spid": spid}
 
 
@@ -1555,12 +1583,71 @@ def patch_transitions(pptx: Path, transition: str) -> int:
     return slide_count
 
 
+def _count_audio_in_archive(
+    archive: zipfile.ZipFile, slide_names: Iterable[str]
+) -> int:
+    """Count the slides whose rels part carries an audio Relationship.
+
+    Archive-side leg of the audio summary: no deck is consulted, so it answers
+    "how many packaged slides reference audio" from the slide rels alone. Used
+    only when ``verify_output`` runs without a deck; the deck contract leg
+    produces the same number when one is supplied (TD-020).
+    """
+    present = set(archive.namelist())
+    count = 0
+    for slide_name in slide_names:
+        rels_name = f"ppt/slides/_rels/{Path(slide_name).name}.rels"
+        if rels_name not in present:
+            continue
+        try:
+            rels_root = ET.fromstring(archive.read(rels_name))
+        except ET.ParseError as exc:
+            raise ExportError(f"invalid rels XML in {rels_name}: {exc}") from exc
+        if any(
+            local_name(element.tag) == "Relationship"
+            and str(element.get("Type", "")).endswith("/audio")
+            for element in rels_root
+        ):
+            count += 1
+    return count
+
+
 def verify_output(
     pptx: Path,
     transition: str,
     expect_fonts: bool,
     deck: Optional[Path] = None,
 ) -> Dict[str, Any]:
+    """Verify an exported PPTX and summarise what it ended up containing.
+
+    Args:
+        pptx: Exported PPTX to inspect; must be a valid ZIP holding a
+            presentation part.
+        transition: Transition name the export was asked for. ``"fade"`` is
+            asserted on every slide; other values only keep the ``CT_Slide``
+            element order valid.
+        expect_fonts: When True, log a warning (not a failure) if the writer
+            produced no ``ppt/fonts/*`` part.
+        deck: PPTD deck root for the per-slide audio contract. When given, every
+            page declaring ``audio`` is checked with ``verify_audio_slide``
+            (media part, rels, content-type and timing assertions) and
+            ``audioSlides`` counts the pages that passed; a declared page whose
+            slide part was never exported is skipped and counted in
+            ``audioSkippedMissingSlides`` (the same skip ``patch_audio``
+            applies). When ``None``, the per-slide deep assertions are skipped
+            and ``audioSlides`` is counted from the archive slide rels only.
+
+    Returns:
+        Mapping with ``slides``, ``fadeTransitions``, ``fontParts``,
+        ``audioSlides``, ``audioSkippedMissingSlides``, ``audioParts`` and
+        ``bytes``.
+
+    Raises:
+        ExportError: the path is not a PPTX ZIP, the ZIP fails its CRC check, a
+            slide XML breaks the ``CT_Slide`` order or misses the requested fade
+            transition, a slide rels part is unparsable, or (with ``deck``) a
+            declared audio page violates the audio packaging contract.
+    """
     if not is_pptx(pptx):
         raise ExportError(f"output is not a valid PPTX ZIP: {pptx}")
     with zipfile.ZipFile(pptx) as archive:
@@ -1590,32 +1677,37 @@ def verify_output(
         audio_parts = sorted(
             name for name in archive.namelist() if AUDIO_MEDIA_PART_RE.match(name)
         )
-        audio_slides = 0
-        for slide_name in slide_names:
-            rels_name = (
-                f"ppt/slides/_rels/{Path(slide_name).name}.rels"
-            )
-            if rels_name not in archive.namelist():
-                continue
-            rels_root = ET.fromstring(archive.read(rels_name))
-            if any(
-                local_name(element.tag) == "Relationship"
-                and str(element.get("Type", "")).endswith("/audio")
-                for element in rels_root
-            ):
-                audio_slides += 1
-        if deck is not None:
+        audio_skipped_missing = 0
+        if deck is None:
+            audio_slides = _count_audio_in_archive(archive, slide_names)
+        else:
+            # TD-020: with a deck the contract leg owns the count, so both legs
+            # cannot disagree about which slides carry narration.
+            audio_slides = 0
+            present = set(archive.namelist())
             for source in collect_page_audio(deck):
                 if audio_extension_mime(source["value"]) is None:
                     # Unknown-extension pages are deliberately skipped at patch
                     # time with a warning; do not fail verification for them.
                     continue
+                slide_part = f"ppt/slides/slide{source['slide']}.xml"
+                if slide_part not in present:
+                    # TD-010 G2: patch_audio skipped this page for the same
+                    # reason, so verification skips it too instead of failing.
+                    audio_skipped_missing += 1
+                    log(
+                        f"warning: page {source['slide']} declares audio but has no "
+                        f"slide part in the exported PPTX; not verifying its audio"
+                    )
+                    continue
                 verify_audio_slide(archive, source["slide"])
+                audio_slides += 1
         return {
             "slides": len(slide_names),
             "fadeTransitions": transition_hits,
             "fontParts": len(fonts),
             "audioSlides": audio_slides,
+            "audioSkippedMissingSlides": audio_skipped_missing,
             "audioParts": len(audio_parts),
             "bytes": pptx.stat().st_size,
         }

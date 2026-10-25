@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import contextlib
 import importlib.util
+import inspect
 import io
 import os
 import re
@@ -1672,6 +1673,142 @@ class AudioIdempotencyTests(unittest.TestCase):
         self.assertEqual(media, ["ppt/media/audio1.mp3", "ppt/media/audio2.mp3"])
         self.assertEqual(slide1.count('cmd="playFrom(0)"'), 1)
         self.assertEqual(slide2.count('cmd="playFrom(0)"'), 1)
+
+
+# --------------------------------------------------------------------------
+# T-02: verification contract hardening (TD-011, TD-014, TD-015, TD-020)
+# --------------------------------------------------------------------------
+class AudioVerifyContractTests(unittest.TestCase):
+    """Content-Type pair binding, rels parse defence, docstring, count parity."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.deck_root = self.root / "deck"
+        make_deck(
+            self.deck_root,
+            [{"audio": "media/beep.mp3"}, {"audio": "media/beep.mp3"}],
+        )
+        self.pptx = self.root / "out.pptx"
+        make_pptx(self.pptx, {1: xml_slide(), 2: xml_slide()})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_content_type_override_is_bound_to_its_part(self):
+        # Page 2's Override keeps the right PartName but claims the wrong MIME.
+        # Page 1 still carries a correct `ContentType="audio/mpeg"`, so the old
+        # two-independent-substring check passed for page 2 as well.
+        with zipfile.ZipFile(self.pptx) as archive:
+            content_types = archive.read("[Content_Types].xml").decode("utf-8")
+        tampered = content_types.replace(
+            '<Override PartName="/ppt/media/audio2.mp3" ContentType="audio/mpeg"/>',
+            '<Override PartName="/ppt/media/audio2.mp3" ContentType="audio/wav"/>',
+        )
+        self.assertNotEqual(tampered, content_types, "fixture did not patch page 2")
+        out = self.root / "mime.pptx"
+        rewrite_zip(
+            self.pptx, out, replacements={"[Content_Types].xml": tampered.encode()}
+        )
+        with zipfile.ZipFile(out) as archive:
+            with self.assertRaisesRegex(MODULE.ExportError, "ContentType"):
+                MODULE.verify_audio_slide(archive, 2)
+            # The untouched page still verifies: the failure is per-part.
+            self.assertEqual(
+                MODULE.verify_audio_slide(archive, 1)["part"], "ppt/media/audio1.mp3"
+            )
+
+    def test_verify_output_wraps_corrupt_slide_rels(self):
+        rels_name = "ppt/slides/_rels/slide2.xml.rels"
+        out = self.root / "corrupt-rels.pptx"
+        rewrite_zip(self.pptx, out, replacements={rels_name: b"<Relationships"})
+        with self.assertRaises(MODULE.ExportError) as caught:
+            MODULE.verify_output(out, "fade", False)
+        self.assertIn(rels_name, str(caught.exception))
+
+    def test_verify_output_documents_its_contract(self):
+        docstring = MODULE.verify_output.__doc__ or ""
+        self.assertIn("deck", docstring)
+        for section in ("Args:", "Returns:", "Raises:"):
+            self.assertIn(section, docstring)
+
+    def test_audio_slide_count_matches_across_both_legs(self):
+        without_deck = MODULE.verify_output(self.pptx, "fade", False)
+        with_deck = MODULE.verify_output(self.pptx, "fade", False, deck=self.deck_root)
+        self.assertEqual(without_deck["audioSlides"], 2)
+        self.assertEqual(with_deck["audioSlides"], without_deck["audioSlides"])
+
+    def test_archive_leg_skips_slides_without_rels(self):
+        out = self.root / "one-audio.pptx"
+        make_pptx(out, {1: xml_slide(), 2: xml_slide()})
+        one_page_deck = self.root / "deck-one"
+        make_deck(one_page_deck, [{"audio": "media/beep.mp3"}])
+        MODULE.patch_audio(out, one_page_deck)
+        summary = MODULE.verify_output(out, "fade", False)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioParts"], 1)
+
+    def test_archive_leg_ignores_non_audio_relationships(self):
+        out = self.root / "image-rels.pptx"
+        make_pptx(
+            out,
+            {1: xml_slide(), 2: xml_slide()},
+            rels={
+                2: rels_bytes(
+                    [("rId1", f"{R_NS}/image", "../media/image1.png")]
+                )
+            },
+        )
+        one_page_deck = self.root / "deck-one-audio"
+        make_deck(one_page_deck, [{"audio": "media/beep.mp3"}])
+        MODULE.patch_audio(out, one_page_deck)
+        summary = MODULE.verify_output(out, "fade", False)
+        self.assertEqual(summary["audioSlides"], 1)
+
+    def test_verify_audio_slide_has_no_global_substring_lookup(self):
+        source = inspect.getsource(MODULE.verify_audio_slide)
+        self.assertNotIn("in content_types", source)
+
+    def test_verify_rejects_malformed_content_types(self):
+        out = self.root / "bad-content-types.pptx"
+        rewrite_zip(
+            self.pptx, out, replacements={"[Content_Types].xml": b"<Types"}
+        )
+        with zipfile.ZipFile(out) as archive:
+            with self.assertRaisesRegex(
+                MODULE.ExportError, r"invalid \[Content_Types\]\.xml"
+            ):
+                MODULE.verify_audio_slide(archive, 1)
+
+    def test_verify_skips_declared_page_without_slide_part(self):
+        # AC7 (TD-010 G2 alignment): a page that declares audio but was never
+        # exported has no slide part. patch_audio skips it with a warning, so
+        # verification must skip it too instead of failing the whole export.
+        out = self.root / "missing-slide.pptx"
+        make_pptx(out, {1: xml_slide()})
+        MODULE.patch_audio(out, self.deck_root)
+        summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
+        self.assertEqual(summary["audioSkippedMissingSlides"], 1)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioParts"], 1)
+
+    def test_verify_skip_does_not_mask_a_missing_override(self):
+        # The G2 skip only covers "slide part absent"; a present slide with a
+        # broken audio chain must still fail hard.
+        tampered = self.root / "no-override.pptx"
+        with zipfile.ZipFile(self.pptx) as archive:
+            content_types = archive.read("[Content_Types].xml").decode("utf-8")
+        stripped = re.sub(
+            r'<Override PartName="/ppt/media/audio1\.mp3"[^>]*/>', "", content_types
+        )
+        rewrite_zip(
+            self.pptx,
+            tampered,
+            replacements={"[Content_Types].xml": stripped.encode()},
+        )
+        with self.assertRaises(MODULE.ExportError):
+            MODULE.verify_output(tampered, "fade", False, deck=self.deck_root)
 
 
 if __name__ == "__main__":
