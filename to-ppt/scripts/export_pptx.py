@@ -34,7 +34,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 from urllib.parse import urlparse
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
@@ -1022,14 +1022,44 @@ def _max_timing_id(timing: ET.Element) -> int:
     return max(ids, default=0)
 
 
+def _is_main_seq(seq: ET.Element) -> bool:
+    """Return True when a ``p:seq`` declares ``nodeType="mainSeq"`` on its ``cTn``."""
+    seq_ct = _root_child(seq, "cTn")
+    return seq_ct is not None and seq_ct.get("nodeType") == "mainSeq"
+
+
+def _select_animation_seq(root_child: ET.Element) -> Optional[ET.Element]:
+    """Return the ``p:seq`` that narration timing must be merged into.
+
+    Prefers the sequence whose ``p:cTn`` carries ``nodeType="mainSeq"`` — the
+    OOXML interactive main sequence a slide plays on entry. When no sequence
+    declares ``mainSeq``, the first ``p:seq`` is used and a warning is logged:
+    returning ``None`` would make ``patch_slide_audio`` replace the slide timing
+    and discard the authored animations, which is worse than picking a
+    non-main sequence. Returns ``None`` only when no ``p:seq`` exists at all.
+    """
+    sequences = [child for child in root_child if local_name(child.tag) == "seq"]
+    if not sequences:
+        return None
+    for seq in sequences:
+        if _is_main_seq(seq):
+            return seq
+    log(
+        "warning: slide timing has no mainSeq animation sequence; "
+        "falling back to the first p:seq for the narration timing"
+    )
+    return sequences[0]
+
+
 def merge_narration_timing(timing: ET.Element, spid: int) -> Optional[ET.Element]:
     """Merge the narration ``playFrom(0)`` par into an existing ``p:timing``.
 
-    The narration is inserted as the first parallel ``p:par`` of the first
-    ``p:seq``'s main sequence, so authored element animations stay intact and
-    the slide keeps exactly one root-level ``p:timing``. Returns the (mutated)
-    timing element, or ``None`` when the expected ``tmRoot → seq → childTnLst``
-    structure is absent — the caller then degrades to replace + warning.
+    The narration is inserted as the first parallel ``p:par`` of the timing's
+    ``mainSeq`` sequence (see ``_select_animation_seq``), so authored element
+    animations stay intact and the slide keeps exactly one root-level
+    ``p:timing``. Returns the (mutated) timing element, or ``None`` when the
+    expected ``tmRoot → seq → childTnLst`` structure is absent — the caller then
+    degrades to replace + warning.
     """
     tn_lst = _root_child(timing, "tnLst")
     root_par = _root_child(tn_lst, "par") if tn_lst is not None else None
@@ -1039,7 +1069,7 @@ def merge_narration_timing(timing: ET.Element, spid: int) -> Optional[ET.Element
     root_child = _root_child(root_ct, "childTnLst")
     if root_child is None:
         return None
-    seq = next((child for child in root_child if local_name(child.tag) == "seq"), None)
+    seq = _select_animation_seq(root_child)
     if seq is None:
         return None
     seq_ct = _root_child(seq, "cTn")
@@ -1124,6 +1154,48 @@ def patch_slide_audio(slide_xml: bytes, r_id: str) -> Tuple[bytes, int]:
     return ET.tostring(root, encoding="utf-8", xml_declaration=True), spid
 
 
+def _audio_file_element(
+    root: ET.Element, spid: Optional[str] = None
+) -> Optional[ET.Element]:
+    """Return the ``p:audioFile`` of a hidden audio shape in ``root``.
+
+    Walks the ``p:sp → p:nvSpPr → p:nvPr → p:audioFile`` path. When ``spid`` is
+    given, only the shape whose ``p:cNvPr/@id`` matches it is considered.
+    """
+    for sp in (element for element in root.iter() if local_name(element.tag) == "sp"):
+        nv_sp_pr = _root_child(sp, "nvSpPr")
+        nv_pr = _root_child(nv_sp_pr, "nvPr") if nv_sp_pr is not None else None
+        audio_file = _root_child(nv_pr, "audioFile") if nv_pr is not None else None
+        if audio_file is None:
+            continue
+        if spid is None:
+            return audio_file
+        c_nv_pr = _root_child(nv_sp_pr, "cNvPr")
+        if c_nv_pr is not None and c_nv_pr.get("id") == spid:
+            return audio_file
+    return None
+
+
+def _slide_has_injected_audio(slide_xml: bytes) -> bool:
+    """Return True when a slide already carries the injected narration trace.
+
+    The trace is the pair ``patch_slide_audio`` writes: a hidden audio shape
+    (``p:sp → p:nvSpPr → p:nvPr → p:audioFile``) plus a ``playFrom(0)``
+    narration command. Either half alone is not treated as an injection, so a
+    slide with only authored media or only authored commands is still patched.
+    """
+    try:
+        root = ET.fromstring(slide_xml)
+    except ET.ParseError as exc:
+        raise ExportError(f"invalid slide XML: {exc}") from exc
+    if _audio_file_element(root) is None:
+        return False
+    return any(
+        local_name(element.tag) == "cmd" and element.get("cmd") == "playFrom(0)"
+        for element in root.iter()
+    )
+
+
 def _ct_part_name(media_name: str) -> str:
     """Normalize a media part name to ``[Content_Types].xml`` form (leading slash)."""
     return "/" + media_name.lstrip("/")
@@ -1180,6 +1252,31 @@ def add_audio_relationship(rels_xml: Optional[bytes], media_name: str) -> Tuple[
     return text.encode("utf-8"), r_id
 
 
+def _rewrite_zip(
+    pptx: Path,
+    mutator: Callable[[zipfile.ZipFile, zipfile.ZipFile, Set[str]], None],
+) -> None:
+    """Rewrite a PPTX ZIP in place through a ``mutator`` callback.
+
+    Owns only the mechanical frame shared by every in-place patch: a sibling
+    temp path, the source archive comment, a ``finally`` cleanup and the atomic
+    ``replace`` landing. ``mutator`` receives the open source/target archives
+    and the set of existing part names, and decides which entries to transform
+    and which to append.
+
+    Exceptions from ``mutator`` (including ``ExportError``) propagate untouched:
+    the temp file is still removed and the original PPTX is left as it was.
+    """
+    temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with zipfile.ZipFile(pptx, "r") as source_zip, zipfile.ZipFile(temporary, "w") as target_zip:
+            target_zip.comment = source_zip.comment
+            mutator(source_zip, target_zip, set(source_zip.namelist()))
+        temporary.replace(pptx)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     """Add page narration audio to an exported PPTX via pure-ZIP post-processing.
 
@@ -1188,10 +1285,20 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     a ``[Content_Types].xml`` Override, a slide-rels audio Relationship, a
     hidden 1px audio shape, and a root-level ``p:timing`` narration template
     (``playFrom(0)`` auto-play). Slides that already carry an animation
-    ``p:timing`` get the narration merged in; on merge failure the timing is
-    replaced and a warning is logged.
+    ``p:timing`` get the narration merged into their ``mainSeq`` sequence; on
+    merge failure the timing is replaced and a warning is logged.
 
-    Returns ``{"audioSlides", "audioParts", "audioSkippedUnknownExtensions"}``.
+    Pages that already carry the injected narration trace (a hidden audio shape
+    plus a ``playFrom(0)`` command) are skipped with a warning and counted in
+    ``audioSkippedAlreadyInjected``; their media part, rels entry and slide XML
+    are left untouched. The patch is deliberately *not* an "update audio"
+    operation: a real re-injection would need to remove the previous media part,
+    rels entry, shape and timing par first. To replace a page's narration audio,
+    re-export the PPTX instead of calling this again.
+
+    Returns ``{"audioSlides", "audioParts", "audioSkippedUnknownExtensions",
+    "audioSkippedAlreadyInjected"}``; the no-audio fast path returns only the
+    first three keys.
     """
     sources = collect_page_audio(deck)
     if not sources:
@@ -1223,12 +1330,23 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     # TD-010 G2: a declared audio page must have a matching slide part in the
     # exported package. Skip missing slides with a warning instead of writing
     # dangling rels / media parts / Content-Types Overrides.
+    # TD-012: pages whose slide XML already holds the injected narration trace
+    # are detected here too, so a re-run cannot add a second media part, rels
+    # entry, hidden shape and playFrom(0) par (double playback).
     with zipfile.ZipFile(pptx) as probe:
         present_slides = {
             int(match.group(1))
             for name in probe.namelist()
             for match in [re.fullmatch(r"ppt/slides/slide(\d+)\.xml", name)]
             if match
+        }
+        injected_slides = {
+            pack["slide"]
+            for pack in packs
+            if pack["slide"] in present_slides
+            and _slide_has_injected_audio(
+                probe.read(f"ppt/slides/slide{pack['slide']}.xml")
+            )
         }
     absent_packs = [pack for pack in packs if pack["slide"] not in present_slides]
     for pack in absent_packs:
@@ -1238,79 +1356,89 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
         )
     if absent_packs:
         packs = [pack for pack in packs if pack["slide"] in present_slides]
-        if not packs:
-            return {
-                "audioSlides": 0,
-                "audioParts": 0,
-                "audioSkippedUnknownExtensions": skipped,
-            }
-
-    temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
-    try:
-        with zipfile.ZipFile(pptx, "r") as source_zip, zipfile.ZipFile(temporary, "w") as target_zip:
-            target_zip.comment = source_zip.comment
-            existing_names = set(source_zip.namelist())
-            if "[Content_Types].xml" not in existing_names:
-                raise ExportError("exported PPTX has no [Content_Types].xml")
-            existing_numbers = [
-                int(match.group(1))
-                for name in existing_names
-                for match in [AUDIO_MEDIA_PART_RE.match(name)]
-                if match
-            ]
-            next_audio_number = max(existing_numbers, default=0) + 1
-            for pack in packs:
-                pack["media_name"] = f"ppt/media/audio{next_audio_number}{pack['ext']}"
-                next_audio_number += 1
-
-            rels_cache: Dict[int, bytes] = {}
-            for pack in packs:
-                rels_name = f"ppt/slides/_rels/slide{pack['slide']}.xml.rels"
-                existing_rels = source_zip.read(rels_name) if rels_name in existing_names else None
-                new_rels, r_id = add_audio_relationship(existing_rels, pack["media_name"])
-                pack["r_id"] = r_id
-                rels_cache[pack["slide"]] = new_rels
-
-            content_types = source_zip.read("[Content_Types].xml")
-            patched_content_types = add_audio_content_type_overrides(
-                content_types,
-                {pack["media_name"]: pack["mime"] for pack in packs},
+    for pack in packs:
+        if pack["slide"] in injected_slides:
+            log(
+                f"warning: page {pack['slide']} already carries injected narration "
+                f"audio; skipping (re-export the PPTX to replace the audio)"
             )
-            rels_names_to_write = {
-                f"ppt/slides/_rels/slide{pack['slide']}.xml.rels": pack["slide"]
-                for pack in packs
-            }
-            slide_numbers = {pack["slide"] for pack in packs}
+    if injected_slides:
+        packs = [pack for pack in packs if pack["slide"] not in injected_slides]
+    if not packs:
+        return {
+            "audioSlides": 0,
+            "audioParts": 0,
+            "audioSkippedUnknownExtensions": skipped,
+            "audioSkippedAlreadyInjected": len(injected_slides),
+        }
 
-            for info in source_zip.infolist():
-                data = source_zip.read(info.filename)
-                if info.filename == "[Content_Types].xml":
-                    data = patched_content_types
-                elif info.filename in rels_names_to_write:
-                    data = rels_cache[rels_names_to_write[info.filename]]
-                elif re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
-                    match = re.fullmatch(r"ppt/slides/slide(\d+)\.xml", info.filename)
-                    slide_number = int(match.group(1))
-                    if slide_number in slide_numbers:
-                        pack = next(p for p in packs if p["slide"] == slide_number)
-                        data, _spid = patch_slide_audio(data, pack["r_id"])
-                target_zip.writestr(info, data, compress_type=info.compress_type)
+    def mutator(
+        source_zip: zipfile.ZipFile,
+        target_zip: zipfile.ZipFile,
+        existing_names: Set[str],
+    ) -> None:
+        """Write audio media parts, rels entries and patched slides into the new ZIP."""
+        if "[Content_Types].xml" not in existing_names:
+            raise ExportError("exported PPTX has no [Content_Types].xml")
+        existing_numbers = [
+            int(match.group(1))
+            for name in existing_names
+            for match in [AUDIO_MEDIA_PART_RE.match(name)]
+            if match
+        ]
+        next_audio_number = max(existing_numbers, default=0) + 1
+        for pack in packs:
+            pack["media_name"] = f"ppt/media/audio{next_audio_number}{pack['ext']}"
+            next_audio_number += 1
 
-            for pack in packs:
-                target_zip.writestr(
-                    pack["media_name"], pack["data"], compress_type=zipfile.ZIP_STORED
-                )
-            for rels_name, slide_number in rels_names_to_write.items():
-                if rels_name not in existing_names:
-                    target_zip.writestr(rels_name, rels_cache[slide_number])
-        temporary.replace(pptx)
-    finally:
-        temporary.unlink(missing_ok=True)
+        rels_cache: Dict[int, bytes] = {}
+        for pack in packs:
+            rels_name = f"ppt/slides/_rels/slide{pack['slide']}.xml.rels"
+            existing_rels = source_zip.read(rels_name) if rels_name in existing_names else None
+            new_rels, r_id = add_audio_relationship(existing_rels, pack["media_name"])
+            pack["r_id"] = r_id
+            rels_cache[pack["slide"]] = new_rels
+
+        content_types = source_zip.read("[Content_Types].xml")
+        patched_content_types = add_audio_content_type_overrides(
+            content_types,
+            {pack["media_name"]: pack["mime"] for pack in packs},
+        )
+        rels_names_to_write = {
+            f"ppt/slides/_rels/slide{pack['slide']}.xml.rels": pack["slide"]
+            for pack in packs
+        }
+        slide_numbers = {pack["slide"] for pack in packs}
+
+        for info in source_zip.infolist():
+            data = source_zip.read(info.filename)
+            if info.filename == "[Content_Types].xml":
+                data = patched_content_types
+            elif info.filename in rels_names_to_write:
+                data = rels_cache[rels_names_to_write[info.filename]]
+            elif re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
+                match = re.fullmatch(r"ppt/slides/slide(\d+)\.xml", info.filename)
+                slide_number = int(match.group(1))
+                if slide_number in slide_numbers:
+                    pack = next(p for p in packs if p["slide"] == slide_number)
+                    data, _spid = patch_slide_audio(data, pack["r_id"])
+            target_zip.writestr(info, data, compress_type=info.compress_type)
+
+        for pack in packs:
+            target_zip.writestr(
+                pack["media_name"], pack["data"], compress_type=zipfile.ZIP_STORED
+            )
+        for rels_name, slide_number in rels_names_to_write.items():
+            if rels_name not in existing_names:
+                target_zip.writestr(rels_name, rels_cache[slide_number])
+
+    _rewrite_zip(pptx, mutator)
 
     return {
         "audioSlides": len(packs),
         "audioParts": len(packs),
         "audioSkippedUnknownExtensions": skipped,
+        "audioSkippedAlreadyInjected": len(injected_slides),
     }
 
 
@@ -1319,12 +1447,51 @@ def _resolve_rel_target(rels_name: str, target: str) -> str:
     return posixpath.normpath(posixpath.join(posixpath.dirname(rels_name), target))
 
 
+def _content_type_override(
+    content_types_xml: bytes, part_name: str
+) -> Optional[str]:
+    """Return the ``ContentType`` an ``Override`` declares for ``part_name``.
+
+    Resolves the ``Override`` *element* whose ``PartName`` equals ``part_name``
+    and reads its own ``ContentType`` attribute, so the MIME answer belongs to
+    that part. Matching the two attributes as independent substrings of the
+    whole document can pair a part name with another part's content type
+    (TD-011). Returns ``None`` when no ``Override`` targets ``part_name``.
+    """
+    try:
+        root = ET.fromstring(content_types_xml)
+    except ET.ParseError as exc:
+        raise ExportError(f"invalid [Content_Types].xml: {exc}") from exc
+    for element in root:
+        if local_name(element.tag) != "Override":
+            continue
+        if element.get("PartName") == part_name:
+            return element.get("ContentType")
+    return None
+
+
+def _containing_seq(command: ET.Element, timing: ET.Element) -> Optional[ET.Element]:
+    """Return the ``p:seq`` whose ``childTnLst`` subtree contains ``command``."""
+    for seq in (
+        element for element in timing.iter() if local_name(element.tag) == "seq"
+    ):
+        seq_ct = _root_child(seq, "cTn")
+        child_lst = _root_child(seq_ct, "childTnLst") if seq_ct is not None else None
+        if child_lst is None:
+            continue
+        if any(element is command for element in child_lst.iter()):
+            return seq
+    return None
+
+
 def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str, Any]:
     """Assert a declared-audio slide's packaging is complete.
 
     Verifies exactly one root-level ``p:timing`` with a ``playFrom(0)``
     narration command whose ``spTgt`` spid matches the hidden audio shape, that
-    shape's ``r:embed`` resolves through the slide rels to an audio
+    the command sits inside the timing's ``mainSeq`` sequence (or inside some
+    sequence when the timing declares no ``mainSeq`` — the merge falls back
+    there), that shape's ``r:embed`` resolves through the slide rels to an audio
     Relationship, and that the media part + ``[Content_Types].xml`` Override
     exist. Returns the part name / rId / spid; raises ``ExportError`` on any
     violation.
@@ -1345,6 +1512,7 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     names = [local_name(child.tag) for child in root]
     if names.count("timing") != 1:
         raise ExportError(f"audio slide {slide_number} must have exactly one root-level timing")
+    timing = next(child for child in root if local_name(child.tag) == "timing")
     commands = [
         element
         for element in root.iter()
@@ -1352,6 +1520,19 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     ]
     if not commands:
         raise ExportError(f"audio slide {slide_number} has no playFrom(0) narration command")
+    owner = _containing_seq(commands[0], timing)
+    if owner is None:
+        raise ExportError(
+            f"audio slide {slide_number} narration command is outside every animation sequence"
+        )
+    sequences = [
+        element for element in timing.iter() if local_name(element.tag) == "seq"
+    ]
+    main_sequences = [seq for seq in sequences if _is_main_seq(seq)]
+    if main_sequences and not any(owner is seq for seq in main_sequences):
+        raise ExportError(
+            f"audio slide {slide_number} narration command is not inside the mainSeq sequence"
+        )
     sp_tgt = next(
         (element for element in commands[0].iter() if local_name(element.tag) == "spTgt"),
         None,
@@ -1360,18 +1541,7 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
         raise ExportError(f"audio slide {slide_number} narration command has no spTgt spid")
     spid = sp_tgt.get("spid")
 
-    audio_file = None
-    for sp in (element for element in root.iter() if local_name(element.tag) == "sp"):
-        nv_sp_pr = _root_child(sp, "nvSpPr")
-        nv_pr = _root_child(nv_sp_pr, "nvPr") if nv_sp_pr is not None else None
-        candidate = _root_child(nv_pr, "audioFile") if nv_pr is not None else None
-        if candidate is None:
-            continue
-        c_nv_pr = _root_child(nv_sp_pr, "cNvPr")
-        if c_nv_pr is None or c_nv_pr.get("id") != spid:
-            continue
-        audio_file = candidate
-        break
+    audio_file = _audio_file_element(root, spid)
     if audio_file is None:
         raise ExportError(
             f"audio slide {slide_number} has no hidden audio shape matching spid {spid}"
@@ -1406,31 +1576,73 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     expected_mime = AUDIO_EXTENSION_MIME.get(extension)
     if expected_mime is None:
         raise ExportError(f"audio part has an unknown extension: {part_name}")
-    content_types = archive.read("[Content_Types].xml").decode("utf-8")
     ct_part = _ct_part_name(part_name)
-    if f'PartName="{ct_part}"' not in content_types or f'ContentType="{expected_mime}"' not in content_types:
+    actual_mime = _content_type_override(archive.read("[Content_Types].xml"), ct_part)
+    if actual_mime is None:
         raise ExportError(f"audio part has no [Content_Types].xml Override: {part_name}")
+    if actual_mime != expected_mime:
+        raise ExportError(
+            f"audio part {part_name} has [Content_Types].xml ContentType "
+            f"{actual_mime!r}, expected {expected_mime!r}"
+        )
     return {"part": part_name, "rId": r_id, "spid": spid}
 
 
 def patch_transitions(pptx: Path, transition: str) -> int:
-    temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
+    """Rewrite every slide part with the requested transition.
+
+    Returns the number of patched slide parts; raises ``ExportError`` when the
+    PPTX holds no slide XML at all (the original file is left untouched).
+    """
     slide_count = 0
-    try:
-        with zipfile.ZipFile(pptx, "r") as source, zipfile.ZipFile(temporary, "w") as target:
-            target.comment = source.comment
-            for info in source.infolist():
-                data = source.read(info.filename)
-                if re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
-                    data = replace_transition(data, transition)
-                    slide_count += 1
-                target.writestr(info, data, compress_type=info.compress_type)
+
+    def mutator(
+        source: zipfile.ZipFile,
+        target: zipfile.ZipFile,
+        _existing_names: Set[str],
+    ) -> None:
+        """Copy every entry, replacing the transition in slide parts."""
+        nonlocal slide_count
+        for info in source.infolist():
+            data = source.read(info.filename)
+            if re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
+                data = replace_transition(data, transition)
+                slide_count += 1
+            target.writestr(info, data, compress_type=info.compress_type)
         if slide_count == 0:
             raise ExportError("exported PPTX contains no slide XML")
-        temporary.replace(pptx)
-    finally:
-        temporary.unlink(missing_ok=True)
+
+    _rewrite_zip(pptx, mutator)
     return slide_count
+
+
+def _count_audio_in_archive(
+    archive: zipfile.ZipFile, slide_names: Iterable[str]
+) -> int:
+    """Count the slides whose rels part carries an audio Relationship.
+
+    Archive-side leg of the audio summary: no deck is consulted, so it answers
+    "how many packaged slides reference audio" from the slide rels alone. Used
+    only when ``verify_output`` runs without a deck; the deck contract leg
+    produces the same number when one is supplied (TD-020).
+    """
+    present = set(archive.namelist())
+    count = 0
+    for slide_name in slide_names:
+        rels_name = f"ppt/slides/_rels/{Path(slide_name).name}.rels"
+        if rels_name not in present:
+            continue
+        try:
+            rels_root = ET.fromstring(archive.read(rels_name))
+        except ET.ParseError as exc:
+            raise ExportError(f"invalid rels XML in {rels_name}: {exc}") from exc
+        if any(
+            local_name(element.tag) == "Relationship"
+            and str(element.get("Type", "")).endswith("/audio")
+            for element in rels_root
+        ):
+            count += 1
+    return count
 
 
 def verify_output(
@@ -1439,6 +1651,36 @@ def verify_output(
     expect_fonts: bool,
     deck: Optional[Path] = None,
 ) -> Dict[str, Any]:
+    """Verify an exported PPTX and summarise what it ended up containing.
+
+    Args:
+        pptx: Exported PPTX to inspect; must be a valid ZIP holding a
+            presentation part.
+        transition: Transition name the export was asked for. ``"fade"`` is
+            asserted on every slide; other values only keep the ``CT_Slide``
+            element order valid.
+        expect_fonts: When True, log a warning (not a failure) if the writer
+            produced no ``ppt/fonts/*`` part.
+        deck: PPTD deck root for the per-slide audio contract. When given, every
+            page declaring ``audio`` is checked with ``verify_audio_slide``
+            (media part, rels, content-type and timing assertions) and
+            ``audioSlides`` counts the pages that passed; a declared page whose
+            slide part was never exported is skipped and counted in
+            ``audioSkippedMissingSlides`` (the same skip ``patch_audio``
+            applies). When ``None``, the per-slide deep assertions are skipped
+            and ``audioSlides`` is counted from the archive slide rels only.
+
+    Returns:
+        Mapping with ``slides``, ``fadeTransitions``, ``fontParts``,
+        ``audioSlides``, ``audioSkippedMissingSlides``, ``audioParts`` and
+        ``bytes``.
+
+    Raises:
+        ExportError: the path is not a PPTX ZIP, the ZIP fails its CRC check, a
+            slide XML breaks the ``CT_Slide`` order or misses the requested fade
+            transition, a slide rels part is unparsable, or (with ``deck``) a
+            declared audio page violates the audio packaging contract.
+    """
     if not is_pptx(pptx):
         raise ExportError(f"output is not a valid PPTX ZIP: {pptx}")
     with zipfile.ZipFile(pptx) as archive:
@@ -1468,32 +1710,37 @@ def verify_output(
         audio_parts = sorted(
             name for name in archive.namelist() if AUDIO_MEDIA_PART_RE.match(name)
         )
-        audio_slides = 0
-        for slide_name in slide_names:
-            rels_name = (
-                f"ppt/slides/_rels/{Path(slide_name).name}.rels"
-            )
-            if rels_name not in archive.namelist():
-                continue
-            rels_root = ET.fromstring(archive.read(rels_name))
-            if any(
-                local_name(element.tag) == "Relationship"
-                and str(element.get("Type", "")).endswith("/audio")
-                for element in rels_root
-            ):
-                audio_slides += 1
-        if deck is not None:
+        audio_skipped_missing = 0
+        if deck is None:
+            audio_slides = _count_audio_in_archive(archive, slide_names)
+        else:
+            # TD-020: with a deck the contract leg owns the count, so both legs
+            # cannot disagree about which slides carry narration.
+            audio_slides = 0
+            present = set(archive.namelist())
             for source in collect_page_audio(deck):
                 if audio_extension_mime(source["value"]) is None:
                     # Unknown-extension pages are deliberately skipped at patch
                     # time with a warning; do not fail verification for them.
                     continue
+                slide_part = f"ppt/slides/slide{source['slide']}.xml"
+                if slide_part not in present:
+                    # TD-010 G2: patch_audio skipped this page for the same
+                    # reason, so verification skips it too instead of failing.
+                    audio_skipped_missing += 1
+                    log(
+                        f"warning: page {source['slide']} declares audio but has no "
+                        f"slide part in the exported PPTX; not verifying its audio"
+                    )
+                    continue
                 verify_audio_slide(archive, source["slide"])
+                audio_slides += 1
         return {
             "slides": len(slide_names),
             "fadeTransitions": transition_hits,
             "fontParts": len(fonts),
             "audioSlides": audio_slides,
+            "audioSkippedMissingSlides": audio_skipped_missing,
             "audioParts": len(audio_parts),
             "bytes": pptx.stat().st_size,
         }

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import contextlib
 import importlib.util
+import inspect
 import io
 import os
 import re
@@ -1354,6 +1355,518 @@ class VerifyAudioSlideFailureTests(unittest.TestCase):
         self._verify(self._tampered(
             replacements={"ppt/slides/_rels/slide1.xml.rels": rels.encode()},
         ))
+
+
+# --------------------------------------------------------------------------
+# T-01: narration sequence selection (TD-013) + idempotent re-patch (TD-012)
+# --------------------------------------------------------------------------
+MULTI_SEQ_TIMING = (
+    '<p:timing><p:tnLst><p:par>'
+    '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
+    "<p:childTnLst>"
+    # interactive sequence first: the pre-TD-013 code picked this one blindly
+    '<p:seq concurrent="1" nextAc="seek">'
+    '<p:cTn id="2" dur="indefinite" nodeType="interactiveSeq"><p:childTnLst>'
+    '<p:par><p:cTn id="10" dur="500" fill="hold">'
+    '<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>'
+    '<p:effect effectId="1" presetClass="entr" presetSubtype="0" grpId="0">'
+    '<p:cBhvr><p:cTn id="11" dur="500" fill="hold"/>'
+    '<p:tgtEl><p:spTgt spid="2"/></p:tgtEl></p:cBhvr></p:effect>'
+    "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:seq>"
+    # main sequence second: the OOXML interactive main sequence
+    '<p:seq concurrent="1" nextAc="seek">'
+    '<p:cTn id="20" dur="indefinite" nodeType="mainSeq"><p:childTnLst>'
+    '<p:par><p:cTn id="30" dur="500" fill="hold">'
+    '<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>'
+    '<p:effect effectId="2" presetClass="emph" presetSubtype="0" grpId="1">'
+    '<p:cBhvr><p:cTn id="31" dur="500" fill="hold"/>'
+    '<p:tgtEl><p:spTgt spid="2"/></p:tgtEl></p:cBhvr></p:effect>'
+    "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:seq>"
+    "</p:childTnLst></p:cTn></p:par></p:tnLst></p:timing>"
+)
+
+
+def _timing_sequences(root: ET.Element):
+    """Return ``[(node_type, child_tn_lst)]`` for every ``p:seq`` in the timing."""
+    sequences = []
+    for seq in (
+        element for element in root.iter() if MODULE.local_name(element.tag) == "seq"
+    ):
+        seq_ct = next(
+            (child for child in seq if MODULE.local_name(child.tag) == "cTn"), None
+        )
+        node_type = seq_ct.get("nodeType") if seq_ct is not None else None
+        child_lst = None
+        if seq_ct is not None:
+            child_lst = next(
+                (child for child in seq_ct if MODULE.local_name(child.tag) == "childTnLst"),
+                None,
+            )
+        sequences.append((node_type, child_lst))
+    return sequences
+
+
+def _has_play_from(element: ET.Element) -> bool:
+    """True when ``element`` contains a ``playFrom(0)`` narration command."""
+    return any(
+        MODULE.local_name(child.tag) == "cmd" and child.get("cmd") == "playFrom(0)"
+        for child in element.iter()
+    )
+
+
+class NarrationSequenceSelectionTests(unittest.TestCase):
+    """TD-013: narration must land in the ``mainSeq`` sequence, never blindly first."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.deck_root = self.root / "deck"
+        make_deck(self.deck_root, [{"audio": "media/beep.mp3"}])
+        self.pptx = self.root / "out.pptx"
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _patched_root(self) -> ET.Element:
+        with zipfile.ZipFile(self.pptx) as archive:
+            return ET.fromstring(archive.read("ppt/slides/slide1.xml"))
+
+    def test_narration_merges_into_main_seq(self):
+        make_pptx(self.pptx, {1: xml_slide(timing=MULTI_SEQ_TIMING)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        sequences = _timing_sequences(self._patched_root())
+        self.assertEqual(len(sequences), 2)
+        interactive = [lst for node_type, lst in sequences if node_type == "interactiveSeq"]
+        main = [lst for node_type, lst in sequences if node_type == "mainSeq"]
+        self.assertEqual(len(main), 1)
+        main_lst = main[0]
+        self.assertEqual(len(main_lst), 2)
+        self.assertTrue(
+            _has_play_from(main_lst[0]),
+            "narration par must be the first child of the mainSeq childTnLst",
+        )
+        self.assertEqual(
+            _has_play_from(interactive[0]),
+            False,
+            "narration must not be merged into a non-mainSeq sequence",
+        )
+
+    def test_fallback_to_first_seq_warns(self):
+        # No sequence declares mainSeq: fall back to the first seq (returning
+        # None would replace the timing and discard the authored animations).
+        timing = MULTI_SEQ_TIMING.replace('nodeType="mainSeq"', 'nodeType="clickSeq"')
+        make_pptx(self.pptx, {1: xml_slide(timing=timing)})
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            MODULE.patch_audio(self.pptx, self.deck_root)
+        sequences = _timing_sequences(self._patched_root())
+        self.assertEqual(len(sequences), 2)
+        first_lst, second_lst = sequences[0][1], sequences[1][1]
+        self.assertTrue(_has_play_from(first_lst[0]))
+        self.assertEqual(len(first_lst), 2)
+        self.assertEqual(_has_play_from(second_lst), False)
+        self.assertIn("mainSeq", err.getvalue())
+
+    def test_verify_rejects_narration_outside_main_seq(self):
+        make_pptx(self.pptx, {1: xml_slide(timing=MULTI_SEQ_TIMING)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        # Move the narration par from the mainSeq into the interactive sequence.
+        root = self._patched_root()
+        sequences = [lst for _node_type, lst in _timing_sequences(root)]
+        narration = sequences[1][0]
+        sequences[1].remove(narration)
+        sequences[0].append(narration)
+        tampered = self.root / "tampered.pptx"
+        rewrite_zip(
+            self.pptx,
+            tampered,
+            replacements={
+                "ppt/slides/slide1.xml": ET.tostring(
+                    root, encoding="utf-8", xml_declaration=True
+                )
+            },
+        )
+        with zipfile.ZipFile(tampered) as archive:
+            with self.assertRaisesRegex(MODULE.ExportError, "mainSeq"):
+                MODULE.verify_audio_slide(archive, 1)
+
+    def test_verify_accepts_narration_in_single_non_main_seq(self):
+        # No mainSeq anywhere: the ownership assertion degrades to "inside some seq".
+        timing = MULTI_SEQ_TIMING.replace('nodeType="mainSeq"', 'nodeType="clickSeq"')
+        make_pptx(self.pptx, {1: xml_slide(timing=timing)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        with zipfile.ZipFile(self.pptx) as archive:
+            result = MODULE.verify_audio_slide(archive, 1)
+        self.assertTrue(result["part"].endswith(".mp3"))
+
+    def _tamper(self, mutate) -> Path:
+        """Apply ``mutate(root)`` to the patched slide and write a tampered PPTX."""
+        root = self._patched_root()
+        mutate(root)
+        tampered = self.root / "tampered.pptx"
+        rewrite_zip(
+            self.pptx,
+            tampered,
+            replacements={
+                "ppt/slides/slide1.xml": ET.tostring(
+                    root, encoding="utf-8", xml_declaration=True
+                )
+            },
+        )
+        return tampered
+
+    @staticmethod
+    def _tm_root_child(root: ET.Element) -> ET.Element:
+        """Return the ``tmRoot`` cTn's ``childTnLst`` (the one holding the seqs)."""
+        return next(
+            element
+            for element in root.iter()
+            if MODULE.local_name(element.tag) == "childTnLst"
+            and any(MODULE.local_name(child.tag) == "seq" for child in element)
+        )
+
+    def test_verify_rejects_narration_outside_every_seq(self):
+        # A playFrom(0) par that hangs off the tmRoot childTnLst instead of a seq
+        # childTnLst is not an authored animation slot at all.
+        make_pptx(self.pptx, {1: xml_slide(timing=MULTI_SEQ_TIMING)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+
+        def move_narration_out_of_seqs(root):
+            main_lst = [
+                lst
+                for node_type, lst in _timing_sequences(root)
+                if node_type == "mainSeq"
+            ][0]
+            narration = main_lst[0]
+            main_lst.remove(narration)
+            self._tm_root_child(root).append(narration)
+
+        tampered = self._tamper(move_narration_out_of_seqs)
+        with zipfile.ZipFile(tampered) as archive:
+            with self.assertRaisesRegex(MODULE.ExportError, "outside every animation sequence"):
+                MODULE.verify_audio_slide(archive, 1)
+
+    def test_verify_tolerates_seq_without_ctn(self):
+        # A seq with no p:cTn cannot own the narration; the look-up must skip it
+        # and keep searching instead of failing.
+        make_pptx(self.pptx, {1: xml_slide(timing=MULTI_SEQ_TIMING)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+
+        tampered = self._tamper(
+            lambda root: self._tm_root_child(root).insert(0, ET.Element(f"{{{P_NS}}}seq"))
+        )
+        with zipfile.ZipFile(tampered) as archive:
+            self.assertTrue(MODULE.verify_audio_slide(archive, 1)["rId"].startswith("rId"))
+
+    def test_patch_audio_rejects_malformed_slide_xml(self):
+        # The idempotency probe reads every declared slide, so a malformed slide
+        # part must surface as ExportError there too (not a bare ET.ParseError).
+        make_pptx(self.pptx, {1: xml_slide()})
+        broken = self.root / "broken.pptx"
+        rewrite_zip(
+            self.pptx, broken, replacements={"ppt/slides/slide1.xml": b"<broken"}
+        )
+        with self.assertRaisesRegex(MODULE.ExportError, "invalid slide XML"):
+            MODULE.patch_audio(broken, self.deck_root)
+
+
+class AudioIdempotencyTests(unittest.TestCase):
+    """TD-012: re-running ``patch_audio`` on an injected PPTX must not duplicate."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.deck_root = self.root / "deck"
+        make_deck(self.deck_root, [{"audio": "media/beep.mp3"}])
+        self.pptx = self.root / "out.pptx"
+        make_pptx(self.pptx, {1: xml_slide()})
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _package_counts(self, pptx=None):
+        """Return (media parts, audio rels, playFrom(0) commands) from the PPTX."""
+        target = pptx or self.pptx
+        with zipfile.ZipFile(target) as archive:
+            media = sorted(
+                name
+                for name in archive.namelist()
+                if MODULE.AUDIO_MEDIA_PART_RE.match(name)
+            )
+            rels = archive.read("ppt/slides/_rels/slide1.xml.rels").decode("utf-8")
+            audio_rels = len(re.findall(r'Type="[^"]*/audio"', rels))
+            slide = archive.read("ppt/slides/slide1.xml").decode("utf-8")
+        return media, audio_rels, slide.count('cmd="playFrom(0)"')
+
+    def test_second_patch_leaves_package_unchanged(self):
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        first = self._package_counts()
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        second = self._package_counts()
+        self.assertEqual(first, second)
+        self.assertEqual(len(first[0]), 1)
+
+    def test_second_patch_reports_skipped_pages(self):
+        first = MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertEqual(first["audioSlides"], 1)
+        second = MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertEqual(second["audioSlides"], 0)
+        self.assertEqual(second["audioParts"], 0)
+        self.assertEqual(second["audioSkippedAlreadyInjected"], 1)
+
+    def test_second_patch_warns_about_the_skip(self):
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertIn("audio", err.getvalue().lower())
+        self.assertIn("skip", err.getvalue().lower())
+
+    def test_authored_play_from_without_audio_shape_is_still_patched(self):
+        # Half a trace (an authored playFrom(0) command, no audio shape) is not
+        # an injection: the page must still get its narration.
+        timing = ET.tostring(
+            MODULE.build_narration_timing(2), encoding="unicode"
+        )
+        make_pptx(self.pptx, {1: xml_slide(timing=timing)})
+        summary = MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 0)
+
+    def test_audio_shape_without_command_is_still_patched(self):
+        # The mirror image: the shape survives but its playFrom(0) par was
+        # stripped, so the page is patched again instead of being skipped.
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        with zipfile.ZipFile(self.pptx) as archive:
+            slide = archive.read("ppt/slides/slide1.xml").decode("utf-8")
+        stripped = re.sub(r"<p:cmd\b.*?</p:cmd>", "", slide, flags=re.DOTALL)
+        self.assertNotIn('cmd="playFrom(0)"', stripped)
+        original = self.root / "original.pptx"
+        self.pptx.replace(original)
+        rewrite_zip(
+            original, self.pptx, replacements={"ppt/slides/slide1.xml": stripped.encode()}
+        )
+        summary = MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 0)
+
+    def test_skip_applies_per_page(self):        # Slide 1 is injected by the first run; slide 2 is still untouched and
+        # must still receive its own audio part on the second run.
+        make_pptx(self.pptx, {1: xml_slide(), 2: xml_slide()})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        two_page_deck = self.root / "deck-two"
+        make_deck(
+            two_page_deck,
+            [{"audio": "media/beep.mp3"}, {"audio": "media/beep.mp3"}],
+        )
+        summary = MODULE.patch_audio(self.pptx, two_page_deck)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 1)
+        with zipfile.ZipFile(self.pptx) as archive:
+            media = sorted(
+                name
+                for name in archive.namelist()
+                if MODULE.AUDIO_MEDIA_PART_RE.match(name)
+            )
+            slide1 = archive.read("ppt/slides/slide1.xml").decode("utf-8")
+            slide2 = archive.read("ppt/slides/slide2.xml").decode("utf-8")
+        self.assertEqual(media, ["ppt/media/audio1.mp3", "ppt/media/audio2.mp3"])
+        self.assertEqual(slide1.count('cmd="playFrom(0)"'), 1)
+        self.assertEqual(slide2.count('cmd="playFrom(0)"'), 1)
+
+
+# --------------------------------------------------------------------------
+# T-02: verification contract hardening (TD-011, TD-014, TD-015, TD-020)
+# --------------------------------------------------------------------------
+class AudioVerifyContractTests(unittest.TestCase):
+    """Content-Type pair binding, rels parse defence, docstring, count parity."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.deck_root = self.root / "deck"
+        make_deck(
+            self.deck_root,
+            [{"audio": "media/beep.mp3"}, {"audio": "media/beep.mp3"}],
+        )
+        self.pptx = self.root / "out.pptx"
+        make_pptx(self.pptx, {1: xml_slide(), 2: xml_slide()})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_content_type_override_is_bound_to_its_part(self):
+        # Page 2's Override keeps the right PartName but claims the wrong MIME.
+        # Page 1 still carries a correct `ContentType="audio/mpeg"`, so the old
+        # two-independent-substring check passed for page 2 as well.
+        with zipfile.ZipFile(self.pptx) as archive:
+            content_types = archive.read("[Content_Types].xml").decode("utf-8")
+        tampered = content_types.replace(
+            '<Override PartName="/ppt/media/audio2.mp3" ContentType="audio/mpeg"/>',
+            '<Override PartName="/ppt/media/audio2.mp3" ContentType="audio/wav"/>',
+        )
+        self.assertNotEqual(tampered, content_types, "fixture did not patch page 2")
+        out = self.root / "mime.pptx"
+        rewrite_zip(
+            self.pptx, out, replacements={"[Content_Types].xml": tampered.encode()}
+        )
+        with zipfile.ZipFile(out) as archive:
+            with self.assertRaisesRegex(MODULE.ExportError, "ContentType"):
+                MODULE.verify_audio_slide(archive, 2)
+            # The untouched page still verifies: the failure is per-part.
+            self.assertEqual(
+                MODULE.verify_audio_slide(archive, 1)["part"], "ppt/media/audio1.mp3"
+            )
+
+    def test_verify_output_wraps_corrupt_slide_rels(self):
+        rels_name = "ppt/slides/_rels/slide2.xml.rels"
+        out = self.root / "corrupt-rels.pptx"
+        rewrite_zip(self.pptx, out, replacements={rels_name: b"<Relationships"})
+        with self.assertRaises(MODULE.ExportError) as caught:
+            MODULE.verify_output(out, "fade", False)
+        self.assertIn(rels_name, str(caught.exception))
+
+    def test_verify_output_documents_its_contract(self):
+        docstring = MODULE.verify_output.__doc__ or ""
+        self.assertIn("deck", docstring)
+        for section in ("Args:", "Returns:", "Raises:"):
+            self.assertIn(section, docstring)
+
+    def test_audio_slide_count_matches_across_both_legs(self):
+        without_deck = MODULE.verify_output(self.pptx, "fade", False)
+        with_deck = MODULE.verify_output(self.pptx, "fade", False, deck=self.deck_root)
+        self.assertEqual(without_deck["audioSlides"], 2)
+        self.assertEqual(with_deck["audioSlides"], without_deck["audioSlides"])
+
+    def test_archive_leg_skips_slides_without_rels(self):
+        out = self.root / "one-audio.pptx"
+        make_pptx(out, {1: xml_slide(), 2: xml_slide()})
+        one_page_deck = self.root / "deck-one"
+        make_deck(one_page_deck, [{"audio": "media/beep.mp3"}])
+        MODULE.patch_audio(out, one_page_deck)
+        summary = MODULE.verify_output(out, "fade", False)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioParts"], 1)
+
+    def test_archive_leg_ignores_non_audio_relationships(self):
+        out = self.root / "image-rels.pptx"
+        make_pptx(
+            out,
+            {1: xml_slide(), 2: xml_slide()},
+            rels={
+                2: rels_bytes(
+                    [("rId1", f"{R_NS}/image", "../media/image1.png")]
+                )
+            },
+        )
+        one_page_deck = self.root / "deck-one-audio"
+        make_deck(one_page_deck, [{"audio": "media/beep.mp3"}])
+        MODULE.patch_audio(out, one_page_deck)
+        summary = MODULE.verify_output(out, "fade", False)
+        self.assertEqual(summary["audioSlides"], 1)
+
+    def test_verify_audio_slide_has_no_global_substring_lookup(self):
+        source = inspect.getsource(MODULE.verify_audio_slide)
+        self.assertNotIn("in content_types", source)
+
+    def test_verify_rejects_malformed_content_types(self):
+        out = self.root / "bad-content-types.pptx"
+        rewrite_zip(
+            self.pptx, out, replacements={"[Content_Types].xml": b"<Types"}
+        )
+        with zipfile.ZipFile(out) as archive:
+            with self.assertRaisesRegex(
+                MODULE.ExportError, r"invalid \[Content_Types\]\.xml"
+            ):
+                MODULE.verify_audio_slide(archive, 1)
+
+    def test_verify_skips_declared_page_without_slide_part(self):
+        # AC7 (TD-010 G2 alignment): a page that declares audio but was never
+        # exported has no slide part. patch_audio skips it with a warning, so
+        # verification must skip it too instead of failing the whole export.
+        out = self.root / "missing-slide.pptx"
+        make_pptx(out, {1: xml_slide()})
+        MODULE.patch_audio(out, self.deck_root)
+        summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
+        self.assertEqual(summary["audioSkippedMissingSlides"], 1)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioParts"], 1)
+
+    def test_verify_skip_does_not_mask_a_missing_override(self):
+        # The G2 skip only covers "slide part absent"; a present slide with a
+        # broken audio chain must still fail hard.
+        tampered = self.root / "no-override.pptx"
+        with zipfile.ZipFile(self.pptx) as archive:
+            content_types = archive.read("[Content_Types].xml").decode("utf-8")
+        stripped = re.sub(
+            r'<Override PartName="/ppt/media/audio1\.mp3"[^>]*/>', "", content_types
+        )
+        rewrite_zip(
+            self.pptx,
+            tampered,
+            replacements={"[Content_Types].xml": stripped.encode()},
+        )
+        with self.assertRaises(MODULE.ExportError):
+            MODULE.verify_output(tampered, "fade", False, deck=self.deck_root)
+
+
+# --------------------------------------------------------------------------
+# T-04: one ZIP rewrite frame for every in-place patch (TD-017)
+# --------------------------------------------------------------------------
+class ZipRewriteSkeletonTests(unittest.TestCase):
+    """``patch_transitions`` / ``patch_audio`` must not repeat the tmp-frame."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.deck_root = self.root / "deck"
+        make_deck(self.deck_root, [{"audio": "media/beep.mp3"}])
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _temp_files(self):
+        return [path.name for path in self.root.iterdir() if path.name.endswith(".tmp")]
+
+    def test_patch_helpers_do_not_repeat_the_zip_frame(self):
+        for name in ("patch_transitions", "patch_audio"):
+            source = inspect.getsource(getattr(MODULE, name))
+            for banned in ("uuid.uuid4().hex", "temporary.replace", ".tmp"):
+                self.assertNotIn(banned, source, f"{name} still repeats {banned!r}")
+
+    def test_patch_transitions_export_error_cleans_temp(self):
+        pptx = self.root / "no-slides.pptx"
+        with zipfile.ZipFile(pptx, "w") as archive:
+            archive.writestr("[Content_Types].xml", base_content_types(0))
+            archive.writestr("ppt/presentation.xml", '<p:presentation xmlns:p="urn:x"/>')
+        before = pptx.read_bytes()
+        with self.assertRaisesRegex(MODULE.ExportError, "no slide XML"):
+            MODULE.patch_transitions(pptx, "fade")
+        self.assertEqual(self._temp_files(), [])
+        self.assertEqual(pptx.read_bytes(), before, "original PPTX was modified")
+
+    def test_patch_audio_export_error_cleans_temp(self):
+        out = self.root / "no-content-types.pptx"
+        with zipfile.ZipFile(out, "w") as archive:
+            archive.writestr("ppt/slides/slide1.xml", xml_slide())
+        before = out.read_bytes()
+        with self.assertRaisesRegex(MODULE.ExportError, "Content_Types"):
+            MODULE.patch_audio(out, self.deck_root)
+        self.assertEqual(self._temp_files(), [])
+        self.assertEqual(out.read_bytes(), before, "original PPTX was modified")
+
+    def test_zip_comment_survives_the_rewrite(self):
+        pptx = self.root / "commented.pptx"
+        make_pptx(pptx, {1: xml_slide()})
+        with zipfile.ZipFile(pptx, "a") as archive:
+            archive.comment = b"open-kimi-ppt export"
+        MODULE.patch_transitions(pptx, "fade")
+        with zipfile.ZipFile(pptx) as archive:
+            self.assertEqual(archive.comment, b"open-kimi-ppt export")
+        MODULE.patch_audio(pptx, self.deck_root)
+        with zipfile.ZipFile(pptx) as archive:
+            self.assertEqual(archive.comment, b"open-kimi-ppt export")
 
 
 if __name__ == "__main__":
