@@ -1356,5 +1356,323 @@ class VerifyAudioSlideFailureTests(unittest.TestCase):
         ))
 
 
+# --------------------------------------------------------------------------
+# T-01: narration sequence selection (TD-013) + idempotent re-patch (TD-012)
+# --------------------------------------------------------------------------
+MULTI_SEQ_TIMING = (
+    '<p:timing><p:tnLst><p:par>'
+    '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
+    "<p:childTnLst>"
+    # interactive sequence first: the pre-TD-013 code picked this one blindly
+    '<p:seq concurrent="1" nextAc="seek">'
+    '<p:cTn id="2" dur="indefinite" nodeType="interactiveSeq"><p:childTnLst>'
+    '<p:par><p:cTn id="10" dur="500" fill="hold">'
+    '<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>'
+    '<p:effect effectId="1" presetClass="entr" presetSubtype="0" grpId="0">'
+    '<p:cBhvr><p:cTn id="11" dur="500" fill="hold"/>'
+    '<p:tgtEl><p:spTgt spid="2"/></p:tgtEl></p:cBhvr></p:effect>'
+    "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:seq>"
+    # main sequence second: the OOXML interactive main sequence
+    '<p:seq concurrent="1" nextAc="seek">'
+    '<p:cTn id="20" dur="indefinite" nodeType="mainSeq"><p:childTnLst>'
+    '<p:par><p:cTn id="30" dur="500" fill="hold">'
+    '<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>'
+    '<p:effect effectId="2" presetClass="emph" presetSubtype="0" grpId="1">'
+    '<p:cBhvr><p:cTn id="31" dur="500" fill="hold"/>'
+    '<p:tgtEl><p:spTgt spid="2"/></p:tgtEl></p:cBhvr></p:effect>'
+    "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:seq>"
+    "</p:childTnLst></p:cTn></p:par></p:tnLst></p:timing>"
+)
+
+
+def _timing_sequences(root: ET.Element):
+    """Return ``[(node_type, child_tn_lst)]`` for every ``p:seq`` in the timing."""
+    sequences = []
+    for seq in (
+        element for element in root.iter() if MODULE.local_name(element.tag) == "seq"
+    ):
+        seq_ct = next(
+            (child for child in seq if MODULE.local_name(child.tag) == "cTn"), None
+        )
+        node_type = seq_ct.get("nodeType") if seq_ct is not None else None
+        child_lst = None
+        if seq_ct is not None:
+            child_lst = next(
+                (child for child in seq_ct if MODULE.local_name(child.tag) == "childTnLst"),
+                None,
+            )
+        sequences.append((node_type, child_lst))
+    return sequences
+
+
+def _has_play_from(element: ET.Element) -> bool:
+    """True when ``element`` contains a ``playFrom(0)`` narration command."""
+    return any(
+        MODULE.local_name(child.tag) == "cmd" and child.get("cmd") == "playFrom(0)"
+        for child in element.iter()
+    )
+
+
+class NarrationSequenceSelectionTests(unittest.TestCase):
+    """TD-013: narration must land in the ``mainSeq`` sequence, never blindly first."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.deck_root = self.root / "deck"
+        make_deck(self.deck_root, [{"audio": "media/beep.mp3"}])
+        self.pptx = self.root / "out.pptx"
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _patched_root(self) -> ET.Element:
+        with zipfile.ZipFile(self.pptx) as archive:
+            return ET.fromstring(archive.read("ppt/slides/slide1.xml"))
+
+    def test_narration_merges_into_main_seq(self):
+        make_pptx(self.pptx, {1: xml_slide(timing=MULTI_SEQ_TIMING)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        sequences = _timing_sequences(self._patched_root())
+        self.assertEqual(len(sequences), 2)
+        interactive = [lst for node_type, lst in sequences if node_type == "interactiveSeq"]
+        main = [lst for node_type, lst in sequences if node_type == "mainSeq"]
+        self.assertEqual(len(main), 1)
+        main_lst = main[0]
+        self.assertEqual(len(main_lst), 2)
+        self.assertTrue(
+            _has_play_from(main_lst[0]),
+            "narration par must be the first child of the mainSeq childTnLst",
+        )
+        self.assertEqual(
+            _has_play_from(interactive[0]),
+            False,
+            "narration must not be merged into a non-mainSeq sequence",
+        )
+
+    def test_fallback_to_first_seq_warns(self):
+        # No sequence declares mainSeq: fall back to the first seq (returning
+        # None would replace the timing and discard the authored animations).
+        timing = MULTI_SEQ_TIMING.replace('nodeType="mainSeq"', 'nodeType="clickSeq"')
+        make_pptx(self.pptx, {1: xml_slide(timing=timing)})
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            MODULE.patch_audio(self.pptx, self.deck_root)
+        sequences = _timing_sequences(self._patched_root())
+        self.assertEqual(len(sequences), 2)
+        first_lst, second_lst = sequences[0][1], sequences[1][1]
+        self.assertTrue(_has_play_from(first_lst[0]))
+        self.assertEqual(len(first_lst), 2)
+        self.assertEqual(_has_play_from(second_lst), False)
+        self.assertIn("mainSeq", err.getvalue())
+
+    def test_verify_rejects_narration_outside_main_seq(self):
+        make_pptx(self.pptx, {1: xml_slide(timing=MULTI_SEQ_TIMING)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        # Move the narration par from the mainSeq into the interactive sequence.
+        root = self._patched_root()
+        sequences = [lst for _node_type, lst in _timing_sequences(root)]
+        narration = sequences[1][0]
+        sequences[1].remove(narration)
+        sequences[0].append(narration)
+        tampered = self.root / "tampered.pptx"
+        rewrite_zip(
+            self.pptx,
+            tampered,
+            replacements={
+                "ppt/slides/slide1.xml": ET.tostring(
+                    root, encoding="utf-8", xml_declaration=True
+                )
+            },
+        )
+        with zipfile.ZipFile(tampered) as archive:
+            with self.assertRaisesRegex(MODULE.ExportError, "mainSeq"):
+                MODULE.verify_audio_slide(archive, 1)
+
+    def test_verify_accepts_narration_in_single_non_main_seq(self):
+        # No mainSeq anywhere: the ownership assertion degrades to "inside some seq".
+        timing = MULTI_SEQ_TIMING.replace('nodeType="mainSeq"', 'nodeType="clickSeq"')
+        make_pptx(self.pptx, {1: xml_slide(timing=timing)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        with zipfile.ZipFile(self.pptx) as archive:
+            result = MODULE.verify_audio_slide(archive, 1)
+        self.assertTrue(result["part"].endswith(".mp3"))
+
+    def _tamper(self, mutate) -> Path:
+        """Apply ``mutate(root)`` to the patched slide and write a tampered PPTX."""
+        root = self._patched_root()
+        mutate(root)
+        tampered = self.root / "tampered.pptx"
+        rewrite_zip(
+            self.pptx,
+            tampered,
+            replacements={
+                "ppt/slides/slide1.xml": ET.tostring(
+                    root, encoding="utf-8", xml_declaration=True
+                )
+            },
+        )
+        return tampered
+
+    @staticmethod
+    def _tm_root_child(root: ET.Element) -> ET.Element:
+        """Return the ``tmRoot`` cTn's ``childTnLst`` (the one holding the seqs)."""
+        return next(
+            element
+            for element in root.iter()
+            if MODULE.local_name(element.tag) == "childTnLst"
+            and any(MODULE.local_name(child.tag) == "seq" for child in element)
+        )
+
+    def test_verify_rejects_narration_outside_every_seq(self):
+        # A playFrom(0) par that hangs off the tmRoot childTnLst instead of a seq
+        # childTnLst is not an authored animation slot at all.
+        make_pptx(self.pptx, {1: xml_slide(timing=MULTI_SEQ_TIMING)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+
+        def move_narration_out_of_seqs(root):
+            main_lst = [
+                lst
+                for node_type, lst in _timing_sequences(root)
+                if node_type == "mainSeq"
+            ][0]
+            narration = main_lst[0]
+            main_lst.remove(narration)
+            self._tm_root_child(root).append(narration)
+
+        tampered = self._tamper(move_narration_out_of_seqs)
+        with zipfile.ZipFile(tampered) as archive:
+            with self.assertRaisesRegex(MODULE.ExportError, "outside every animation sequence"):
+                MODULE.verify_audio_slide(archive, 1)
+
+    def test_verify_tolerates_seq_without_ctn(self):
+        # A seq with no p:cTn cannot own the narration; the look-up must skip it
+        # and keep searching instead of failing.
+        make_pptx(self.pptx, {1: xml_slide(timing=MULTI_SEQ_TIMING)})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+
+        tampered = self._tamper(
+            lambda root: self._tm_root_child(root).insert(0, ET.Element(f"{{{P_NS}}}seq"))
+        )
+        with zipfile.ZipFile(tampered) as archive:
+            self.assertTrue(MODULE.verify_audio_slide(archive, 1)["rId"].startswith("rId"))
+
+    def test_patch_audio_rejects_malformed_slide_xml(self):
+        # The idempotency probe reads every declared slide, so a malformed slide
+        # part must surface as ExportError there too (not a bare ET.ParseError).
+        make_pptx(self.pptx, {1: xml_slide()})
+        broken = self.root / "broken.pptx"
+        rewrite_zip(
+            self.pptx, broken, replacements={"ppt/slides/slide1.xml": b"<broken"}
+        )
+        with self.assertRaisesRegex(MODULE.ExportError, "invalid slide XML"):
+            MODULE.patch_audio(broken, self.deck_root)
+
+
+class AudioIdempotencyTests(unittest.TestCase):
+    """TD-012: re-running ``patch_audio`` on an injected PPTX must not duplicate."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.deck_root = self.root / "deck"
+        make_deck(self.deck_root, [{"audio": "media/beep.mp3"}])
+        self.pptx = self.root / "out.pptx"
+        make_pptx(self.pptx, {1: xml_slide()})
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _package_counts(self, pptx=None):
+        """Return (media parts, audio rels, playFrom(0) commands) from the PPTX."""
+        target = pptx or self.pptx
+        with zipfile.ZipFile(target) as archive:
+            media = sorted(
+                name
+                for name in archive.namelist()
+                if MODULE.AUDIO_MEDIA_PART_RE.match(name)
+            )
+            rels = archive.read("ppt/slides/_rels/slide1.xml.rels").decode("utf-8")
+            audio_rels = len(re.findall(r'Type="[^"]*/audio"', rels))
+            slide = archive.read("ppt/slides/slide1.xml").decode("utf-8")
+        return media, audio_rels, slide.count('cmd="playFrom(0)"')
+
+    def test_second_patch_leaves_package_unchanged(self):
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        first = self._package_counts()
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        second = self._package_counts()
+        self.assertEqual(first, second)
+        self.assertEqual(len(first[0]), 1)
+
+    def test_second_patch_reports_skipped_pages(self):
+        first = MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertEqual(first["audioSlides"], 1)
+        second = MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertEqual(second["audioSlides"], 0)
+        self.assertEqual(second["audioParts"], 0)
+        self.assertEqual(second["audioSkippedAlreadyInjected"], 1)
+
+    def test_second_patch_warns_about_the_skip(self):
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertIn("audio", err.getvalue().lower())
+        self.assertIn("skip", err.getvalue().lower())
+
+    def test_authored_play_from_without_audio_shape_is_still_patched(self):
+        # Half a trace (an authored playFrom(0) command, no audio shape) is not
+        # an injection: the page must still get its narration.
+        timing = ET.tostring(
+            MODULE.build_narration_timing(2), encoding="unicode"
+        )
+        make_pptx(self.pptx, {1: xml_slide(timing=timing)})
+        summary = MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 0)
+
+    def test_audio_shape_without_command_is_still_patched(self):
+        # The mirror image: the shape survives but its playFrom(0) par was
+        # stripped, so the page is patched again instead of being skipped.
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        with zipfile.ZipFile(self.pptx) as archive:
+            slide = archive.read("ppt/slides/slide1.xml").decode("utf-8")
+        stripped = re.sub(r"<p:cmd\b.*?</p:cmd>", "", slide, flags=re.DOTALL)
+        self.assertNotIn('cmd="playFrom(0)"', stripped)
+        original = self.root / "original.pptx"
+        self.pptx.replace(original)
+        rewrite_zip(
+            original, self.pptx, replacements={"ppt/slides/slide1.xml": stripped.encode()}
+        )
+        summary = MODULE.patch_audio(self.pptx, self.deck_root)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 0)
+
+    def test_skip_applies_per_page(self):        # Slide 1 is injected by the first run; slide 2 is still untouched and
+        # must still receive its own audio part on the second run.
+        make_pptx(self.pptx, {1: xml_slide(), 2: xml_slide()})
+        MODULE.patch_audio(self.pptx, self.deck_root)
+        two_page_deck = self.root / "deck-two"
+        make_deck(
+            two_page_deck,
+            [{"audio": "media/beep.mp3"}, {"audio": "media/beep.mp3"}],
+        )
+        summary = MODULE.patch_audio(self.pptx, two_page_deck)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 1)
+        with zipfile.ZipFile(self.pptx) as archive:
+            media = sorted(
+                name
+                for name in archive.namelist()
+                if MODULE.AUDIO_MEDIA_PART_RE.match(name)
+            )
+            slide1 = archive.read("ppt/slides/slide1.xml").decode("utf-8")
+            slide2 = archive.read("ppt/slides/slide2.xml").decode("utf-8")
+        self.assertEqual(media, ["ppt/media/audio1.mp3", "ppt/media/audio2.mp3"])
+        self.assertEqual(slide1.count('cmd="playFrom(0)"'), 1)
+        self.assertEqual(slide2.count('cmd="playFrom(0)"'), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

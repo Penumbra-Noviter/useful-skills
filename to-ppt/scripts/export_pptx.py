@@ -1022,14 +1022,44 @@ def _max_timing_id(timing: ET.Element) -> int:
     return max(ids, default=0)
 
 
+def _is_main_seq(seq: ET.Element) -> bool:
+    """Return True when a ``p:seq`` declares ``nodeType="mainSeq"`` on its ``cTn``."""
+    seq_ct = _root_child(seq, "cTn")
+    return seq_ct is not None and seq_ct.get("nodeType") == "mainSeq"
+
+
+def _select_animation_seq(root_child: ET.Element) -> Optional[ET.Element]:
+    """Return the ``p:seq`` that narration timing must be merged into.
+
+    Prefers the sequence whose ``p:cTn`` carries ``nodeType="mainSeq"`` — the
+    OOXML interactive main sequence a slide plays on entry. When no sequence
+    declares ``mainSeq``, the first ``p:seq`` is used and a warning is logged:
+    returning ``None`` would make ``patch_slide_audio`` replace the slide timing
+    and discard the authored animations, which is worse than picking a
+    non-main sequence. Returns ``None`` only when no ``p:seq`` exists at all.
+    """
+    sequences = [child for child in root_child if local_name(child.tag) == "seq"]
+    if not sequences:
+        return None
+    for seq in sequences:
+        if _is_main_seq(seq):
+            return seq
+    log(
+        "warning: slide timing has no mainSeq animation sequence; "
+        "falling back to the first p:seq for the narration timing"
+    )
+    return sequences[0]
+
+
 def merge_narration_timing(timing: ET.Element, spid: int) -> Optional[ET.Element]:
     """Merge the narration ``playFrom(0)`` par into an existing ``p:timing``.
 
-    The narration is inserted as the first parallel ``p:par`` of the first
-    ``p:seq``'s main sequence, so authored element animations stay intact and
-    the slide keeps exactly one root-level ``p:timing``. Returns the (mutated)
-    timing element, or ``None`` when the expected ``tmRoot → seq → childTnLst``
-    structure is absent — the caller then degrades to replace + warning.
+    The narration is inserted as the first parallel ``p:par`` of the timing's
+    ``mainSeq`` sequence (see ``_select_animation_seq``), so authored element
+    animations stay intact and the slide keeps exactly one root-level
+    ``p:timing``. Returns the (mutated) timing element, or ``None`` when the
+    expected ``tmRoot → seq → childTnLst`` structure is absent — the caller then
+    degrades to replace + warning.
     """
     tn_lst = _root_child(timing, "tnLst")
     root_par = _root_child(tn_lst, "par") if tn_lst is not None else None
@@ -1039,7 +1069,7 @@ def merge_narration_timing(timing: ET.Element, spid: int) -> Optional[ET.Element
     root_child = _root_child(root_ct, "childTnLst")
     if root_child is None:
         return None
-    seq = next((child for child in root_child if local_name(child.tag) == "seq"), None)
+    seq = _select_animation_seq(root_child)
     if seq is None:
         return None
     seq_ct = _root_child(seq, "cTn")
@@ -1124,6 +1154,48 @@ def patch_slide_audio(slide_xml: bytes, r_id: str) -> Tuple[bytes, int]:
     return ET.tostring(root, encoding="utf-8", xml_declaration=True), spid
 
 
+def _audio_file_element(
+    root: ET.Element, spid: Optional[str] = None
+) -> Optional[ET.Element]:
+    """Return the ``p:audioFile`` of a hidden audio shape in ``root``.
+
+    Walks the ``p:sp → p:nvSpPr → p:nvPr → p:audioFile`` path. When ``spid`` is
+    given, only the shape whose ``p:cNvPr/@id`` matches it is considered.
+    """
+    for sp in (element for element in root.iter() if local_name(element.tag) == "sp"):
+        nv_sp_pr = _root_child(sp, "nvSpPr")
+        nv_pr = _root_child(nv_sp_pr, "nvPr") if nv_sp_pr is not None else None
+        audio_file = _root_child(nv_pr, "audioFile") if nv_pr is not None else None
+        if audio_file is None:
+            continue
+        if spid is None:
+            return audio_file
+        c_nv_pr = _root_child(nv_sp_pr, "cNvPr")
+        if c_nv_pr is not None and c_nv_pr.get("id") == spid:
+            return audio_file
+    return None
+
+
+def _slide_has_injected_audio(slide_xml: bytes) -> bool:
+    """Return True when a slide already carries the injected narration trace.
+
+    The trace is the pair ``patch_slide_audio`` writes: a hidden audio shape
+    (``p:sp → p:nvSpPr → p:nvPr → p:audioFile``) plus a ``playFrom(0)``
+    narration command. Either half alone is not treated as an injection, so a
+    slide with only authored media or only authored commands is still patched.
+    """
+    try:
+        root = ET.fromstring(slide_xml)
+    except ET.ParseError as exc:
+        raise ExportError(f"invalid slide XML: {exc}") from exc
+    if _audio_file_element(root) is None:
+        return False
+    return any(
+        local_name(element.tag) == "cmd" and element.get("cmd") == "playFrom(0)"
+        for element in root.iter()
+    )
+
+
 def _ct_part_name(media_name: str) -> str:
     """Normalize a media part name to ``[Content_Types].xml`` form (leading slash)."""
     return "/" + media_name.lstrip("/")
@@ -1188,10 +1260,20 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     a ``[Content_Types].xml`` Override, a slide-rels audio Relationship, a
     hidden 1px audio shape, and a root-level ``p:timing`` narration template
     (``playFrom(0)`` auto-play). Slides that already carry an animation
-    ``p:timing`` get the narration merged in; on merge failure the timing is
-    replaced and a warning is logged.
+    ``p:timing`` get the narration merged into their ``mainSeq`` sequence; on
+    merge failure the timing is replaced and a warning is logged.
 
-    Returns ``{"audioSlides", "audioParts", "audioSkippedUnknownExtensions"}``.
+    Pages that already carry the injected narration trace (a hidden audio shape
+    plus a ``playFrom(0)`` command) are skipped with a warning and counted in
+    ``audioSkippedAlreadyInjected``; their media part, rels entry and slide XML
+    are left untouched. The patch is deliberately *not* an "update audio"
+    operation: a real re-injection would need to remove the previous media part,
+    rels entry, shape and timing par first. To replace a page's narration audio,
+    re-export the PPTX instead of calling this again.
+
+    Returns ``{"audioSlides", "audioParts", "audioSkippedUnknownExtensions",
+    "audioSkippedAlreadyInjected"}``; the no-audio fast path returns only the
+    first three keys.
     """
     sources = collect_page_audio(deck)
     if not sources:
@@ -1223,12 +1305,23 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     # TD-010 G2: a declared audio page must have a matching slide part in the
     # exported package. Skip missing slides with a warning instead of writing
     # dangling rels / media parts / Content-Types Overrides.
+    # TD-012: pages whose slide XML already holds the injected narration trace
+    # are detected here too, so a re-run cannot add a second media part, rels
+    # entry, hidden shape and playFrom(0) par (double playback).
     with zipfile.ZipFile(pptx) as probe:
         present_slides = {
             int(match.group(1))
             for name in probe.namelist()
             for match in [re.fullmatch(r"ppt/slides/slide(\d+)\.xml", name)]
             if match
+        }
+        injected_slides = {
+            pack["slide"]
+            for pack in packs
+            if pack["slide"] in present_slides
+            and _slide_has_injected_audio(
+                probe.read(f"ppt/slides/slide{pack['slide']}.xml")
+            )
         }
     absent_packs = [pack for pack in packs if pack["slide"] not in present_slides]
     for pack in absent_packs:
@@ -1238,12 +1331,21 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
         )
     if absent_packs:
         packs = [pack for pack in packs if pack["slide"] in present_slides]
-        if not packs:
-            return {
-                "audioSlides": 0,
-                "audioParts": 0,
-                "audioSkippedUnknownExtensions": skipped,
-            }
+    for pack in packs:
+        if pack["slide"] in injected_slides:
+            log(
+                f"warning: page {pack['slide']} already carries injected narration "
+                f"audio; skipping (re-export the PPTX to replace the audio)"
+            )
+    if injected_slides:
+        packs = [pack for pack in packs if pack["slide"] not in injected_slides]
+    if not packs:
+        return {
+            "audioSlides": 0,
+            "audioParts": 0,
+            "audioSkippedUnknownExtensions": skipped,
+            "audioSkippedAlreadyInjected": len(injected_slides),
+        }
 
     temporary = pptx.with_name(f".{pptx.name}.{uuid.uuid4().hex}.tmp")
     try:
@@ -1311,6 +1413,7 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
         "audioSlides": len(packs),
         "audioParts": len(packs),
         "audioSkippedUnknownExtensions": skipped,
+        "audioSkippedAlreadyInjected": len(injected_slides),
     }
 
 
@@ -1319,12 +1422,28 @@ def _resolve_rel_target(rels_name: str, target: str) -> str:
     return posixpath.normpath(posixpath.join(posixpath.dirname(rels_name), target))
 
 
+def _containing_seq(command: ET.Element, timing: ET.Element) -> Optional[ET.Element]:
+    """Return the ``p:seq`` whose ``childTnLst`` subtree contains ``command``."""
+    for seq in (
+        element for element in timing.iter() if local_name(element.tag) == "seq"
+    ):
+        seq_ct = _root_child(seq, "cTn")
+        child_lst = _root_child(seq_ct, "childTnLst") if seq_ct is not None else None
+        if child_lst is None:
+            continue
+        if any(element is command for element in child_lst.iter()):
+            return seq
+    return None
+
+
 def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str, Any]:
     """Assert a declared-audio slide's packaging is complete.
 
     Verifies exactly one root-level ``p:timing`` with a ``playFrom(0)``
     narration command whose ``spTgt`` spid matches the hidden audio shape, that
-    shape's ``r:embed`` resolves through the slide rels to an audio
+    the command sits inside the timing's ``mainSeq`` sequence (or inside some
+    sequence when the timing declares no ``mainSeq`` — the merge falls back
+    there), that shape's ``r:embed`` resolves through the slide rels to an audio
     Relationship, and that the media part + ``[Content_Types].xml`` Override
     exist. Returns the part name / rId / spid; raises ``ExportError`` on any
     violation.
@@ -1345,6 +1464,7 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     names = [local_name(child.tag) for child in root]
     if names.count("timing") != 1:
         raise ExportError(f"audio slide {slide_number} must have exactly one root-level timing")
+    timing = next(child for child in root if local_name(child.tag) == "timing")
     commands = [
         element
         for element in root.iter()
@@ -1352,6 +1472,19 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     ]
     if not commands:
         raise ExportError(f"audio slide {slide_number} has no playFrom(0) narration command")
+    owner = _containing_seq(commands[0], timing)
+    if owner is None:
+        raise ExportError(
+            f"audio slide {slide_number} narration command is outside every animation sequence"
+        )
+    sequences = [
+        element for element in timing.iter() if local_name(element.tag) == "seq"
+    ]
+    main_sequences = [seq for seq in sequences if _is_main_seq(seq)]
+    if main_sequences and not any(owner is seq for seq in main_sequences):
+        raise ExportError(
+            f"audio slide {slide_number} narration command is not inside the mainSeq sequence"
+        )
     sp_tgt = next(
         (element for element in commands[0].iter() if local_name(element.tag) == "spTgt"),
         None,
@@ -1360,18 +1493,7 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
         raise ExportError(f"audio slide {slide_number} narration command has no spTgt spid")
     spid = sp_tgt.get("spid")
 
-    audio_file = None
-    for sp in (element for element in root.iter() if local_name(element.tag) == "sp"):
-        nv_sp_pr = _root_child(sp, "nvSpPr")
-        nv_pr = _root_child(nv_sp_pr, "nvPr") if nv_sp_pr is not None else None
-        candidate = _root_child(nv_pr, "audioFile") if nv_pr is not None else None
-        if candidate is None:
-            continue
-        c_nv_pr = _root_child(nv_sp_pr, "cNvPr")
-        if c_nv_pr is None or c_nv_pr.get("id") != spid:
-            continue
-        audio_file = candidate
-        break
+    audio_file = _audio_file_element(root, spid)
     if audio_file is None:
         raise ExportError(
             f"audio slide {slide_number} has no hidden audio shape matching spid {spid}"
