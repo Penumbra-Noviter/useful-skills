@@ -24,3 +24,8 @@ quarkclouddrive/*
 TO-TICKETS.md
 TECH_DEBT.md
 DEV_LOG.md
+
+# 一次性批次产物（kickoff 编排/证据/审核副本，易达数十 MB）
+.scratch/
+# 测试缓存
+.coverage*
