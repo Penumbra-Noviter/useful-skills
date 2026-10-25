@@ -31,7 +31,7 @@ import json
 import math
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 try:
     from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
@@ -258,9 +258,12 @@ def to_svg_path(poly: Polygon, dx: float = 0.0, dy: float = 0.0) -> str:
     """Serialize an oriented polygon to an SVG path string.
 
     Each ring becomes ``M...L...Z`` with coordinates shifted by ``(dx, dy)``
-    and rounded to one decimal place. Rings that collapse to fewer than three
-    distinct points after rounding are skipped (degenerate after rounding).
-    The caller is responsible for winding (see :func:`compute_paths`).
+    and rounded to one decimal place. Degenerate rings are skipped: a ring is
+    degenerate when, after translation and rounding, it has fewer than three
+    distinct points **or** a zero shoelace area (e.g. three collinear points,
+    or an ``A, B, A`` ring). This is the same criterion every other ring
+    serializer uses (see :func:`_normalize_ring`). The caller is responsible
+    for winding (see :func:`compute_paths`).
 
     Args:
         poly: the polygon to serialize (exterior + holes).
@@ -269,20 +272,15 @@ def to_svg_path(poly: Polygon, dx: float = 0.0, dy: float = 0.0) -> str:
 
     Returns:
         A legal SVG path string whose segments use only ``M``/``L``/``Z``
-        commands and end with ``Z``.
+        commands and end with ``Z``; the empty string when every ring is
+        degenerate.
     """
     if poly is None or poly.is_empty:
         return ""
     parts: List[str] = []
     for ring in (poly.exterior, *poly.interiors):
-        pts = [(_round1(c[0] - dx), _round1(c[1] - dy)) for c in ring.coords]
-        if len(pts) > 1 and pts[0] == pts[-1]:
-            pts = pts[:-1]
-        uniq: List[Tuple[float, float]] = []
-        for pt in pts:
-            if not uniq or pt != uniq[-1]:
-                uniq.append(pt)
-        if len(uniq) < 3:
+        uniq = _normalize_ring(ring, dx, dy)
+        if uniq is None:
             continue
         parts.append("M" + _fmt(uniq[0][0]) + "," + _fmt(uniq[0][1]))
         for x, y in uniq[1:]:
@@ -304,14 +302,27 @@ def _shoelace_area(pts: Sequence[Tuple[float, float]]) -> float:
     )
 
 
-def _rounded_ring(ring: Any, dx: float, dy: float) -> Optional[List[Tuple[float, float]]]:
-    """Round + translate one ring and judge it against the post-rounding
-    degenerate-ring contract (review F3).
+def _normalize_ring(
+    ring: Any, dx: float, dy: float
+) -> Optional[List[Tuple[float, float]]]:
+    """Round + translate one ring and judge it against the single
+    degenerate-ring contract shared by every ring-serializing caller (TD-016).
 
     A ring is degenerate — and returns ``None`` — when, after translation and
     rounding to one decimal, it has fewer than three distinct points or a zero
-    shoelace area (e.g. a >=3-point zig-zag that is collinear after rounding).
-    Such rings must be dropped, never serialized as zero-area paths.
+    shoelace area (e.g. three collinear points, an ``A, B, A`` ring whose
+    adjacent-duplicate removal still leaves three entries, or a >=3-point
+    zig-zag that is collinear after rounding). Such rings must be dropped,
+    never serialized as zero-area paths.
+
+    Args:
+        ring: a shapely ring (``poly.exterior`` or one of ``poly.interiors``).
+        dx: horizontal translation subtracted from every x coordinate.
+        dy: vertical translation subtracted from every y coordinate.
+
+    Returns:
+        The ring's points as ``(x, y)`` pairs with the closing duplicate and
+        consecutive duplicates removed, or ``None`` when it is degenerate.
     """
     pts = [(_round1(c[0] - dx), _round1(c[1] - dy)) for c in ring.coords]
     if len(pts) > 1 and pts[0] == pts[-1]:
@@ -327,14 +338,31 @@ def _rounded_ring(ring: Any, dx: float, dy: float) -> Optional[List[Tuple[float,
     return uniq
 
 
+def _rounded_ring(ring: Any, dx: float, dy: float) -> Optional[List[Tuple[float, float]]]:
+    """Backwards-compatible alias of :func:`_normalize_ring`.
+
+    Kept as the name used by :func:`compute_paths`; it delegates so the
+    degenerate-ring criterion exists in exactly one place (TD-016).
+    """
+    return _normalize_ring(ring, dx, dy)
+
+
 # Rings whose area is at or below this (in square units) are considered
 # degenerate after the 1-decimal rounding and dropped with a stderr warning.
 EPS_AREA = 1e-6
 
 
-def _orient_polygon(poly: Polygon) -> Polygon:
+def _orient_polygon(poly: Polygon, seen: Set[str]) -> Polygon:
     """Re-orient a polygon: outer ring CW, inner rings CCW, and drop
-    degenerate (zero-area) rings so the rounded output stays sane."""
+    degenerate (zero-area) rings so the rounded output stays sane.
+
+    Args:
+        poly: the polygon to re-orient.
+        seen: the calling computation's warning de-duplication container.
+
+    Returns:
+        The re-oriented polygon, or an empty ``Polygon`` for a zero-area input.
+    """
     dropped = False
     if poly.area <= EPS_AREA:
         return Polygon()
@@ -349,18 +377,21 @@ def _orient_polygon(poly: Polygon) -> Polygon:
         interiors.append(ring)
     out = orient(Polygon(poly.exterior, interiors), -1.0)
     if dropped:
-        _warn("dropped a degenerate ring (zero area after rounding)")
+        _warn("dropped a degenerate ring (zero area after rounding)", seen)
     return out
 
 
-_WARNED: List[str] = []
+def _warn(message: str, seen: Set[str]) -> None:
+    """Emit a stderr warning, deduplicated within one computation (TD-019).
 
-
-def _warn(message: str) -> None:
-    """Emit a stderr warning, deduplicated within one computation so repeated
-    degenerate rings do not spam the same message."""
-    if message not in _WARNED:
-        _WARNED.append(message)
+    Args:
+        message: the warning text; also the de-duplication key.
+        seen: the caller-owned de-duplication container. Every computation
+            passes its own set so nested or concurrent runs never share —
+            and never reset — each other's warning state.
+    """
+    if message not in seen:
+        seen.add(message)
         print(f"boolean_path: warning: {message}", file=sys.stderr)
 
 
@@ -429,7 +460,9 @@ def compute_paths(geometries: Any, op: str) -> Dict[str, Any]:
         raise BooleanPathError(
             f"unknown operation {op!r}; expected one of {', '.join(OPERATIONS)}"
         )
-    _WARNED.clear()  # warnings are deduplicated within one computation
+    # Warnings are deduplicated within this computation only: the de-dup
+    # container is local, so nested / concurrent runs cannot reset it (TD-019).
+    seen: Set[str] = set()
     polygons = parse_geometries(geometries)
     if op == OP_SUBTRACT and len(polygons) < 2:
         raise BooleanPathError(
@@ -437,9 +470,11 @@ def compute_paths(geometries: Any, op: str) -> Dict[str, Any]:
         )
     result = _apply_operation(polygons, op)
     out_polys = [p for p in _polygons_from(result) if not p.is_empty]
-    out_polys = [p for p in (_orient_polygon(p) for p in out_polys) if not p.is_empty]
+    out_polys = [
+        p for p in (_orient_polygon(p, seen) for p in out_polys) if not p.is_empty
+    ]
     if not out_polys:
-        _warn("no area remains after the boolean operation; output is empty")
+        _warn("no area remains after the boolean operation; output is empty", seen)
         return {"paths": [], "viewBox": [0.0, 0.0]}
 
     minx = min(c[0] for p in out_polys for r in (p.exterior, *p.interiors) for c in r.coords)
@@ -451,19 +486,19 @@ def compute_paths(geometries: Any, op: str) -> Dict[str, Any]:
     for poly in out_polys:
         exterior = _rounded_ring(poly.exterior, minx, miny)
         if exterior is None:
-            _warn("dropped a degenerate ring (zero area after rounding)")
+            _warn("dropped a degenerate ring (zero area after rounding)", seen)
             continue
         interiors: List[List[Tuple[float, float]]] = []
         for ring in poly.interiors:
             rounded = _rounded_ring(ring, minx, miny)
             if rounded is None:
-                _warn("dropped a degenerate ring (zero area after rounding)")
+                _warn("dropped a degenerate ring (zero area after rounding)", seen)
             else:
                 interiors.append(rounded)
         built.append(Polygon(exterior, interiors))
 
     if not built:
-        _warn("all output rings degenerated after rounding; output is empty")
+        _warn("all output rings degenerated after rounding; output is empty", seen)
         return {"paths": [], "viewBox": [0.0, 0.0]}
 
     # viewBox: bounds of the final RETAINED (post-rounding) rings only, so a
@@ -475,7 +510,7 @@ def compute_paths(geometries: Any, op: str) -> Dict[str, Any]:
     paths = [to_svg_path(p) for p in built]
     paths = [p for p in paths if p]
     if not paths:
-        _warn("all output rings degenerated after rounding; output is empty")
+        _warn("all output rings degenerated after rounding; output is empty", seen)
         return {"paths": [], "viewBox": [0.0, 0.0]}
     return {"paths": paths, "viewBox": [float(v) for v in view_box]}
 
