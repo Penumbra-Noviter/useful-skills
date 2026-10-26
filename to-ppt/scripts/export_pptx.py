@@ -1114,14 +1114,29 @@ def place_timing(root: ET.Element, timing: ET.Element) -> None:
 def patch_slide_audio(slide_xml: bytes, r_id: str) -> Tuple[bytes, int]:
     """Inject the hidden audio shape and narration timing into one slide.
 
-    Returns the patched slide XML and the hidden shape's ``spid``. An existing
-    root-level ``p:timing`` (element animations) is merged first; on merge
-    failure it is replaced by the narration template and a warning is logged.
+    Returns the patched slide XML and the hidden shape's ``spid``. A slide
+    whose page state is ``"injected"`` (already carries an ``audioFile`` shape)
+    or ``"unmergeable"`` (the authored animation timing cannot merge the
+    narration) is returned untouched with ``spid`` 0 and a warning is logged —
+    re-injecting would accumulate media / drop the authored animations
+    (TD-030 / TD-031). Otherwise an existing root-level ``p:timing`` is merged
+    (guaranteed mergeable by the state check); a missing timing gets the
+    narration template.
     """
-    try:
-        root = ET.fromstring(slide_xml)
-    except ET.ParseError as exc:
-        raise ExportError(f"invalid slide XML: {exc}") from exc
+    state = _slide_audio_state(slide_xml)
+    if state == "injected":
+        log(
+            "warning: slide already carries injected narration audio; "
+            "skipping (re-export the PPTX to replace the audio)"
+        )
+        return slide_xml, 0
+    if state == "unmergeable":
+        log(
+            "warning: slide timing cannot merge the narration; skipping "
+            "injection to keep the authored animations"
+        )
+        return slide_xml, 0
+    root = ET.fromstring(slide_xml)
     c_sld = _root_child(root, "cSld")
     sp_tree = _root_child(c_sld, "spTree") if c_sld is not None else None
     if sp_tree is None:
@@ -1130,13 +1145,12 @@ def patch_slide_audio(slide_xml: bytes, r_id: str) -> Tuple[bytes, int]:
     sp_tree.append(build_audio_shape(spid, r_id))
 
     existing = _root_child(root, "timing")
-    if existing is not None and merge_narration_timing(existing, spid) is None:
-        log("warning: failed to merge narration timing into the existing animation "
-            "timing; replacing the slide timing")
-        root.remove(existing)
-        existing = None
     if existing is None:
         place_timing(root, build_narration_timing(spid))
+    else:
+        # state == "plain" guarantees the merge succeeds (unmergeable already
+        # returned early), so the authored animations are never replaced.
+        merge_narration_timing(existing, spid)
 
     # Keep the final timing (merged or fresh) in valid CT_Slide order.
     names = [local_name(child.tag) for child in root]
@@ -1176,24 +1190,39 @@ def _audio_file_element(
     return None
 
 
-def _slide_has_injected_audio(slide_xml: bytes) -> bool:
-    """Return True when a slide already carries the injected narration trace.
+def _slide_audio_state(slide_xml: bytes) -> str:
+    """Classify a slide for narration-audio injection (page state table).
 
-    The trace is the pair ``patch_slide_audio`` writes: a hidden audio shape
-    (``p:sp → p:nvSpPr → p:nvPr → p:audioFile``) plus a ``playFrom(0)``
-    narration command. Either half alone is not treated as an injection, so a
-    slide with only authored media or only authored commands is still patched.
+    Returns one of:
+
+    - ``"injected"`` — an ``audioFile`` shape already exists
+      (``_audio_file_element`` hit, playFrom or not): re-injecting would
+      accumulate a second media part, rels entry, shape and timing par, so the
+      page is skipped (TD-030).
+    - ``"unmergeable"`` — no ``audioFile`` shape but a root-level ``p:timing``
+      whose structure ``merge_narration_timing`` cannot merge into (tmRoot /
+      seq / childTnLst absent, or a ``seq`` nested inside a par): injecting
+      would replace the authored animation timing, so the page is skipped
+      (TD-031).
+    - ``"plain"`` — injectable: no audioFile and either no root timing or one
+      that merges cleanly.
+
+    Shared by the patch side (``patch_slide_audio`` / ``patch_audio``) and the
+    verify side (``verify_output``) so skip judgments stay aligned. Raises
+    ``ExportError`` on malformed slide XML.
     """
     try:
         root = ET.fromstring(slide_xml)
     except ET.ParseError as exc:
         raise ExportError(f"invalid slide XML: {exc}") from exc
-    if _audio_file_element(root) is None:
-        return False
-    return any(
-        local_name(element.tag) == "cmd" and element.get("cmd") == "playFrom(0)"
-        for element in root.iter()
-    )
+    if _audio_file_element(root) is not None:
+        return "injected"
+    timing = _root_child(root, "timing")
+    if timing is not None and merge_narration_timing(timing, 0) is None:
+        # The spid is irrelevant on the failure path; a throwaway tree is
+        # parsed here, so a successful merge mutates nothing the caller sees.
+        return "unmergeable"
+    return "plain"
 
 
 def _ct_part_name(media_name: str) -> str:
@@ -1285,20 +1314,25 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     a ``[Content_Types].xml`` Override, a slide-rels audio Relationship, a
     hidden 1px audio shape, and a root-level ``p:timing`` narration template
     (``playFrom(0)`` auto-play). Slides that already carry an animation
-    ``p:timing`` get the narration merged into their ``mainSeq`` sequence; on
-    merge failure the timing is replaced and a warning is logged.
+    ``p:timing`` get the narration merged into their ``mainSeq`` sequence.
 
-    Pages that already carry the injected narration trace (a hidden audio shape
-    plus a ``playFrom(0)`` command) are skipped with a warning and counted in
-    ``audioSkippedAlreadyInjected``; their media part, rels entry and slide XML
-    are left untouched. The patch is deliberately *not* an "update audio"
-    operation: a real re-injection would need to remove the previous media part,
-    rels entry, shape and timing par first. To replace a page's narration audio,
-    re-export the PPTX instead of calling this again.
+    Pages are classified through ``_slide_audio_state`` (TD-030 / TD-031):
+
+    - ``injected`` (an ``audioFile`` shape already exists, playFrom or not) is
+      skipped with a warning and counted in ``audioSkippedAlreadyInjected``;
+      their media part, rels entry and slide XML are left untouched. The patch
+      is deliberately *not* an "update audio" operation: a real re-injection
+      would need to remove the previous media part, rels entry, shape and
+      timing par first. To replace a page's narration audio, re-export the
+      PPTX instead of calling this again.
+    - ``unmergeable`` (the authored animation timing cannot merge the
+      narration) is skipped with a warning and counted in
+      ``audioSkippedUnmergeableTiming`` — better no narration than replacing
+      the authored animations.
 
     Returns ``{"audioSlides", "audioParts", "audioSkippedUnknownExtensions",
-    "audioSkippedAlreadyInjected"}``; the no-audio fast path returns only the
-    first three keys.
+    "audioSkippedAlreadyInjected", "audioSkippedUnmergeableTiming"}``; the
+    no-audio fast path returns only the first three keys.
     """
     sources = collect_page_audio(deck)
     if not sources:
@@ -1330,9 +1364,12 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     # TD-010 G2: a declared audio page must have a matching slide part in the
     # exported package. Skip missing slides with a warning instead of writing
     # dangling rels / media parts / Content-Types Overrides.
-    # TD-012: pages whose slide XML already holds the injected narration trace
-    # are detected here too, so a re-run cannot add a second media part, rels
-    # entry, hidden shape and playFrom(0) par (double playback).
+    # TD-030: pages whose slide XML already holds an audioFile shape (playFrom
+    # or not) are detected here via the shared page state helper, so a re-run
+    # cannot add a second media part, rels entry, hidden shape and playFrom(0)
+    # par (TD-012 double playback / TD-030 half-trace accumulation).
+    # TD-031: pages whose authored timing cannot merge the narration are also
+    # skipped here (no narration injected, animations kept).
     with zipfile.ZipFile(pptx) as probe:
         present_slides = {
             int(match.group(1))
@@ -1340,14 +1377,19 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
             for match in [re.fullmatch(r"ppt/slides/slide(\d+)\.xml", name)]
             if match
         }
-        injected_slides = {
-            pack["slide"]
-            for pack in packs
-            if pack["slide"] in present_slides
-            and _slide_has_injected_audio(
+        slide_states = {
+            pack["slide"]: _slide_audio_state(
                 probe.read(f"ppt/slides/slide{pack['slide']}.xml")
             )
+            for pack in packs
+            if pack["slide"] in present_slides
         }
+    injected_slides = {
+        slide for slide, state in slide_states.items() if state == "injected"
+    }
+    unmergeable_slides = {
+        slide for slide, state in slide_states.items() if state == "unmergeable"
+    }
     absent_packs = [pack for pack in packs if pack["slide"] not in present_slides]
     for pack in absent_packs:
         log(
@@ -1362,14 +1404,24 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
                 f"warning: page {pack['slide']} already carries injected narration "
                 f"audio; skipping (re-export the PPTX to replace the audio)"
             )
-    if injected_slides:
-        packs = [pack for pack in packs if pack["slide"] not in injected_slides]
+        elif pack["slide"] in unmergeable_slides:
+            log(
+                f"warning: page {pack['slide']} slide timing cannot merge the "
+                f"narration; skipping injection to keep the authored animations"
+            )
+    if injected_slides or unmergeable_slides:
+        packs = [
+            pack for pack in packs
+            if pack["slide"] not in injected_slides
+            and pack["slide"] not in unmergeable_slides
+        ]
     if not packs:
         return {
             "audioSlides": 0,
             "audioParts": 0,
             "audioSkippedUnknownExtensions": skipped,
             "audioSkippedAlreadyInjected": len(injected_slides),
+            "audioSkippedUnmergeableTiming": len(unmergeable_slides),
         }
 
     def mutator(
@@ -1439,6 +1491,7 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
         "audioParts": len(packs),
         "audioSkippedUnknownExtensions": skipped,
         "audioSkippedAlreadyInjected": len(injected_slides),
+        "audioSkippedUnmergeableTiming": len(unmergeable_slides),
     }
 
 
@@ -1662,18 +1715,25 @@ def verify_output(
         expect_fonts: When True, log a warning (not a failure) if the writer
             produced no ``ppt/fonts/*`` part.
         deck: PPTD deck root for the per-slide audio contract. When given, every
-            page declaring ``audio`` is checked with ``verify_audio_slide``
-            (media part, rels, content-type and timing assertions) and
-            ``audioSlides`` counts the pages that passed; a declared page whose
-            slide part was never exported is skipped and counted in
-            ``audioSkippedMissingSlides`` (the same skip ``patch_audio``
-            applies). When ``None``, the per-slide deep assertions are skipped
-            and ``audioSlides`` is counted from the archive slide rels only.
+            page declaring ``audio`` is classified through ``_slide_audio_state``
+            (self-contained, no patch call chain): a page whose slide part was
+            never exported is skipped and counted in ``audioSkippedMissingSlides``;
+            an ``unmergeable`` timing is skipped and counted in
+            ``audioSkippedUnmergeableTiming``; a media ``audioFile`` shape without
+            a ``playFrom(0)`` narration (half-trace) is skipped and counted in
+            ``audioSkippedAlreadyInjected`` — all three are deliberate skips that
+            ``patch_audio`` applies too, so they must not fail the export. A plain
+            page that lost its narration raises ``ExportError``; pages carrying a
+            narration are asserted with ``verify_audio_slide`` (media part, rels,
+            content-type and timing assertions) and ``audioSlides`` counts the
+            pages that passed. When ``None``, the per-slide deep assertions are
+            skipped and ``audioSlides`` is counted from the archive slide rels only.
 
     Returns:
         Mapping with ``slides``, ``fadeTransitions``, ``fontParts``,
-        ``audioSlides``, ``audioSkippedMissingSlides``, ``audioParts`` and
-        ``bytes``.
+        ``audioSlides``, ``audioSkippedMissingSlides``,
+        ``audioSkippedAlreadyInjected``, ``audioSkippedUnmergeableTiming``,
+        ``audioParts`` and ``bytes``.
 
     Raises:
         ExportError: the path is not a PPTX ZIP, the ZIP fails its CRC check, a
@@ -1711,11 +1771,16 @@ def verify_output(
             name for name in archive.namelist() if AUDIO_MEDIA_PART_RE.match(name)
         )
         audio_skipped_missing = 0
+        audio_skipped_already_injected = 0
+        audio_skipped_unmergeable = 0
         if deck is None:
             audio_slides = _count_audio_in_archive(archive, slide_names)
         else:
             # TD-020: with a deck the contract leg owns the count, so both legs
             # cannot disagree about which slides carry narration.
+            # TD-030 / TD-031: the shared page-state helper decides skip vs
+            # fail — a page patch deliberately left alone must not fail the
+            # export, while a plain page that lost its narration is a defect.
             audio_slides = 0
             present = set(archive.namelist())
             for source in collect_page_audio(deck):
@@ -1733,6 +1798,38 @@ def verify_output(
                         f"slide part in the exported PPTX; not verifying its audio"
                     )
                     continue
+                slide_xml = archive.read(slide_part)
+                state = _slide_audio_state(slide_xml)
+                if state == "unmergeable":
+                    # TD-031: patch left the authored timing alone; skipping the
+                    # narration beats replacing the animations, so do not fail.
+                    audio_skipped_unmergeable += 1
+                    log(
+                        f"warning: page {source['slide']} slide timing cannot merge "
+                        f"the narration; skipping its audio verification"
+                    )
+                    continue
+                root = ET.fromstring(slide_xml)
+                has_narration = any(
+                    local_name(element.tag) == "cmd"
+                    and element.get("cmd") == "playFrom(0)"
+                    for element in root.iter()
+                )
+                if not has_narration:
+                    if state == "injected":
+                        # TD-030 half-trace: patch left the media hotspot alone;
+                        # the skip is deliberate, not a lost narration defect.
+                        audio_skipped_already_injected += 1
+                        log(
+                            f"warning: page {source['slide']} already carries a media "
+                            f"audioFile shape without narration; skipping its audio "
+                            f"verification"
+                        )
+                        continue
+                    raise ExportError(
+                        f"audio slide {source['slide']} has no playFrom(0) "
+                        f"narration command"
+                    )
                 verify_audio_slide(archive, source["slide"])
                 audio_slides += 1
         return {
@@ -1741,6 +1838,8 @@ def verify_output(
             "fontParts": len(fonts),
             "audioSlides": audio_slides,
             "audioSkippedMissingSlides": audio_skipped_missing,
+            "audioSkippedAlreadyInjected": audio_skipped_already_injected,
+            "audioSkippedUnmergeableTiming": audio_skipped_unmergeable,
             "audioParts": len(audio_parts),
             "bytes": pptx.stat().st_size,
         }
