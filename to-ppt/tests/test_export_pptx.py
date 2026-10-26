@@ -1337,6 +1337,37 @@ class PlayFromCommandPredicateTests(unittest.TestCase):
         self.assertNotIn('.get("cmd") == "playFrom(0)"', verify_source)
         self.assertIn("_is_play_from_command(", verify_source)
 
+    def test_type_and_cmd_constraint_is_exact_enumeration(self):
+        # TD-049: the predicate must stay an exact, case-sensitive
+        # enumeration of ("mediacall", "call") x cmd=="playFrom(0)" — the
+        # four-round Falsify matrix verified every row but none were backed
+        # by tests.  Locks against whitelist drift (mislowering to a single
+        # type, or relaxing case sensitivity to .lower()).
+        cases = [
+            # Rejection rows (Falsify first): empty / case / whitespace /
+            # wrong command, incl. the authored onBegin (TD-046).
+            ("onEnd", "playFrom(0)", False),
+            ("", "playFrom(0)", False),
+            ("CALL", "playFrom(0)", False),
+            ("call ", "playFrom(0)", False),
+            ("onBegin", "playFrom(0)", False),
+            ("call", "playFrom(1)", False),
+            ("call", "pause", False),
+            ("mediacall", "PlayFrom(0)", False),
+            # Acceptance rows (the two whitelisted types x playFrom(0)).
+            ("call", "playFrom(0)", True),
+            ("mediacall", "playFrom(0)", True),
+        ]
+        for type_value, cmd_value, expected in cases:
+            with self.subTest(type_value=type_value, cmd_value=cmd_value):
+                element = MODULE._sub(
+                    ET.Element("x"), "cmd", P_NS,
+                    {"type": type_value, "cmd": cmd_value},
+                )
+                self.assertIs(
+                    MODULE._is_play_from_command(element), expected,
+                )
+
 
 class AudioPageStateTests(unittest.TestCase):
     """TD-030 / TD-031: 页状态表 (injected / unmergeable / plain) 两侧贯通."""
