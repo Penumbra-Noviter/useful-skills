@@ -1028,6 +1028,23 @@ def _is_main_seq(seq: ET.Element) -> bool:
     return seq_ct is not None and seq_ct.get("nodeType") == "mainSeq"
 
 
+def _main_sequences(timing_or_root_child: ET.Element) -> List[ET.Element]:
+    """Return every ``p:seq`` in the subtree with ``nodeType="mainSeq"``.
+
+    Single source for the mainSeq look-up shared by the merge-side picker
+    (``_select_animation_seq``) and the verify-side ownership assert
+    (``verify_audio_slide``), so the OOXML notion of "the interactive main
+    sequence" cannot drift between the two (TD-025).
+    """
+    return [
+        seq for seq in (
+            element for element in timing_or_root_child.iter()
+            if local_name(element.tag) == "seq"
+        )
+        if _is_main_seq(seq)
+    ]
+
+
 def _select_animation_seq(root_child: ET.Element) -> Optional[ET.Element]:
     """Return the ``p:seq`` that narration timing must be merged into.
 
@@ -1041,8 +1058,9 @@ def _select_animation_seq(root_child: ET.Element) -> Optional[ET.Element]:
     sequences = [child for child in root_child if local_name(child.tag) == "seq"]
     if not sequences:
         return None
+    main_sequences = _main_sequences(root_child)
     for seq in sequences:
-        if _is_main_seq(seq):
+        if seq in main_sequences:
             return seq
     log(
         "warning: slide timing has no mainSeq animation sequence; "
@@ -1281,17 +1299,37 @@ def add_audio_relationship(rels_xml: Optional[bytes], media_name: str) -> Tuple[
     return text.encode("utf-8"), r_id
 
 
+def _write_entry(
+    target_zip: zipfile.ZipFile,
+    info: zipfile.ZipInfo,
+    data: bytes,
+    written: Set[str],
+) -> None:
+    """Write one ZIP entry, refusing duplicate part names (TD-034).
+
+    The ZIP format allows several entries with the same name and
+    ``ZipFile.read()`` silently returns the last one, so a duplicate would
+    corrupt the package (the first entry's content is lost). Raises
+    ``ExportError`` instead of silently last-wins.
+    """
+    if info.filename in written:
+        raise ExportError(f"duplicate part name in PPTX: {info.filename}")
+    written.add(info.filename)
+    target_zip.writestr(info, data, compress_type=info.compress_type)
+
+
 def _rewrite_zip(
     pptx: Path,
-    mutator: Callable[[zipfile.ZipFile, zipfile.ZipFile, Set[str]], None],
+    mutator: Callable[[zipfile.ZipFile, zipfile.ZipFile], None],
 ) -> None:
     """Rewrite a PPTX ZIP in place through a ``mutator`` callback.
 
     Owns only the mechanical frame shared by every in-place patch: a sibling
     temp path, the source archive comment, a ``finally`` cleanup and the atomic
     ``replace`` landing. ``mutator`` receives the open source/target archives
-    and the set of existing part names, and decides which entries to transform
-    and which to append.
+    (two arguments, TD-024) and decides which entries to transform and which to
+    append; part-name look-ups are derived inside the mutator (``patch_audio``
+    builds ``set(source_zip.namelist())`` itself).
 
     Exceptions from ``mutator`` (including ``ExportError``) propagate untouched:
     the temp file is still removed and the original PPTX is left as it was.
@@ -1300,7 +1338,7 @@ def _rewrite_zip(
     try:
         with zipfile.ZipFile(pptx, "r") as source_zip, zipfile.ZipFile(temporary, "w") as target_zip:
             target_zip.comment = source_zip.comment
-            mutator(source_zip, target_zip, set(source_zip.namelist()))
+            mutator(source_zip, target_zip)
         temporary.replace(pptx)
     finally:
         temporary.unlink(missing_ok=True)
@@ -1427,9 +1465,9 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
     def mutator(
         source_zip: zipfile.ZipFile,
         target_zip: zipfile.ZipFile,
-        existing_names: Set[str],
     ) -> None:
         """Write audio media parts, rels entries and patched slides into the new ZIP."""
+        existing_names = set(source_zip.namelist())
         if "[Content_Types].xml" not in existing_names:
             raise ExportError("exported PPTX has no [Content_Types].xml")
         existing_numbers = [
@@ -1462,6 +1500,7 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
         }
         slide_numbers = {pack["slide"] for pack in packs}
 
+        written: Set[str] = set()
         for info in source_zip.infolist():
             data = source_zip.read(info.filename)
             if info.filename == "[Content_Types].xml":
@@ -1474,15 +1513,20 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
                 if slide_number in slide_numbers:
                     pack = next(p for p in packs if p["slide"] == slide_number)
                     data, _spid = patch_slide_audio(data, pack["r_id"])
-            target_zip.writestr(info, data, compress_type=info.compress_type)
+            _write_entry(target_zip, info, data, written)
 
         for pack in packs:
-            target_zip.writestr(
-                pack["media_name"], pack["data"], compress_type=zipfile.ZIP_STORED
+            _write_entry(
+                target_zip, zipfile.ZipInfo(pack["media_name"]), pack["data"], written
             )
         for rels_name, slide_number in rels_names_to_write.items():
             if rels_name not in existing_names:
-                target_zip.writestr(rels_name, rels_cache[slide_number])
+                _write_entry(
+                    target_zip,
+                    zipfile.ZipInfo(rels_name),
+                    rels_cache[slide_number],
+                    written,
+                )
 
     _rewrite_zip(pptx, mutator)
 
@@ -1578,10 +1622,7 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
         raise ExportError(
             f"audio slide {slide_number} narration command is outside every animation sequence"
         )
-    sequences = [
-        element for element in timing.iter() if local_name(element.tag) == "seq"
-    ]
-    main_sequences = [seq for seq in sequences if _is_main_seq(seq)]
+    main_sequences = _main_sequences(timing)
     if main_sequences and not any(owner is seq for seq in main_sequences):
         raise ExportError(
             f"audio slide {slide_number} narration command is not inside the mainSeq sequence"
@@ -1633,7 +1674,7 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     actual_mime = _content_type_override(archive.read("[Content_Types].xml"), ct_part)
     if actual_mime is None:
         raise ExportError(f"audio part has no [Content_Types].xml Override: {part_name}")
-    if actual_mime != expected_mime:
+    if actual_mime.lower() != expected_mime.lower():
         raise ExportError(
             f"audio part {part_name} has [Content_Types].xml ContentType "
             f"{actual_mime!r}, expected {expected_mime!r}"
@@ -1652,16 +1693,16 @@ def patch_transitions(pptx: Path, transition: str) -> int:
     def mutator(
         source: zipfile.ZipFile,
         target: zipfile.ZipFile,
-        _existing_names: Set[str],
     ) -> None:
         """Copy every entry, replacing the transition in slide parts."""
         nonlocal slide_count
+        written: Set[str] = set()
         for info in source.infolist():
             data = source.read(info.filename)
             if re.fullmatch(r"ppt/slides/slide\d+\.xml", info.filename):
                 data = replace_transition(data, transition)
                 slide_count += 1
-            target.writestr(info, data, compress_type=info.compress_type)
+            _write_entry(target, info, data, written)
         if slide_count == 0:
             raise ExportError("exported PPTX contains no slide XML")
 
@@ -1856,11 +1897,26 @@ def postprocess_pptx(
     Fixed order: ``patch_transitions`` → ``patch_audio`` → ``verify_output``.
     ``project_dir`` is the deck root used to resolve ``Page.audio`` values and
     against which ``verify_output`` cross-checks the packaged audio.
+
+    ``patch_audio``'s summary is merged into ``verify_output``'s so the skip
+    counts only the patch side knows surface on the shared pipeline (TD-035):
+    ``audioSkippedAlreadyInjected`` / ``audioSkippedUnmergeableTiming`` take the
+    patch-side value — the same skip events are observed from both sides
+    (verify's per-page skips are a subset of patch's), so the union is the patch
+    count, not a sum. Every other field (``slides`` / ``fadeTransitions`` /
+    ``audioSlides`` / ``audioParts`` / ``bytes`` …) stays verify-side, keeping
+    both export paths' summary shape backward compatible.
     """
     slide_count = patch_transitions(output, transition)
-    patch_audio(output, project_dir)
+    patch_summary = patch_audio(output, project_dir)
     summary = verify_output(output, transition, expect_fonts, deck=project_dir)
     summary["transitionPatchedSlides"] = slide_count
+    summary["audioSkippedAlreadyInjected"] = patch_summary.get(
+        "audioSkippedAlreadyInjected", 0
+    )
+    summary["audioSkippedUnmergeableTiming"] = patch_summary.get(
+        "audioSkippedUnmergeableTiming", 0
+    )
     return summary
 
 

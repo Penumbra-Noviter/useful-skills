@@ -970,6 +970,116 @@ class AudioExporterHookupTests(unittest.TestCase):
         self.assertEqual(summary["exporter"], "browser-local-editor")
         post.assert_called_once_with(out, manifest.parent, "fade", True)
 
+    @staticmethod
+    def _unmergeable_timing() -> str:
+        return (
+            "<p:timing><p:tnLst><p:par>"
+            '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
+            '<p:childTnLst><p:seq concurrent="1" nextAc="seek">'
+            '<p:cTn id="2" dur="indefinite" nodeType="mainSeq"/>'
+            "</p:seq></p:childTnLst></p:cTn></p:par></p:tnLst></p:timing>"
+        )
+
+    @staticmethod
+    def _half_trace_slide() -> bytes:
+        root = ET.fromstring(xml_slide())
+        sp_tree = next(
+            element
+            for element in root.iter()
+            if MODULE.local_name(element.tag) == "spTree"
+        )
+        sp_tree.append(MODULE.build_audio_shape(3, "rId5"))
+        return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
+    def test_postprocess_merge_keeps_main_summary_fields(self):
+        # TD-035 on a clean run: the shared-pipeline summary keeps the
+        # verify-side main fields and adds the patch-side skip counts (0),
+        # matching a patch_audio single run on the same input.
+        deck_root = self.root / "deck-merge-clean"
+        make_deck(deck_root, [{"audio": "media/beep.mp3"}])
+        pristine = self.root / "pristine-clean.pptx"
+        make_pptx(pristine, {1: xml_slide()})
+        out = self.root / "out-clean.pptx"
+        make_pptx(out, {1: xml_slide()})
+        patch_summary = MODULE.patch_audio(pristine, deck_root)
+        summary = MODULE.postprocess_pptx(out, deck_root, "fade", False)
+        for key in ("slides", "fadeTransitions", "audioSlides", "audioParts"):
+            self.assertIn(key, summary)
+        self.assertEqual(summary["slides"], 1)
+        self.assertEqual(summary["fadeTransitions"], 1)
+        self.assertEqual(summary["audioSlides"], 1)
+        self.assertEqual(summary["audioParts"], 1)
+        self.assertEqual(
+            summary["audioSkippedAlreadyInjected"],
+            patch_summary.get("audioSkippedAlreadyInjected", 0),
+        )
+        self.assertEqual(
+            summary["audioSkippedUnmergeableTiming"],
+            patch_summary.get("audioSkippedUnmergeableTiming", 0),
+        )
+
+    def test_postprocess_merge_exposes_half_trace_skip_count(self):
+        # TD-035: patch's audioSkippedAlreadyInjected (invisible in A-1's
+        # verify-only summary) now surfaces in the shared pipeline, equal to a
+        # patch_audio single run on the same half-trace package.
+        deck_root = self.root / "deck-merge-half"
+        make_deck(deck_root, [{"audio": "media/beep.mp3"}])
+        pristine = self.root / "pristine-half.pptx"
+        make_pptx(pristine, {1: self._half_trace_slide()})
+        out = self.root / "out-half.pptx"
+        make_pptx(out, {1: self._half_trace_slide()})
+        patch_summary = MODULE.patch_audio(pristine, deck_root)
+        self.assertEqual(patch_summary["audioSkippedAlreadyInjected"], 1)
+        summary = MODULE.postprocess_pptx(out, deck_root, "fade", False)
+        self.assertEqual(
+            summary["audioSkippedAlreadyInjected"],
+            patch_summary["audioSkippedAlreadyInjected"],
+        )
+        self.assertEqual(summary["audioSkippedUnmergeableTiming"], 0)
+        self.assertEqual(summary["audioSlides"], 0)
+
+    def test_postprocess_merge_exposes_unmergeable_skip_count(self):
+        deck_root = self.root / "deck-merge-um"
+        make_deck(deck_root, [{"audio": "media/beep.mp3"}])
+        pristine = self.root / "pristine-um.pptx"
+        make_pptx(pristine, {1: xml_slide(timing=self._unmergeable_timing())})
+        out = self.root / "out-um.pptx"
+        make_pptx(out, {1: xml_slide(timing=self._unmergeable_timing())})
+        patch_summary = MODULE.patch_audio(pristine, deck_root)
+        self.assertEqual(patch_summary["audioSkippedUnmergeableTiming"], 1)
+        summary = MODULE.postprocess_pptx(out, deck_root, "fade", False)
+        self.assertEqual(
+            summary["audioSkippedUnmergeableTiming"],
+            patch_summary["audioSkippedUnmergeableTiming"],
+        )
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 0)
+        self.assertEqual(summary["audioSlides"], 0)
+
+    def test_postprocess_merge_takes_patch_skip_count_not_verify(self):
+        # TD-035 merge rule: skip counts take the patch side (same event set
+        # observed from both sides — union, not sum). A pre-existing full
+        # injection is skipped by patch (alreadyInjected=1) while verify
+        # deep-verifies it into audioSlides; the merged summary must carry the
+        # patch count and keep verify's audioSlides.
+        deck_root = self.root / "deck-merge-prior"
+        make_deck(deck_root, [{"audio": "media/beep.mp3"}])
+        pristine = self.root / "pristine-prior.pptx"
+        make_pptx(pristine, {1: xml_slide()})
+        MODULE.patch_audio(pristine, deck_root)  # fully injected
+        out = self.root / "out-prior.pptx"
+        make_pptx(out, {1: xml_slide()})
+        MODULE.patch_audio(out, deck_root)  # fully injected
+        patch_summary = MODULE.patch_audio(out, deck_root)  # single run on input
+        self.assertEqual(patch_summary["audioSkippedAlreadyInjected"], 1)
+        summary = MODULE.postprocess_pptx(out, deck_root, "fade", False)
+        self.assertEqual(
+            summary["audioSkippedAlreadyInjected"],
+            patch_summary["audioSkippedAlreadyInjected"],
+        )
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 1)
+        self.assertEqual(summary["audioSlides"], 1)  # verify still counts it
+        self.assertEqual(summary["audioParts"], 1)
+
 
 def rewrite_zip(src: Path, dst: Path, replacements=None, additions=None, drops=frozenset()) -> None:
     """Copy a ZIP while replacing/adding/dropping specific members (for tampering)."""
@@ -1802,6 +1912,15 @@ class NarrationSequenceSelectionTests(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.ExportError, "invalid slide XML"):
             MODULE.patch_audio(broken, self.deck_root)
 
+    def test_main_seq_selection_is_single_sourced(self):
+        # TD-025: the mainSeq look-up lives in `_main_sequences` only; neither
+        # the merge-side sequence picker nor the verify-side ownership assert
+        # inlines a nodeType search loop anymore.
+        for func in (MODULE._select_animation_seq, MODULE.verify_audio_slide):
+            source = inspect.getsource(func)
+            self.assertIn("_main_sequences(", source)
+            self.assertNotIn("_is_main_seq(", source)
+
 
 class AudioIdempotencyTests(unittest.TestCase):
     """TD-012: re-running ``patch_audio`` on an injected PPTX must not duplicate."""
@@ -2006,9 +2125,62 @@ class AudioVerifyContractTests(unittest.TestCase):
         summary = MODULE.verify_output(out, "fade", False)
         self.assertEqual(summary["audioSlides"], 1)
 
-    def test_verify_audio_slide_has_no_global_substring_lookup(self):
-        source = inspect.getsource(MODULE.verify_audio_slide)
-        self.assertNotIn("in content_types", source)
+    def test_verify_accepts_uppercase_mime_variant(self):
+        # TD-033①: the MIME comparison is case-insensitive, so `audio/MPEG`
+        # (a legal registry variant) verifies exactly like `audio/mpeg`.
+        with zipfile.ZipFile(self.pptx) as archive:
+            content_types = archive.read("[Content_Types].xml").decode("utf-8")
+        tampered = content_types.replace(
+            '<Override PartName="/ppt/media/audio2.mp3" ContentType="audio/mpeg"/>',
+            '<Override PartName="/ppt/media/audio2.mp3" ContentType="audio/MPEG"/>',
+        )
+        self.assertNotEqual(tampered, content_types, "fixture did not patch page 2")
+        out = self.root / "mime-case.pptx"
+        rewrite_zip(
+            self.pptx, out, replacements={"[Content_Types].xml": tampered.encode()}
+        )
+        with zipfile.ZipFile(out) as archive:
+            self.assertEqual(
+                MODULE.verify_audio_slide(archive, 2)["part"], "ppt/media/audio2.mp3"
+            )
+
+    def test_verify_rejects_wrong_mime_case_insensitively(self):
+        # A genuinely wrong MIME fails regardless of casing: audio/mpeg vs
+        # AUDIO/WAV are different media types, not a casing variant.
+        with zipfile.ZipFile(self.pptx) as archive:
+            content_types = archive.read("[Content_Types].xml").decode("utf-8")
+        tampered = content_types.replace(
+            '<Override PartName="/ppt/media/audio2.mp3" ContentType="audio/mpeg"/>',
+            '<Override PartName="/ppt/media/audio2.mp3" ContentType="AUDIO/WAV"/>',
+        )
+        out = self.root / "mime-wrong-case.pptx"
+        rewrite_zip(
+            self.pptx, out, replacements={"[Content_Types].xml": tampered.encode()}
+        )
+        with zipfile.ZipFile(out) as archive:
+            with self.assertRaisesRegex(MODULE.ExportError, "ContentType"):
+                MODULE.verify_audio_slide(archive, 2)
+
+    def test_verify_rejects_default_only_mime_declaration(self):
+        # TD-033① boundary: a Default-only declaration (no Override) is NOT a
+        # fallback — the part must still fail verification.
+        with zipfile.ZipFile(self.pptx) as archive:
+            content_types = archive.read("[Content_Types].xml").decode("utf-8")
+        stripped = re.sub(
+            r'<Override PartName="/ppt/media/audio2\.mp3"[^>]*/>', "", content_types
+        )
+        defaulted = stripped.replace(
+            "</Types>", '<Default Extension="mp3" ContentType="audio/mpeg"/></Types>'
+        )
+        out = self.root / "default-only.pptx"
+        rewrite_zip(
+            self.pptx, out, replacements={"[Content_Types].xml": defaulted.encode()}
+        )
+        with zipfile.ZipFile(out) as archive:
+            with self.assertRaisesRegex(
+                MODULE.ExportError, r"no \[Content_Types\]\.xml Override"
+            ):
+                MODULE.verify_audio_slide(archive, 2)
 
     def test_verify_rejects_malformed_content_types(self):
         out = self.root / "bad-content-types.pptx"
@@ -2107,6 +2279,50 @@ class ZipRewriteSkeletonTests(unittest.TestCase):
         MODULE.patch_audio(pptx, self.deck_root)
         with zipfile.ZipFile(pptx) as archive:
             self.assertEqual(archive.comment, b"open-kimi-ppt export")
+
+    def _dup_pptx(self, name: str) -> Path:
+        pptx = self.root / name
+        with zipfile.ZipFile(pptx, "w") as archive:
+            archive.writestr("[Content_Types].xml", base_content_types(1))
+            archive.writestr("ppt/presentation.xml", '<p:presentation xmlns:p="urn:x"/>')
+            archive.writestr("ppt/slides/slide1.xml", xml_slide())
+            archive.writestr(
+                "ppt/slides/slide1.xml",
+                xml_slide().replace(b"Title 1", b"Title 2"),
+            )
+        return pptx
+
+    def test_duplicate_entry_rejected_by_patch_transitions(self):
+        # TD-034: two same-named entries must be rejected (zipfile read()
+        # silently returns the last one), never last-wins; the original bytes
+        # stay untouched.
+        pptx = self._dup_pptx("dup-transitions.pptx")
+        before = pptx.read_bytes()
+        with self.assertRaisesRegex(MODULE.ExportError, "duplicate part name"):
+            MODULE.patch_transitions(pptx, "fade")
+        self.assertEqual(self._temp_files(), [])
+        self.assertEqual(pptx.read_bytes(), before)
+
+    def test_duplicate_entry_rejected_by_patch_audio(self):
+        pptx = self._dup_pptx("dup-audio.pptx")
+        before = pptx.read_bytes()
+        with self.assertRaisesRegex(MODULE.ExportError, "duplicate part name"):
+            MODULE.patch_audio(pptx, self.deck_root)
+        self.assertEqual(self._temp_files(), [])
+        self.assertEqual(pptx.read_bytes(), before)
+
+    def test_mutator_contract_is_two_arguments(self):
+        # TD-024: mutators no longer receive the part-name set as a third
+        # argument; the frame passes (source_zip, target_zip) only, and
+        # patch_audio derives the set itself inside its closure.
+        self.assertNotIn("existing_names", inspect.getsource(MODULE.patch_transitions))
+        self.assertNotIn("_existing_names", inspect.getsource(MODULE.patch_transitions))
+        self.assertIn(
+            "set(source_zip.namelist())", inspect.getsource(MODULE.patch_audio)
+        )
+        frame = inspect.getsource(MODULE._rewrite_zip)
+        self.assertNotIn("existing_names", frame)
+        self.assertIn("mutator(source_zip, target_zip)", frame)
 
 
 if __name__ == "__main__":
