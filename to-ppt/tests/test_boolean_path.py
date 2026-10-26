@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import warnings
 from pathlib import Path
 from unittest.mock import patch
 
@@ -754,6 +755,108 @@ class RingDegeneracyContractTests(unittest.TestCase):
         self.assertEqual(path.count("M"), 1)  # only the exterior survives
         self.assertAlmostEqual(parse_path(path).area, 100.0)  # 10 x 10 shell
         self.assertLess(signed_area(parse_path(path)), 0)  # exterior is CW
+
+    def test_translation_subtracts_dx_dy_byte_exact(self):
+        # TD-028 direction lock: positive and negative shifts pinned to
+        # char-exact SVG output, so a sign flip in the implementation
+        # (``c[0] - dx`` <-> ``c[0] + dx``) fails both cases.
+        square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+        cases = {
+            "positive_shift": (
+                (100.0, 50.0),
+                "M-100.0,-50.0L-90.0,-50.0L-90.0,-40.0L-100.0,-40.0Z",
+            ),
+            "negative_shift": (
+                (-100.0, -50.0),
+                "M100.0,50.0L110.0,50.0L110.0,60.0L100.0,60.0Z",
+            ),
+        }
+        for name, ((dx, dy), expected) in cases.items():
+            with self.subTest(shift=name):
+                self.assertEqual(MODULE.to_svg_path(square, dx, dy), expected)
+
+    def test_translation_shifted_ring_matches_normalize_ring(self):
+        # Anti-drift lock: the public serializer and the single helper must
+        # agree on the shifted coordinates, not only on degeneracy verdicts.
+        square = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+        self.assertEqual(
+            MODULE._normalize_ring(square.exterior, 100.0, 50.0),
+            [(-100.0, -50.0), (-90.0, -50.0), (-90.0, -40.0), (-100.0, -40.0)],
+        )
+
+    def test_normalize_ring_rejects_non_finite_coordinates(self):
+        # TD-033②: NaN / Inf coordinates must never reach the serializer;
+        # ``_normalize_ring`` treats them as degenerate (``None``) instead of
+        # emitting an illegal "nan"/"inf" SVG token. Responsibility boundary
+        # with ``_num``: ``_num`` rejects non-finite AND out-of-range values on
+        # the JSON parsing path, ``_normalize_ring`` guards the ring
+        # serialization path against direct / bypass callers.
+        nan, inf = float("nan"), float("inf")
+
+        class _Ring:
+            def __init__(self, coords):
+                self.coords = coords
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            rings = [
+                _Ring([(0, 0), (nan, 1), (2, 2), (0, 2)]),
+                _Ring([(0, 0), (inf, 1), (2, 2), (0, 2)]),
+                _Ring([(0, 0), (-inf, 1), (2, 2), (0, 2)]),
+                Polygon([(0, 0), (nan, 1), (2, 2), (0, 2)]).exterior,
+                Polygon([(0, 0), (inf, 1), (2, 2), (0, 2)]).exterior,
+            ]
+            for ring in rings:
+                with self.subTest(ring=ring.coords if hasattr(ring, "coords") else ring):
+                    self.assertIsNone(MODULE._normalize_ring(ring, 0, 0))
+                    self.assertIsNone(MODULE._normalize_ring(ring, 100.0, 50.0))
+
+    def test_to_svg_path_skips_non_finite_rings(self):
+        # A NaN/Inf ring is dropped (treated as degenerate), never serialized
+        # as "nan"/"inf" tokens; remaining valid rings are emitted as usual.
+        nan, inf = float("nan"), float("inf")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            self.assertEqual(
+                MODULE.to_svg_path(Polygon([(0, 0), (nan, 1), (2, 2), (0, 2)])), ""
+            )
+            self.assertEqual(
+                MODULE.to_svg_path(Polygon([(0, 0), (inf, 1), (2, 2), (0, 2)])), ""
+            )
+            # NaN exterior -> dropped; the valid hole is the only remaining ring
+            donut = Polygon(
+                [(0, 0), (nan, 10), (10, 10), (0, 10)],
+                [[(2, 2), (4, 2), (4, 4), (2, 4)]],
+            )
+            self.assertEqual(
+                MODULE.to_svg_path(donut), "M2.0,2.0L4.0,2.0L4.0,4.0L2.0,4.0Z"
+            )
+
+
+class PublicExportContractTests(unittest.TestCase):
+    """TD-023: the three public names are declared in ``__all__`` and are
+    reachable through ``from boolean_path import *``."""
+
+    PUBLIC_NAMES = {"require_shapely", "geometry_to_shapely", "build_parser"}
+
+    def test_all_contains_the_three_public_names(self):
+        self.assertTrue(set(MODULE.__all__) >= self.PUBLIC_NAMES)
+        for name in self.PUBLIC_NAMES:
+            self.assertTrue(hasattr(MODULE, name), name)
+
+    def test_star_import_exposes_the_three_public_names(self):
+        ns: dict = {}
+        saved = sys.modules.get("boolean_path")
+        try:
+            sys.modules["boolean_path"] = MODULE
+            exec("from boolean_path import *", ns)
+        finally:
+            if saved is None:
+                sys.modules.pop("boolean_path", None)
+            else:
+                sys.modules["boolean_path"] = saved
+        missing = self.PUBLIC_NAMES - set(ns)
+        self.assertEqual(missing, set(), f"star-import missing: {missing}")
 
 
 class _ReentrantStderr:
