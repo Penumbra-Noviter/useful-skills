@@ -1384,9 +1384,14 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
       narration) is skipped with a warning and counted in
       ``audioSkippedUnmergeableTiming`` — better no narration than replacing
       the authored animations.
+    - ``missing slide part`` (TD-010 G2: a page declares audio but the package
+      holds no ``slide{n}.xml``) is skipped with a warning and counted in
+      ``audioSkippedMissingSlides`` (TD-040), so dangling rels / media parts /
+      Content-Types Overrides are never written.
 
     Returns ``{"audioSlides", "audioParts", "audioSkippedUnknownExtensions",
-    "audioSkippedAlreadyInjected", "audioSkippedUnmergeableTiming"}``; the
+    "audioSkippedMissingSlides", "audioSkippedAlreadyInjected",
+    "audioSkippedUnmergeableTiming"}``; the
     no-audio fast path returns only the first three keys.
     """
     sources = collect_page_audio(deck)
@@ -1476,6 +1481,7 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
             "audioSlides": 0,
             "audioParts": 0,
             "audioSkippedUnknownExtensions": skipped,
+            "audioSkippedMissingSlides": len(absent_packs),
             "audioSkippedAlreadyInjected": len(injected_slides),
             "audioSkippedUnmergeableTiming": len(unmergeable_slides),
         }
@@ -1552,6 +1558,7 @@ def patch_audio(pptx: Path, deck: Path) -> Dict[str, Any]:
         "audioSlides": len(packs),
         "audioParts": len(packs),
         "audioSkippedUnknownExtensions": skipped,
+        "audioSkippedMissingSlides": len(absent_packs),
         "audioSkippedAlreadyInjected": len(injected_slides),
         "audioSkippedUnmergeableTiming": len(unmergeable_slides),
     }
@@ -1788,7 +1795,10 @@ def verify_output(
             an ``unmergeable`` timing is skipped and counted in
             ``audioSkippedUnmergeableTiming``; a media ``audioFile`` shape without
             a ``playFrom(0)`` narration (audioFile-only half-trace) is skipped and
-            counted in ``audioSkippedAlreadyInjected`` — all three are deliberate
+            counted in ``audioSkippedInjectedNoNarration`` (TD-039 — this
+            standalone entry's observed "injected pages without narration";
+            distinct from the patch-side ``audioSkippedAlreadyInjected``, which
+            aggregates every injected page) — all three are deliberate
             skips that ``patch_audio`` applies too, so they must not fail the
             export. A plain page that lost its narration raises ``ExportError``.
             Pages carrying a narration command — including the playFrom-only
@@ -1804,7 +1814,7 @@ def verify_output(
     Returns:
         Mapping with ``slides``, ``fadeTransitions``, ``fontParts``,
         ``audioSlides``, ``audioSkippedMissingSlides``,
-        ``audioSkippedAlreadyInjected``, ``audioSkippedUnmergeableTiming``,
+        ``audioSkippedInjectedNoNarration``, ``audioSkippedUnmergeableTiming``,
         ``audioParts`` and ``bytes``.
 
     Raises:
@@ -1843,7 +1853,7 @@ def verify_output(
             name for name in archive.namelist() if AUDIO_MEDIA_PART_RE.match(name)
         )
         audio_skipped_missing = 0
-        audio_skipped_already_injected = 0
+        audio_skipped_injected_no_narration = 0
         audio_skipped_unmergeable = 0
         if deck is None:
             audio_slides = _count_audio_in_archive(archive, slide_names)
@@ -1891,7 +1901,7 @@ def verify_output(
                     if state == "injected":
                         # TD-030 half-trace: patch left the media hotspot alone;
                         # the skip is deliberate, not a lost narration defect.
-                        audio_skipped_already_injected += 1
+                        audio_skipped_injected_no_narration += 1
                         log(
                             f"warning: page {source['slide']} already carries a media "
                             f"audioFile shape without narration; skipping its audio "
@@ -1910,11 +1920,47 @@ def verify_output(
             "fontParts": len(fonts),
             "audioSlides": audio_slides,
             "audioSkippedMissingSlides": audio_skipped_missing,
-            "audioSkippedAlreadyInjected": audio_skipped_already_injected,
+            "audioSkippedInjectedNoNarration": audio_skipped_injected_no_narration,
             "audioSkippedUnmergeableTiming": audio_skipped_unmergeable,
             "audioParts": len(audio_parts),
             "bytes": pptx.stat().st_size,
         }
+
+
+def _merge_skip_counts(
+    summary: Dict[str, Any], patch_summary: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Merge the patch-side skip counts into a verify summary (TD-035 / TD-040).
+
+    ``audioSkippedAlreadyInjected`` and ``audioSkippedUnmergeableTiming`` take
+    the patch-side value: both sides observe the same skip events and verify's
+    per-page skips are a subset of patch's, so the union is the patch count,
+    not a sum. ``audioSkippedMissingSlides`` also takes the patch-side value —
+    patch and verify derive it from the same slide-part presence judgment over
+    the same package, so the values should agree; when they do not (not
+    expected), a warning is logged and the larger value is kept so a genuinely
+    skipped page is never under-reported. The verify-only
+    ``audioSkippedInjectedNoNarration`` counter is dropped: it is the
+    standalone entry's per-page observation, and the shared summary keeps the
+    patch-side aggregation under ``audioSkippedAlreadyInjected`` (TD-039).
+    """
+    summary.pop("audioSkippedInjectedNoNarration", None)
+    summary["audioSkippedAlreadyInjected"] = patch_summary.get(
+        "audioSkippedAlreadyInjected", 0
+    )
+    summary["audioSkippedUnmergeableTiming"] = patch_summary.get(
+        "audioSkippedUnmergeableTiming", 0
+    )
+    patch_missing = patch_summary.get("audioSkippedMissingSlides", 0)
+    verify_missing = summary.get("audioSkippedMissingSlides", 0)
+    summary["audioSkippedMissingSlides"] = patch_missing
+    if patch_missing != verify_missing:
+        log(
+            f"warning: patch and verify disagree on audioSkippedMissingSlides "
+            f"(patch {patch_missing}, verify {verify_missing}); keeping the larger"
+        )
+        summary["audioSkippedMissingSlides"] = max(patch_missing, verify_missing)
+    return summary
 
 
 def postprocess_pptx(
@@ -1930,25 +1976,21 @@ def postprocess_pptx(
     against which ``verify_output`` cross-checks the packaged audio.
 
     ``patch_audio``'s summary is merged into ``verify_output``'s so the skip
-    counts only the patch side knows surface on the shared pipeline (TD-035):
-    ``audioSkippedAlreadyInjected`` / ``audioSkippedUnmergeableTiming`` take the
+    counts only the patch side knows surface on the shared pipeline (TD-035),
+    via ``_merge_skip_counts`` (TD-039 / TD-040): ``audioSkippedAlreadyInjected``
+    / ``audioSkippedUnmergeableTiming`` / ``audioSkippedMissingSlides`` take the
     patch-side value — the same skip events are observed from both sides
-    (verify's per-page skips are a subset of patch's), so the union is the patch
-    count, not a sum. Every other field (``slides`` / ``fadeTransitions`` /
-    ``audioSlides`` / ``audioParts`` / ``bytes`` …) stays verify-side, keeping
-    both export paths' summary shape backward compatible.
+    (verify's per-page skips are a subset of patch's), so the union is the
+    patch count, not a sum; the verify-only ``audioSkippedInjectedNoNarration``
+    key is not part of the shared summary. Every other field (``slides`` /
+    ``fadeTransitions`` / ``audioSlides`` / ``audioParts`` / ``bytes`` …) stays
+    verify-side, keeping both export paths' summary shape backward compatible.
     """
     slide_count = patch_transitions(output, transition)
     patch_summary = patch_audio(output, project_dir)
     summary = verify_output(output, transition, expect_fonts, deck=project_dir)
     summary["transitionPatchedSlides"] = slide_count
-    summary["audioSkippedAlreadyInjected"] = patch_summary.get(
-        "audioSkippedAlreadyInjected", 0
-    )
-    summary["audioSkippedUnmergeableTiming"] = patch_summary.get(
-        "audioSkippedUnmergeableTiming", 0
-    )
-    return summary
+    return _merge_skip_counts(summary, patch_summary)
 
 
 def resolve_editor_root() -> Path:

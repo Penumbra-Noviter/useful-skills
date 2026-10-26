@@ -547,6 +547,8 @@ class AudioPackagingTests(unittest.TestCase):
             result = MODULE.patch_audio(out, deck_root)
         self.assertEqual(result["audioSlides"], 2)
         self.assertEqual(result["audioParts"], 2)
+        # TD-040: the patch side now counts TD-010 G2 skips in its own key.
+        self.assertEqual(result["audioSkippedMissingSlides"], 1)
         with zipfile.ZipFile(out) as archive:
             names = archive.namelist()
             self.assertIn("ppt/media/audio1.mp3", names)
@@ -569,6 +571,8 @@ class AudioPackagingTests(unittest.TestCase):
             result = MODULE.patch_audio(out, deck_root)
         self.assertEqual(result["audioSlides"], 0)
         self.assertEqual(result["audioParts"], 0)
+        # TD-040: the patch-side G2 counter is populated even when nothing is written.
+        self.assertEqual(result["audioSkippedMissingSlides"], 1)
         with zipfile.ZipFile(out) as archive:
             names = archive.namelist()
             self.assertFalse(any(name.startswith("ppt/media/audio") for name in names))
@@ -1080,6 +1084,42 @@ class AudioExporterHookupTests(unittest.TestCase):
         self.assertEqual(summary["audioSlides"], 1)  # verify still counts it
         self.assertEqual(summary["audioParts"], 1)
 
+    def test_postprocess_merges_missing_slides_skip_count(self):
+        # TD-039 / TD-040: the shared-pipeline summary surfaces the patch-side
+        # audioSkippedMissingSlides (identical to verify's count here) and does
+        # NOT leak the verify-only audioSkippedInjectedNoNarration key.
+        deck_root = self.root / "deck-pp-missing"
+        make_deck(
+            deck_root,
+            [{"audio": "media/beep.mp3"}, {"audio": "media/beep.mp3"}],
+        )
+        out = self.root / "pp-missing.pptx"
+        make_pptx(out, {1: xml_slide()})  # only slide 1 exported
+        summary = MODULE.postprocess_pptx(out, deck_root, "fade", False)
+        self.assertEqual(summary["audioSkippedMissingSlides"], 1)
+        self.assertNotIn("audioSkippedInjectedNoNarration", summary)
+        self.assertEqual(summary["audioSlides"], 1)
+
+    def test_merge_skip_counts_keeps_larger_missing_and_warns(self):
+        # TD-040 defensive rule: patch and verify derive audioSkippedMissingSlides
+        # from the same slide-part presence judgment, so a mismatch is not
+        # expected — when one occurs, warn and keep the larger count so a
+        # genuinely skipped page is never under-reported.
+        err = io.StringIO()
+        summary = {"audioSkippedMissingSlides": 1, "audioSlides": 1}
+        patch_summary = {
+            "audioSkippedMissingSlides": 2,
+            "audioSkippedAlreadyInjected": 0,
+            "audioSkippedUnmergeableTiming": 0,
+        }
+        with contextlib.redirect_stderr(err):
+            merged = MODULE._merge_skip_counts(dict(summary), patch_summary)
+        self.assertEqual(merged["audioSkippedMissingSlides"], 2)
+        self.assertEqual(merged["audioSlides"], 1)
+        self.assertEqual(merged["audioSkippedAlreadyInjected"], 0)
+        self.assertIn("disagree", err.getvalue().lower())
+        self.assertIn("warning", err.getvalue().lower())
+
 
 def rewrite_zip(src: Path, dst: Path, replacements=None, additions=None, drops=frozenset()) -> None:
     """Copy a ZIP while replacing/adding/dropping specific members (for tampering)."""
@@ -1445,7 +1485,7 @@ class AudioPageStateTests(unittest.TestCase):
             names = archive.namelist()
             self.assertFalse(any(MODULE.AUDIO_MEDIA_PART_RE.match(n) for n in names))
         verify = MODULE.verify_output(out, "fade", False, deck=deck_root)
-        self.assertEqual(verify["audioSkippedAlreadyInjected"], 1)
+        self.assertEqual(verify["audioSkippedInjectedNoNarration"], 1)
         self.assertEqual(verify["audioSkippedUnmergeableTiming"], 1)
         self.assertEqual(verify["audioSlides"], 0)
 
@@ -1455,9 +1495,20 @@ class AudioPageStateTests(unittest.TestCase):
         out = self.root / "verify-half.pptx"
         make_pptx(out, {1: self._half_trace_slide()})
         summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
-        self.assertEqual(summary["audioSkippedAlreadyInjected"], 1)
+        self.assertEqual(summary["audioSkippedInjectedNoNarration"], 1)
         self.assertEqual(summary["audioSkippedUnmergeableTiming"], 0)
         self.assertEqual(summary["audioSlides"], 0)
+
+    def test_verify_standalone_summary_uses_renamed_injected_key(self):
+        # TD-039: the standalone verify entry's injected skip counter is
+        # renamed audioSkippedInjectedNoNarration (injected pages without
+        # narration); the old audioSkippedAlreadyInjected key must not appear
+        # in a verify-only summary — that key is the patch-side aggregation.
+        out = self.root / "verify-rename.pptx"
+        make_pptx(out, {1: self._half_trace_slide()})
+        summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
+        self.assertEqual(summary["audioSkippedInjectedNoNarration"], 1)
+        self.assertNotIn("audioSkippedAlreadyInjected", summary)
 
     def test_verify_skips_unmergeable_matches_patch(self):
         # AC4: verify skips the same unmergeable pages patch skips; counts agree.
@@ -1480,10 +1531,10 @@ class AudioPageStateTests(unittest.TestCase):
         patch_summary = MODULE.patch_audio(out, self.deck_root)
         verify_summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
         self.assertEqual(
-            verify_summary["audioSkippedAlreadyInjected"],
+            verify_summary["audioSkippedInjectedNoNarration"],
             patch_summary["audioSkippedAlreadyInjected"],
         )
-        self.assertEqual(verify_summary["audioSkippedAlreadyInjected"], 1)
+        self.assertEqual(verify_summary["audioSkippedInjectedNoNarration"], 1)
 
     def test_verify_playfrom_only_page_fails_as_defect(self):
         # TD-041 choice: patch skips a playFrom-only page rather than
@@ -1508,7 +1559,7 @@ class AudioPageStateTests(unittest.TestCase):
         MODULE.patch_audio(out, self.deck_root)
         summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
         self.assertEqual(summary["audioSlides"], 1)
-        self.assertEqual(summary["audioSkippedAlreadyInjected"], 0)
+        self.assertEqual(summary["audioSkippedInjectedNoNarration"], 0)
         self.assertEqual(summary["audioSkippedUnmergeableTiming"], 0)
 
 
