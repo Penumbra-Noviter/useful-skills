@@ -1210,6 +1210,34 @@ def _audio_file_element(
     return None
 
 
+def _is_play_from_command(element: ET.Element) -> bool:
+    """Return whether ``element`` is a narration ``playFrom(0)`` command.
+
+    A ``p:cmd`` whose ``cmd`` attribute is ``playFrom(0)`` counts as a
+    narration command only when its ``type`` attribute is a media-call type
+    (``call`` — what ``build_narration_par`` writes — or ``mediacall``); an
+    authored animation using ``type="onBegin"`` is not an injection trace
+    (TD-046).
+    """
+    return (
+        local_name(element.tag) == "cmd"
+        and element.get("cmd") == "playFrom(0)"
+        and element.get("type") in ("mediacall", "call")
+    )
+
+
+def _has_play_from_command(root: ET.Element) -> bool:
+    """Return whether the slide XML carries a narration ``playFrom(0)`` command.
+
+    Shares ``_is_play_from_command`` with the injection judgement
+    (``_slide_audio_state``), the verify-side command collection
+    (``verify_audio_slide``) and the narration check (``verify_output``), so
+    the command shape can only drift in one place (TD-045) and the ``type``
+    constraint stays aligned across all three (TD-046).
+    """
+    return any(_is_play_from_command(element) for element in root.iter())
+
+
 def _slide_audio_state(slide_xml: bytes) -> str:
     """Classify a slide for narration-audio injection (page state table).
 
@@ -1245,10 +1273,7 @@ def _slide_audio_state(slide_xml: bytes) -> str:
         raise ExportError(f"invalid slide XML: {exc}") from exc
     if _audio_file_element(root) is not None:
         return "injected"
-    if any(
-        local_name(element.tag) == "cmd" and element.get("cmd") == "playFrom(0)"
-        for element in root.iter()
-    ):
+    if _has_play_from_command(root):
         return "injected"
     timing = _root_child(root, "timing")
     if timing is not None and merge_narration_timing(timing, 0) is None:
@@ -1638,7 +1663,7 @@ def verify_audio_slide(archive: zipfile.ZipFile, slide_number: int) -> Dict[str,
     commands = [
         element
         for element in root.iter()
-        if local_name(element.tag) == "cmd" and element.get("cmd") == "playFrom(0)"
+        if _is_play_from_command(element)
     ]
     if not commands:
         raise ExportError(f"audio slide {slide_number} has no playFrom(0) narration command")
@@ -1892,11 +1917,7 @@ def verify_output(
                     )
                     continue
                 root = ET.fromstring(slide_xml)
-                has_narration = any(
-                    local_name(element.tag) == "cmd"
-                    and element.get("cmd") == "playFrom(0)"
-                    for element in root.iter()
-                )
+                has_narration = _has_play_from_command(root)
                 if not has_narration:
                     if state == "injected":
                         # TD-030 half-trace: patch left the media hotspot alone;
