@@ -1266,6 +1266,78 @@ class AudioMergeStructureFailureTests(unittest.TestCase):
         self.assertTrue(any(cid >= 12 for cid in ids))
 
 
+class PlayFromCommandPredicateTests(unittest.TestCase):
+    """TD-045/046: ``_has_play_from_command`` is the single playFrom judgement.
+
+    Direct calls to the private helper are declared here as a test-time seam
+    (TD-043): the predicate is the thinnest assert surface for the ``type``
+    constraint, exercised in isolation and through every production call site
+    (``_slide_audio_state`` / ``verify_audio_slide`` / ``verify_output``).
+    """
+
+    @staticmethod
+    def _root_with_command(type_value: str, cmd_value: str = "playFrom(0)") -> ET.Element:
+        """A slide tree whose timing carries one ``p:cmd`` with ``cmd_value``."""
+        timing = (
+            '<p:timing><p:tnLst><p:par><p:cTn id="1" dur="indefinite" '
+            'restart="never" nodeType="tmRoot"><p:childTnLst><p:seq '
+            'concurrent="1" nextAc="seek"><p:cTn id="2" dur="indefinite" '
+            'nodeType="mainSeq"><p:childTnLst><p:par><p:cTn id="3" fill="hold">'
+            '<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>'
+            f'<p:cmd type="{type_value}" cmd="{cmd_value}">'
+            '<p:cBhvr><p:cTn id="4" dur="0"/></p:cBhvr></p:cmd>'
+            "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:seq>"
+            "</p:childTnLst></p:cTn></p:par></p:tnLst></p:timing>"
+        )
+        return ET.fromstring(xml_slide(timing=timing))
+
+    def test_mediacall_command_is_play_from(self):
+        root = self._root_with_command("mediacall")
+        self.assertTrue(MODULE._has_play_from_command(root))
+
+    def test_call_command_is_play_from(self):
+        root = self._root_with_command("call")
+        self.assertTrue(MODULE._has_play_from_command(root))
+
+    def test_onbegin_command_is_not_play_from(self):
+        # TD-046: an authored animation using the OOXML-legitimate
+        # type="onBegin" must not be mistaken for an injection trace.
+        root = self._root_with_command("onBegin")
+        self.assertFalse(MODULE._has_play_from_command(root))
+
+    def test_command_without_type_is_not_play_from(self):
+        timing = '<p:timing><p:cmd cmd="playFrom(0)"><p:cBhvr/></p:cmd></p:timing>'
+        root = ET.fromstring(xml_slide(timing=timing))
+        self.assertFalse(MODULE._has_play_from_command(root))
+
+    def test_wrong_cmd_value_is_not_play_from(self):
+        root = self._root_with_command("mediacall", cmd_value="playFrom(1)")
+        self.assertFalse(MODULE._has_play_from_command(root))
+
+    def test_cmd_value_match_is_case_sensitive(self):
+        root = self._root_with_command("mediacall", cmd_value="PlayFrom(0)")
+        self.assertFalse(MODULE._has_play_from_command(root))
+
+    def test_non_command_element_is_ignored(self):
+        timing = (
+            '<p:timing><p:effect type="mediacall" cmd="playFrom(0)">'
+            "<p:cBhvr/></p:effect></p:timing>"
+        )
+        root = ET.fromstring(xml_slide(timing=timing))
+        self.assertFalse(MODULE._has_play_from_command(root))
+
+    def test_play_from_predicate_is_single_sourced(self):
+        # TD-045: the playFrom(0) judgement lives in the shared predicate
+        # only — no caller inlines a local_name=="cmd" scan loop anymore.
+        for func in (MODULE._slide_audio_state, MODULE.verify_output):
+            source = inspect.getsource(func)
+            self.assertNotIn('.get("cmd") == "playFrom(0)"', source)
+            self.assertIn("_has_play_from_command(", source)
+        verify_source = inspect.getsource(MODULE.verify_audio_slide)
+        self.assertNotIn('.get("cmd") == "playFrom(0)"', verify_source)
+        self.assertIn("_is_play_from_command(", verify_source)
+
+
 class AudioPageStateTests(unittest.TestCase):
     """TD-030 / TD-031: 页状态表 (injected / unmergeable / plain) 两侧贯通."""
 
@@ -1389,6 +1461,54 @@ class AudioPageStateTests(unittest.TestCase):
         root_child.append(MODULE.build_narration_par(2, 10))
         slide = xml_slide(timing=ET.tostring(timing, encoding="unicode"))
         self.assertEqual(MODULE._slide_audio_state(slide), "injected")
+
+    def test_slide_audio_state_onbegin_playfrom_falls_to_unmergeable(self):
+        # TD-046: a playFrom(0) command with type="onBegin" (an authored
+        # animation, OOXML-legal but not a media call) is no longer an injected
+        # trace — the page falls through to the mergeability probe instead of
+        # being classified injected.
+        timing = ET.fromstring(
+            xml_slide(timing=self._unmergeable_main_seq_timing())
+        )
+        timing = next(
+            element
+            for element in timing
+            if MODULE.local_name(element.tag) == "timing"
+        )
+        tm_root = next(
+            element
+            for element in timing.iter()
+            if element.get("nodeType") == "tmRoot"
+        )
+        root_child = next(
+            element
+            for element in tm_root
+            if MODULE.local_name(element.tag) == "childTnLst"
+        )
+        par = MODULE.build_narration_par(2, 10)
+        for element in par.iter():
+            if MODULE.local_name(element.tag) == "cmd":
+                element.set("type", "onBegin")
+        root_child.append(par)
+        slide = xml_slide(timing=ET.tostring(timing, encoding="unicode"))
+        self.assertEqual(MODULE._slide_audio_state(slide), "unmergeable")
+
+    def test_slide_audio_state_onbegin_playfrom_plain_when_timing_mergeable(self):
+        # TD-046 other branch: with a mergeable authored timing the onBegin
+        # page is "plain" — injectable — rather than "injected" from a false
+        # trace (contrast: type="call" in the same template is "injected").
+        timing = ET.tostring(
+            MODULE.build_narration_timing(2), encoding="unicode"
+        ).replace('type="call"', 'type="onBegin"')
+        self.assertEqual(MODULE._slide_audio_state(xml_slide(timing=timing)), "plain")
+
+    def test_slide_audio_state_mediacall_playfrom_is_injected(self):
+        # TD-046: type="mediacall" (the OOXML media-call form, and the exact
+        # attribute this tool's spec targets) is still an injection trace.
+        timing = ET.tostring(
+            MODULE.build_narration_timing(2), encoding="unicode"
+        ).replace('type="call"', 'type="mediacall"')
+        self.assertEqual(MODULE._slide_audio_state(xml_slide(timing=timing)), "injected")
 
     def test_slide_audio_state_malformed_xml_raises(self):
         with self.assertRaisesRegex(MODULE.ExportError, "invalid slide XML"):
@@ -1729,6 +1849,18 @@ class VerifyAudioSlideFailureTests(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.ExportError, "no playFrom"):
             self._verify(self._tampered(replacements={"ppt/slides/slide1.xml": slide.encode()}))
 
+    def test_verify_onbegin_playfrom_not_counted(self):
+        # TD-046: a playFrom(0) command with type="onBegin" (authored
+        # animation, not a media call) does not count as a narration command —
+        # verification reports the slide as having none.
+        timing = ET.tostring(
+            MODULE.build_narration_timing(2), encoding="unicode"
+        ).replace('type="call"', 'type="onBegin"')
+        slide = xml_slide(timing=timing)
+        out = self._tampered(replacements={"ppt/slides/slide1.xml": slide})
+        with self.assertRaisesRegex(MODULE.ExportError, "no playFrom"):
+            self._verify(out)
+
     def test_verify_rejects_multiple_playfrom_commands_with_count(self):
         # TD-041: a slide with two playFrom(0) commands (only reachable through
         # external edits, since patch skips injected pages) must fail with the
@@ -1759,6 +1891,46 @@ class VerifyAudioSlideFailureTests(unittest.TestCase):
             self._verify(out)
         # exactly one command (the patched base) still verifies end to end
         self.assertTrue(self._verify(self.base)["part"].endswith(".mp3"))
+
+    def test_verify_accepts_mediacall_playfrom(self):
+        # TD-046: type="mediacall" is a media-call type — the same fully
+        # packaged slide verifies end to end when the narration command
+        # carries it instead of "call".
+        slide = self._slide().replace('type="call"', 'type="mediacall"')
+        out = self._tampered(replacements={"ppt/slides/slide1.xml": slide.encode()})
+        self.assertTrue(self._verify(out)["part"].endswith(".mp3"))
+
+    def test_verify_onbegin_command_does_not_inflate_count(self):
+        # TD-046: an onBegin playFrom is not counted — one typed narration
+        # command plus one onBegin command is still exactly one playFrom
+        # command, so the fully packaged slide still verifies.
+        root = ET.fromstring(self._slide())
+        onbegin = ET.fromstring(
+            f'<p:par xmlns:p="{P_NS}"><p:cTn id="30" fill="hold">'
+            '<p:childTnLst><p:cmd type="onBegin" cmd="playFrom(0)">'
+            '<p:cBhvr><p:cTn id="31" dur="0"/></p:cBhvr></p:cmd>'
+            "</p:childTnLst></p:cTn></p:par>"
+        )
+        for seq in root.iter():
+            if MODULE.local_name(seq.tag) == "seq":
+                seq_ct = next(
+                    child
+                    for child in seq
+                    if MODULE.local_name(child.tag) == "cTn"
+                )
+                child_lst = next(
+                    (
+                        child
+                        for child in seq_ct
+                        if MODULE.local_name(child.tag) == "childTnLst"
+                    ),
+                    None,
+                )
+                if child_lst is not None:
+                    child_lst.append(onbegin)
+        slide = ET.tostring(root, encoding="unicode")
+        out = self._tampered(replacements={"ppt/slides/slide1.xml": slide.encode()})
+        self.assertTrue(self._verify(out)["part"].endswith(".mp3"))
 
     def test_verify_cmd_without_spid(self):
         slide = self._slide().replace('spid="3"', 'spid=""')
