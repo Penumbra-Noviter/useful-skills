@@ -547,6 +547,8 @@ class AudioPackagingTests(unittest.TestCase):
             result = MODULE.patch_audio(out, deck_root)
         self.assertEqual(result["audioSlides"], 2)
         self.assertEqual(result["audioParts"], 2)
+        # TD-040: the patch side now counts TD-010 G2 skips in its own key.
+        self.assertEqual(result["audioSkippedMissingSlides"], 1)
         with zipfile.ZipFile(out) as archive:
             names = archive.namelist()
             self.assertIn("ppt/media/audio1.mp3", names)
@@ -569,6 +571,8 @@ class AudioPackagingTests(unittest.TestCase):
             result = MODULE.patch_audio(out, deck_root)
         self.assertEqual(result["audioSlides"], 0)
         self.assertEqual(result["audioParts"], 0)
+        # TD-040: the patch-side G2 counter is populated even when nothing is written.
+        self.assertEqual(result["audioSkippedMissingSlides"], 1)
         with zipfile.ZipFile(out) as archive:
             names = archive.namelist()
             self.assertFalse(any(name.startswith("ppt/media/audio") for name in names))
@@ -1080,6 +1084,42 @@ class AudioExporterHookupTests(unittest.TestCase):
         self.assertEqual(summary["audioSlides"], 1)  # verify still counts it
         self.assertEqual(summary["audioParts"], 1)
 
+    def test_postprocess_merges_missing_slides_skip_count(self):
+        # TD-039 / TD-040: the shared-pipeline summary surfaces the patch-side
+        # audioSkippedMissingSlides (identical to verify's count here) and does
+        # NOT leak the verify-only audioSkippedInjectedNoNarration key.
+        deck_root = self.root / "deck-pp-missing"
+        make_deck(
+            deck_root,
+            [{"audio": "media/beep.mp3"}, {"audio": "media/beep.mp3"}],
+        )
+        out = self.root / "pp-missing.pptx"
+        make_pptx(out, {1: xml_slide()})  # only slide 1 exported
+        summary = MODULE.postprocess_pptx(out, deck_root, "fade", False)
+        self.assertEqual(summary["audioSkippedMissingSlides"], 1)
+        self.assertNotIn("audioSkippedInjectedNoNarration", summary)
+        self.assertEqual(summary["audioSlides"], 1)
+
+    def test_merge_skip_counts_keeps_larger_missing_and_warns(self):
+        # TD-040 defensive rule: patch and verify derive audioSkippedMissingSlides
+        # from the same slide-part presence judgment, so a mismatch is not
+        # expected — when one occurs, warn and keep the larger count so a
+        # genuinely skipped page is never under-reported.
+        err = io.StringIO()
+        summary = {"audioSkippedMissingSlides": 1, "audioSlides": 1}
+        patch_summary = {
+            "audioSkippedMissingSlides": 2,
+            "audioSkippedAlreadyInjected": 0,
+            "audioSkippedUnmergeableTiming": 0,
+        }
+        with contextlib.redirect_stderr(err):
+            merged = MODULE._merge_skip_counts(dict(summary), patch_summary)
+        self.assertEqual(merged["audioSkippedMissingSlides"], 2)
+        self.assertEqual(merged["audioSlides"], 1)
+        self.assertEqual(merged["audioSkippedAlreadyInjected"], 0)
+        self.assertIn("disagree", err.getvalue().lower())
+        self.assertIn("warning", err.getvalue().lower())
+
 
 def rewrite_zip(src: Path, dst: Path, replacements=None, additions=None, drops=frozenset()) -> None:
     """Copy a ZIP while replacing/adding/dropping specific members (for tampering)."""
@@ -1310,6 +1350,46 @@ class AudioPageStateTests(unittest.TestCase):
             MODULE._slide_audio_state(xml_slide(timing=ANIMATION_TIMING)), "plain"
         )
 
+    def test_slide_audio_state_playfrom_only_is_injected(self):
+        # TD-041: a playFrom(0) command with no audioFile shape is the other
+        # half of the injected trace (this tool always writes shape + command
+        # together, so a playFrom-only residue means a previous injection was
+        # partially rolled back / externally edited). Re-injecting would
+        # accumulate a second playFrom(0), so the page must be classified
+        # injected and skipped.
+        timing = ET.tostring(
+            MODULE.build_narration_timing(2), encoding="unicode"
+        )
+        self.assertEqual(
+            MODULE._slide_audio_state(xml_slide(timing=timing)), "injected"
+        )
+
+    def test_slide_audio_state_playfrom_injected_wins_over_unmergeable(self):
+        # TD-041 order: the playFrom trace is judged before the mergeability
+        # probe, so a page carrying a playFrom(0) command stays injected even
+        # when its timing would otherwise be unmergeable.
+        timing = ET.fromstring(
+            xml_slide(timing=self._unmergeable_main_seq_timing())
+        )
+        timing = next(
+            element
+            for element in timing
+            if MODULE.local_name(element.tag) == "timing"
+        )
+        tm_root = next(
+            element
+            for element in timing.iter()
+            if element.get("nodeType") == "tmRoot"
+        )
+        root_child = next(
+            element
+            for element in tm_root
+            if MODULE.local_name(element.tag) == "childTnLst"
+        )
+        root_child.append(MODULE.build_narration_par(2, 10))
+        slide = xml_slide(timing=ET.tostring(timing, encoding="unicode"))
+        self.assertEqual(MODULE._slide_audio_state(slide), "injected")
+
     def test_slide_audio_state_malformed_xml_raises(self):
         with self.assertRaisesRegex(MODULE.ExportError, "invalid slide XML"):
             MODULE._slide_audio_state(b"<broken")
@@ -1405,7 +1485,7 @@ class AudioPageStateTests(unittest.TestCase):
             names = archive.namelist()
             self.assertFalse(any(MODULE.AUDIO_MEDIA_PART_RE.match(n) for n in names))
         verify = MODULE.verify_output(out, "fade", False, deck=deck_root)
-        self.assertEqual(verify["audioSkippedAlreadyInjected"], 1)
+        self.assertEqual(verify["audioSkippedInjectedNoNarration"], 1)
         self.assertEqual(verify["audioSkippedUnmergeableTiming"], 1)
         self.assertEqual(verify["audioSlides"], 0)
 
@@ -1415,9 +1495,20 @@ class AudioPageStateTests(unittest.TestCase):
         out = self.root / "verify-half.pptx"
         make_pptx(out, {1: self._half_trace_slide()})
         summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
-        self.assertEqual(summary["audioSkippedAlreadyInjected"], 1)
+        self.assertEqual(summary["audioSkippedInjectedNoNarration"], 1)
         self.assertEqual(summary["audioSkippedUnmergeableTiming"], 0)
         self.assertEqual(summary["audioSlides"], 0)
+
+    def test_verify_standalone_summary_uses_renamed_injected_key(self):
+        # TD-039: the standalone verify entry's injected skip counter is
+        # renamed audioSkippedInjectedNoNarration (injected pages without
+        # narration); the old audioSkippedAlreadyInjected key must not appear
+        # in a verify-only summary — that key is the patch-side aggregation.
+        out = self.root / "verify-rename.pptx"
+        make_pptx(out, {1: self._half_trace_slide()})
+        summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
+        self.assertEqual(summary["audioSkippedInjectedNoNarration"], 1)
+        self.assertNotIn("audioSkippedAlreadyInjected", summary)
 
     def test_verify_skips_unmergeable_matches_patch(self):
         # AC4: verify skips the same unmergeable pages patch skips; counts agree.
@@ -1440,10 +1531,26 @@ class AudioPageStateTests(unittest.TestCase):
         patch_summary = MODULE.patch_audio(out, self.deck_root)
         verify_summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
         self.assertEqual(
-            verify_summary["audioSkippedAlreadyInjected"],
+            verify_summary["audioSkippedInjectedNoNarration"],
             patch_summary["audioSkippedAlreadyInjected"],
         )
-        self.assertEqual(verify_summary["audioSkippedAlreadyInjected"], 1)
+        self.assertEqual(verify_summary["audioSkippedInjectedNoNarration"], 1)
+
+    def test_verify_playfrom_only_page_fails_as_defect(self):
+        # TD-041 choice: patch skips a playFrom-only page rather than
+        # accumulating a second command, but verify still asserts the declared
+        # audio is packaged — a playFrom-only page carries no hidden audio
+        # shape, so verifying it raises instead of silently certifying a
+        # package whose declared audio is gone (re-export to repair it).
+        out = self.root / "verify-playfrom.pptx"
+        timing = ET.tostring(MODULE.build_narration_timing(2), encoding="unicode")
+        make_pptx(
+            out,
+            {1: xml_slide(timing=timing)},
+            rels={1: rels_bytes([("rId5", f"{R_NS}/audio", "media/audio1.mp3")])},
+        )
+        with self.assertRaisesRegex(MODULE.ExportError, "no hidden audio shape"):
+            MODULE.verify_output(out, "fade", False, deck=self.deck_root)
 
     def test_verify_summary_exposes_new_skip_fields(self):
         # A clean export: the new skip fields are present and zero.
@@ -1452,7 +1559,7 @@ class AudioPageStateTests(unittest.TestCase):
         MODULE.patch_audio(out, self.deck_root)
         summary = MODULE.verify_output(out, "fade", False, deck=self.deck_root)
         self.assertEqual(summary["audioSlides"], 1)
-        self.assertEqual(summary["audioSkippedAlreadyInjected"], 0)
+        self.assertEqual(summary["audioSkippedInjectedNoNarration"], 0)
         self.assertEqual(summary["audioSkippedUnmergeableTiming"], 0)
 
 
@@ -1621,6 +1728,37 @@ class VerifyAudioSlideFailureTests(unittest.TestCase):
         slide = re.sub(r"<p:cmd[^>]*>.*?</p:cmd>", "", self._slide(), flags=re.DOTALL)
         with self.assertRaisesRegex(MODULE.ExportError, "no playFrom"):
             self._verify(self._tampered(replacements={"ppt/slides/slide1.xml": slide.encode()}))
+
+    def test_verify_rejects_multiple_playfrom_commands_with_count(self):
+        # TD-041: a slide with two playFrom(0) commands (only reachable through
+        # external edits, since patch skips injected pages) must fail with the
+        # actual command count instead of passing by inspecting only the first
+        # command. Exactly one command still verifies (boundary assert below).
+        root = ET.fromstring(self._slide())
+        seq = next(
+            element
+            for element in root.iter()
+            if MODULE.local_name(element.tag) == "seq"
+            and any(
+                MODULE.local_name(child.tag) == "cTn"
+                and child.get("nodeType") == "mainSeq"
+                for child in element
+            )
+        )
+        seq_ct = next(child for child in seq if MODULE.local_name(child.tag) == "cTn")
+        main_lst = next(
+            child for child in seq_ct if MODULE.local_name(child.tag) == "childTnLst"
+        )
+        main_lst.append(MODULE.build_narration_par(3, 20))
+        slide = ET.tostring(root, encoding="unicode")
+        out = self._tampered(replacements={"ppt/slides/slide1.xml": slide.encode()})
+        with self.assertRaisesRegex(
+            MODULE.ExportError,
+            r"audio slide 1 has 2 playFrom\(0\) narration commands, expected 1",
+        ):
+            self._verify(out)
+        # exactly one command (the patched base) still verifies end to end
+        self.assertTrue(self._verify(self.base)["part"].endswith(".mp3"))
 
     def test_verify_cmd_without_spid(self):
         slide = self._slide().replace('spid="3"', 'spid=""')
@@ -1796,7 +1934,7 @@ class NarrationSequenceSelectionTests(unittest.TestCase):
 
     def test_fallback_to_first_seq_warns(self):
         # No sequence declares mainSeq: fall back to the first seq (returning
-        # None would replace the timing and discard the authored animations).
+        # None would make the caller skip the narration, never replace it).
         timing = MULTI_SEQ_TIMING.replace('nodeType="mainSeq"', 'nodeType="clickSeq"')
         make_pptx(self.pptx, {1: xml_slide(timing=timing)})
         err = io.StringIO()
@@ -1921,6 +2059,18 @@ class NarrationSequenceSelectionTests(unittest.TestCase):
             self.assertIn("_main_sequences(", source)
             self.assertNotIn("_is_main_seq(", source)
 
+    def test_merge_and_select_docstrings_stop_describing_replace(self):
+        # TD-036: the merge-path docstrings describe the post-TD-031 skip
+        # behavior; the stale "degrade to replace / discard" wording is gone.
+        merge_doc = MODULE.merge_narration_timing.__doc__ or ""
+        select_doc = MODULE._select_animation_seq.__doc__ or ""
+        for doc in (merge_doc, select_doc):
+            self.assertNotIn("degrades to replace", doc)
+            self.assertNotIn("replace the slide timing", doc)
+            self.assertNotIn("discard", doc)
+        self.assertIn("skip", merge_doc.lower())
+        self.assertIn("skip", select_doc.lower())
+
 
 class AudioIdempotencyTests(unittest.TestCase):
     """TD-012: re-running ``patch_audio`` on an injected PPTX must not duplicate."""
@@ -1974,16 +2124,25 @@ class AudioIdempotencyTests(unittest.TestCase):
         self.assertIn("audio", err.getvalue().lower())
         self.assertIn("skip", err.getvalue().lower())
 
-    def test_authored_play_from_without_audio_shape_is_still_patched(self):
-        # Half a trace (an authored playFrom(0) command, no audio shape) is not
-        # an injection: the page must still get its narration.
+    def test_play_from_without_audio_shape_is_skipped(self):
+        # TD-041 (assertion change): a playFrom(0) command with no audioFile
+        # shape is no longer "plain" and re-patched — it is the playFrom-only
+        # half of the injected trace and must be skipped, exactly like an
+        # audioFile-only half-trace. Re-injecting would accumulate a second
+        # playFrom(0), so the page is counted as already injected and left
+        # byte-for-byte untouched (no media part is added).
         timing = ET.tostring(
             MODULE.build_narration_timing(2), encoding="unicode"
         )
         make_pptx(self.pptx, {1: xml_slide(timing=timing)})
         summary = MODULE.patch_audio(self.pptx, self.deck_root)
-        self.assertEqual(summary["audioSlides"], 1)
-        self.assertEqual(summary["audioSkippedAlreadyInjected"], 0)
+        self.assertEqual(summary["audioSlides"], 0)
+        self.assertEqual(summary["audioSkippedAlreadyInjected"], 1)
+        with zipfile.ZipFile(self.pptx) as archive:
+            names = archive.namelist()
+            self.assertFalse(any(MODULE.AUDIO_MEDIA_PART_RE.match(n) for n in names))
+            slide = archive.read("ppt/slides/slide1.xml").decode("utf-8")
+        self.assertEqual(slide.count('cmd="playFrom(0)"'), 1)
 
     def test_audio_shape_without_command_counts_as_injected(self):
         # TD-030: the trace is now judged by the audioFile shape alone. A slide
