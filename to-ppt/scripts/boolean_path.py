@@ -55,9 +55,12 @@ __all__ = [
     "OPERATIONS",
     "ELLIPSE_STEPS",
     "MAX_COORD",
+    "require_shapely",
+    "geometry_to_shapely",
     "parse_geometries",
     "compute_paths",
     "to_svg_path",
+    "build_parser",
     "main",
 ]
 
@@ -267,8 +270,8 @@ def to_svg_path(poly: Polygon, dx: float = 0.0, dy: float = 0.0) -> str:
 
     Args:
         poly: the polygon to serialize (exterior + holes).
-        dx: horizontal translation applied to every coordinate.
-        dy: vertical translation applied to every coordinate.
+        dx: horizontal translation subtracted from every x coordinate.
+        dy: vertical translation subtracted from every y coordinate.
 
     Returns:
         A legal SVG path string whose segments use only ``M``/``L``/``Z``
@@ -315,6 +318,14 @@ def _normalize_ring(
     zig-zag that is collinear after rounding). Such rings must be dropped,
     never serialized as zero-area paths.
 
+    A ring containing any non-finite input coordinate (NaN / Inf), or whose
+    translation overflows to a non-finite value, is also treated as
+    degenerate and returns ``None``: serializer callers skip it, so an illegal
+    ``nan`` / ``inf`` SVG token can never be emitted (TD-033②).
+    Responsibility boundary with :func:`_num`: ``_num`` rejects non-finite and
+    out-of-range values on the JSON parsing path; ``_normalize_ring`` guards
+    the ring serialization path for direct / bypass callers.
+
     Args:
         ring: a shapely ring (``poly.exterior`` or one of ``poly.interiors``).
         dx: horizontal translation subtracted from every x coordinate.
@@ -325,6 +336,8 @@ def _normalize_ring(
         consecutive duplicates removed, or ``None`` when it is degenerate.
     """
     pts = [(_round1(c[0] - dx), _round1(c[1] - dy)) for c in ring.coords]
+    if not pts or not all(math.isfinite(x) and math.isfinite(y) for x, y in pts):
+        return None
     if len(pts) > 1 and pts[0] == pts[-1]:
         pts = pts[:-1]
     uniq: List[Tuple[float, float]] = []
