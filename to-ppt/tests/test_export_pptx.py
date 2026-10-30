@@ -884,6 +884,35 @@ class AudioVerifyTests(unittest.TestCase):
         self.assertEqual(summary["audioSlides"], 0)
         self.assertEqual(summary["audioParts"], 0)
 
+    def test_verify_output_skips_half_trace_with_onbegin_command(self):
+        # TD-048: a page whose audioFile shape coexists with an authored
+        # type="onBegin" playFrom(0) command is the four-round Falsify mut3
+        # escape — a type-blind inline cmd scan (legacy residue) would flip
+        # this page from deliberate half-trace skip to RAISE via
+        # verify_audio_slide finding zero whitelisted commands.  The
+        # verify_output layer itself must keep the skip.
+        deck_root = self.root / "deck"
+        make_deck(deck_root, [{"audio": "media/beep.mp3"}])
+        root = ET.fromstring(
+            xml_slide(
+                timing='<p:timing><p:cmd type="onBegin" cmd="playFrom(0)">'
+                "<p:cBhvr/></p:cmd></p:timing>"
+            )
+        )
+        sp_tree = next(
+            element
+            for element in root.iter()
+            if MODULE.local_name(element.tag) == "spTree"
+        )
+        sp_tree.append(MODULE.build_audio_shape(3, "rId5"))
+        out = self.root / "out.pptx"
+        make_pptx(
+            out, {1: ET.tostring(root, encoding="utf-8", xml_declaration=True)}
+        )
+        summary = MODULE.verify_output(out, "fade", False, deck=deck_root)
+        self.assertEqual(summary["audioSlides"], 0)
+        self.assertEqual(summary["audioSkippedInjectedNoNarration"], 1)
+
 
 class AudioExporterHookupTests(unittest.TestCase):
     """AC7-8 导出路径挂接: postprocess (transition → audio → verify)."""
@@ -1328,13 +1357,16 @@ class PlayFromCommandPredicateTests(unittest.TestCase):
 
     def test_play_from_predicate_is_single_sourced(self):
         # TD-045: the playFrom(0) judgement lives in the shared predicate
-        # only — no caller inlines a local_name=="cmd" scan loop anymore.
+        # only — no caller reads the cmd attribute at all.  TD-048: the
+        # narrowed literal assertion was bypassable by re-texted inline
+        # residue (e.get("cmd","")), so forbid any .get("cmd"… read in a
+        # caller; the attribute reads live solely in the predicate body.
         for func in (MODULE._slide_audio_state, MODULE.verify_output):
             source = inspect.getsource(func)
-            self.assertNotIn('.get("cmd") == "playFrom(0)"', source)
+            self.assertNotIn('.get("cmd"', source)
             self.assertIn("_has_play_from_command(", source)
         verify_source = inspect.getsource(MODULE.verify_audio_slide)
-        self.assertNotIn('.get("cmd") == "playFrom(0)"', verify_source)
+        self.assertNotIn('.get("cmd"', verify_source)
         self.assertIn("_is_play_from_command(", verify_source)
 
     def test_type_and_cmd_constraint_is_exact_enumeration(self):
