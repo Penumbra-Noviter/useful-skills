@@ -4,6 +4,8 @@
 
 判定口径：**vendored** = 直接复制上游文件；**distilled** = 蒸馏/改写，非逐字复制；**自研** = 无上游，本地原创；**封装** = 本地写的外壳 + 调用第三方工具。
 
+**入库范围（2026-11-04 核对注记）**：磁盘 67 个 skill 中 3 个经 `.gitignore` 有意排除、不随 git 分发——`project-kickoff`（§12）、`dao-skill`（§26，外部实装自带 .git）、`universal-exam-cram-coach`（§27，机器特定）；git 实际跟踪 64 个顶层 skill（另含 fetchflow 2 个嵌套模块文档）。
+
 ---
 
 ## 总览
@@ -12,7 +14,7 @@
 |---|---|---|---|---|---|---|
 | cangjie-skill | vendored（官方 Release 包）+ 手工合入 main 修复 | [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill) | MIT（v2.5.0 起） | 2.5.0（+main #31/#32） | 2026-08-27 → 2026-09-16 更新 · 2026-09-27 合入 #31/#32 | ✅ |
 | mattpocock 批次 ~46 个 skill | vendored | [mattpocock/skills](https://github.com/mattpocock/skills)（**用户 2026-08-13 确认**） | 见上游 | 无版本号 | 2026-08-06 | ✅ |
-| skill-creator | vendored | mattpocock/skills（随批次导入；Apache 2.0 LICENSE.txt 系上游随附） | Apache 2.0 | — | 2026-08-06 | ✅（并入批次） |
+| skill-creator | vendored · **已移除 2026-08-29（91fb1a6）**，内容由 §23 skill-authoring 整合继承 | mattpocock/skills（随批次导入；Apache 2.0 LICENSE.txt 系上游随附） | Apache 2.0 | — | 2026-08-06 | ✅（并入批次） |
 | vibehub | vendored | [oil-oil/vibe-hub-skill](https://github.com/oil-oil/vibe-hub-skill) | MIT | — | 2026-08-11 | ✅（config.json 已记） |
 | zine-ui | distilled | [Zeejay0/gathered-scenes-zine-skill](https://github.com/Zeejay0/gathered-scenes-zine-skill) + photo-abstract-editorial（Codex） | personal non-commercial | 1.0.0 | 2026-08-11 | ✅ |
 | diagram-design | vendored + 修复 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) | MIT | 2.6.119 | 2026-08-13 · 2026-09-16 同步 · 2026-09-27 同步 · 2026-10-23 同步 | ✅ |
@@ -34,6 +36,19 @@
 | implement-spec | vendored | mattpocock/skills（v1.3 毕业，`skills/engineering/implement-spec/`） | 见上游 | — | 2026-10-23 | ✅（并入批次） |
 | pr | vendored | mattpocock/skills（`skills/engineering/pr/`，源头 Humanlayer show-me，CREDITS.md 已随附） | 见上游 | — | 2026-10-23 | ✅（并入批次） |
 | retro | vendored + 本地化改写 | mattpocock/skills（`skills/engineering/retro/`） | 见上游 | — | 2026-10-23 | ✅（并入批次） |
+| distill-lesson | 自研 | 无（AGENTS.md §3.5 蒸馏流程执行器） | 仓库根 MIT | — | 91fb1a6（2026-08-29） | — |
+| skill-authoring | distilled（三合一整合层） | skill-creator（Anthropic，Apache-2.0）+ writing-great-skills / writing-for-agents（mattpocock） | Apache 2.0（随附 LICENSE.txt） | — | 91fb1a6（2026-08-29，同日删三个源 skill） | ❌（源已删，本地演化） |
+| writing | 自研（编排层） | 无（路由三件套 + humanizer 接线） | 仓库根 MIT | — | 63f9946（2026-08-29） | — |
+| fetchflow | 自研（编排主体；吸收附件见 §14） | 无（network-profile.md 吸收自 reverse-skill） | 仓库根 MIT | — | 91fb1a6（2026-08-29） | — |
+| reverse-flow | 自研（工作流主体；吸收附件见 §14/§21） | 无（3 references 吸收自 reverse-skill，ghidra-cookbook 另计） | 仓库根 MIT | — | 91fb1a6（2026-08-29） | — |
+| doc-scaffold | 自研 | 无（Model Fingerprint 文档体系审计沉淀） | 仓库根 MIT | — | 7c1d4e5（2026-09-05） | — |
+| kb-search | 自研 | 无（demo vault 经验检索：hy-memory 向量 + grep 兜底） | 仓库根 MIT | — | c1392e1（2026-09-12） | — |
+| officecli | 封装 + vendored 文档层 | officecli CLI（officecli.ai 官方发布物） | 见上游 | — | c1392e1（2026-09-12） | 部分（仅安装 URL） |
+| product-facets | 自研 | 无 | 仓库根 MIT | — | 571b35c（2026-09-16） | — |
+| threat-model | 自研 | 无（STRIDE 方法论规则化） | 仓库根 MIT | — | 571b35c（2026-09-16） | — |
+| quarkclouddrive | vendored（官方 Skill） | 夸克网盘官方（openclaw 生态分发，frontmatter canonicalSkillId 随附） | 见上游 | 1.0.20 | 571b35c（2026-09-16）；.gitignore 白名单仅入库 SKILL.md/references/scripts | ❌（官方分发无 repo） |
+| dao-skill | vendored clone + 本地硬化（外部实装） | [gnipbao/dao-skill](https://github.com/gnipbao/dao-skill) | 见上游 | 本地硬化未提交（D/E/F + evolution-protocol，不回推） | .gitignore 排除；自带 .git 独立 pull | ❌（本地补丁不回推） |
+| universal-exam-cram-coach | 机器特定外部 skill（来源未登记） | 无上游信息（.cc-switch 侧存 real-backup-20260920） | — | — | .gitignore 排除；本地为 .cc-switch 内容镜像（2026-11-04 diff 一致） | — |
 
 ---
 
@@ -76,8 +91,9 @@
   - code-review：本地深度定制版（credibility gate / manifest / 单轴 / 四轴 / negative checklists / falsify-pitfalls）为上游 #1208 的超集，**零改动**
   - 毕业三件评估见 §21。
 
-### 2. skill-creator — vendored
+### 2. skill-creator — vendored · 已移除（2026-08-29）
 
+- **已移除**：91fb1a6（2026-08-29）删除目录；其结构/工作流/脚本由 **§23 skill-authoring** 三合一整合继承（Apache 2.0 LICENSE.txt 随 skill-authoring 延续）。本节保留作 license 溯源
 - **上游**：mattpocock/skills（用户 2026-08-13 确认整批来源；上游当前 main 已无此目录，属导入后上游删除）
 - **License**：仓库内自带 `LICENSE.txt`（Apache 2.0）——Apache 2.0 是 anthropics/skills 的特征、mattpocock 系内少见；若重发布此 skill 请按 Apache 2.0 条款处理并保留版权声明
 - **导入**：随 mattpocock 批次 `77430e9`
@@ -197,8 +213,8 @@
 
 ### 12. project-kickoff — 自研（独立位置）
 
-- **物理位置**：符号链接 → `/c/Users/Administrator/.cc-switch/skills/project-kickoff/`（独立目录，自带 REVISIONS.md / TO-TICKETS.md）
-- **同步**：在真实位置维护，本仓库仅指针
+- **物理位置**：真实维护位置 `/c/Users/Administrator/.cc-switch/skills/project-kickoff/`（独立目录，自带 REVISIONS.md / TO-TICKETS.md）。本仓库目录**原为符号链接、现为实体镜像**（2026-11-04 核对：LinkType 空、内容与 .cc-switch 侧 diff 一致），不随 git 分发（.gitignore 有意排除）
+- **同步**：在 .cc-switch 真实位置维护；镜像化后两侧需人工对齐，同步任一侧后 diff 核对
 
 ### 13. simplify-codebase — vendored + 适配（dao-skill 评估后入库）
 
@@ -315,6 +331,58 @@
 - **验证**：本机 `F:\tools\apps\ghidra` 的 `analyzeHeadless` / `ghidraRun` 可用（check-tools.py 通过）；命令骨架与官方 README 一致
 - **更新提示**：上游更新时对账本文件即可；reverse-flow 为本地 skill，SKILL.md 勿整文件覆盖
 
+### 22. 本地自研 skill 群（无上游，2026-11-04 补登记）
+
+- **共同性质**：均无上游、本地原创；License 一律随仓库根 MIT；无上游对账需求，本地自由演化
+- **distill-lesson**（91fb1a6，2026-08-29）：AGENTS.md §3.5 知识库闭环的蒸馏（写）执行器——会话教训 → demo vault 原子笔记；frontmatter 强制 `summary` + `provenance`，缺来源不落盘
+- **doc-scaffold**（7c1d4e5，2026-09-05）：Model Fingerprint 文档体系审计沉淀为可复用流程——标准档四件套 + 可选 CODE_WIKI + DOCUMENTATION_STANDARDS 总表 + 三道 pre-commit 机械检查；含 dao 评估六项修复（门禁档位自适应/跨平台 pre-commit 等）
+- **kb-search**（c1392e1，2026-09-12）：demo vault 经验实时检索（只读）——hy-memory 向量语义检索优先，server 停机/零命中自动落 grep 三步兜底链；与 distill-lesson 构成知识库读写闭环
+- **writing**（63f9946，2026-08-29）：长篇写作编排层——核对已有产物文件判定阶段，路由三件套（fragments/shape/beats）与 writing-humanizer；编排而非第四种写法
+- **fetchflow 主体**（91fb1a6，2026-08-29）：采集+逆向薄编排（crawl/reverse/chain，Step 0 授权预检 + 四档网络画像）；其吸收附件 network-profile.md 已登记于 §14
+- **reverse-flow 主体**（91fb1a6，2026-08-29）：guided RE 工作流（二进制/固件/APK/脚本/协议/样本）；吸收附件 3 references 与 ghidra-cookbook 已登记于 §14/§21
+- **product-facets**（571b35c，2026-09-16）：立项 on-ramp——从基调（交付意图 × 业务性质 × 质量强度）推导正交「面」，逐面设计校验
+- **threat-model**（571b35c，2026-09-16）：写码前 STRIDE 威胁建模 → 可验证安全需求清单（入工单 acceptance criteria）
+
+### 23. skill-authoring — distilled（三合一整合层，2026-11-04 补登记）
+
+- **来源**（SKILL.md L51 自带声明，随附 ADR-001-integrate-creation-layer.md）：2026-08-27 整合三 skill——`skill-creator`（Anthropic，Apache-2.0：结构/工作流/脚本）+ `writing-great-skills`（Matt Pocock：词汇/失败模式）+ `writing-for-agents`（Matt Pocock：通用 agent 文档原则）
+- **导入**：91fb1a6（2026-08-29）——同一提交删除三个源 skill，本 skill 为整合继任
+- **License**：Apache 2.0（LICENSE.txt 随附，继承 skill-creator 条款）；重发布按 Apache 2.0 处理并保留版权声明
+- **本地改动**：整合层持续本地演化；ADR-002-hardening-dao-authoring-routing.md 记录与 dao-skill 的创作路由契约（dao 侧上游 clone 零改动、authoring 侧承载声明）
+- **更新提示**：三个源 skill 均已删（上游亦删），无上游对账需求
+
+### 24. officecli — 封装 + vendored 文档层（2026-11-04 补登记）
+
+- **上游工具**：officecli CLI（officecli.ai 官方发布物，单二进制 AI-friendly .docx/.xlsx/.pptx CLI，无需 Office 安装；SKILL.md 内安装 URL `d.officecli.ai`）
+- **本地形态**：SKILL.md 为 CLI 参考手册（vendored 基底，L1 read → L2 edit → L3 raw XML 分层）+ **本机专用扩展段**（L437「与文档插件族的内联契约，非上游」——载入 documents/presentations/spreadsheets 插件族设计规范后由 officecli 执行渲染）
+- **导入**：c1392e1（2026-09-12）
+- **更新提示**：CLI 语法以 `officecli help` 动态发现为准（SKILL.md 明令禁止猜语法）；CLI 本体升级独立于本 skill
+
+### 25. quarkclouddrive — vendored（夸克官方 Skill，2026-11-04 补登记）
+
+- **上游**：夸克网盘官方发布 Skill（openclaw 生态分发格式，frontmatter `canonicalSkillId: quarkclouddrive_816db00f`）；官方分发无公开 repo，不可追踪更新
+- **本地版本**：1.0.20
+- **导入**：571b35c（2026-09-16）
+- **入库策略（.gitignore 白名单）**：仅入库 `SKILL.md` + `references/` + `scripts/`；运行态子目录（明文 accessToken / 搜索结果 / 日志，按宿主 agent 命名）一律排除
+- **硬约束**：`get-share-update-files` / `saveas-update` 成功后返回 `msg` 必须原样展示、禁止改写（SKILL.md 与 ask-matt 路由双侧一致）
+- **更新提示**：更新靠重新获取官方 Skill 包比对 frontmatter `version`，逐文件对账
+
+### 26. dao-skill — vendored clone + 本地硬化（外部实装，2026-11-04 补登记）
+
+- **上游**：https://github.com/gnipbao/dao-skill（自带 `.git` 的实体 clone，外部实装不入本仓库 git——.gitignore `dao-skill/`，可独立 pull 更新）
+- **本地硬化层（已本地提交、不回推上游；2026-11-04 核对：领先 origin/main 4 提交，工作区 clean）**：
+  - `c27b932`（09-20）：ADR-001 进化协议留出集 + 严格提升门（吸收 SkillOpt 验证门，候选）
+  - `8347894`（09-20）：skill-authoring 创作路由契约（SKILL.md 强制路由节 + references/routing-authoring-contract.md；ADR-002 记录分工——原方案为「dao 侧源码零改动」，该提交以记录在案的方式打破，硬化进 SKILL.md）
+  - `19681d4` + `35e2cb9`（11-04）：ADR-003 评测时代升级——吸收 2025–2026 权威方法论 Top10（新增 references/evaluation-protocol.md 评测协议四件套、语义判据进 evaluation-rubric 细则、ADR-001 留出门候选转正、Iron Law / Delta-only 进 Non-Negotiables、行为夹具 19 case、repository allowlist 支持 ADR 前缀）
+- **定位**：skill 改进/进化循环的唯一控制者（元设计器/生命周期管理），README 域 0 行
+- **同步**：本目录内 `git pull` 上游；若上游触及本地补丁段，按既有约定「以上游为准、重放本段」（ADR-002/003 内均有冲突预案）
+
+### 27. universal-exam-cram-coach — 机器特定外部 skill（来源未登记，2026-11-04 补登记）
+
+- **形态**：实体目录，不随本仓库 git 分发（.gitignore「机器特定符号链接」组）；内容与 `.cc-switch/skills/universal-exam-cram-coach` 镜像一致（2026-11-04 diff 核对）
+- **来源**：无上游信息、无 git 历史——推断为 .cc-switch 侧独立维护的机器特定 skill；原符号链接已实体化（.cc-switch 侧存有 `universal-exam-cram-coach.real-backup-20260920` 佐证）
+- **待办**：来源/许可待补——实为某上游蒸馏则补登记，自研则在 .cc-switch 侧立档（见「已知缺口」）
+
 ---
 
 1. **查本文件**对应条目 → 拿到上游 URL、本地版本、本地改动点
@@ -331,3 +399,4 @@
 - [x] diagram-design 上游 2.3+ 变更内容评估——**2026-09-16 已同步至 2.6.27（40 型）并重放本地定制**
 - [x] context-monitor 的来源判定为推断——**2026-09-20 已移除**（与 ZCode/dsh 原生 token 监控重复），条目随库删除
 - [ ] agent-reach 上游 Boss直聘 channel 合入（用户 2026-09-16 未选，挂起）
+- [ ] universal-exam-cram-coach 来源/许可待补（2026-11-04 补登记时确认无上游信息，见 §27）

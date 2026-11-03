@@ -10,11 +10,13 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 # zcode 环境的实际指向：D:\Desktop\cc\.claude\skills
 ```
 
+> **克隆可用 64 个**：67 个 skill 中 3 个经 `.gitignore` 有意排除、不随 git 分发——`project-kickoff`（§12）、`universal-exam-cram-coach`（§27，均为 .cc-switch 机器特定镜像）与 `dao-skill`（§26，外部实装，上游 [gnipbao/dao-skill](https://github.com/gnipbao/dao-skill) 自带 .git）。补齐方式见 `PROVENANCE.md` 对应条目。
+
 不知道怎么用哪个技能时，直接问 **`/ask-matt`** ——它是全库的动态路由器（`disable-model-invocation`，用户手动触发），按「要做的事」路由到正确 skill 或流程。
 
 ## 生态总览（9 域）
 
-本仓库 67 个 skill 按功能分成 9 个域；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
+本仓库 67 个 skill 按功能分成 9 个域（其中 3 个经 `.gitignore` 有意排除、不随 git 分发，见「快速开始」与 `PROVENANCE.md` 入库范围注记）；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
 
 ### 域 0 · Skill 生态自治
 
