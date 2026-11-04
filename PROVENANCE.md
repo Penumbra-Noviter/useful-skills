@@ -374,6 +374,7 @@
   - `c27b932`（09-20）：ADR-001 进化协议留出集 + 严格提升门（吸收 SkillOpt 验证门，候选）
   - `8347894`（09-20）：skill-authoring 创作路由契约（SKILL.md 强制路由节 + references/routing-authoring-contract.md；ADR-002 记录分工——原方案为「dao 侧源码零改动」，该提交以记录在案的方式打破，硬化进 SKILL.md）
   - `19681d4` + `35e2cb9`（11-04）：ADR-003 评测时代升级——吸收 2025–2026 权威方法论 Top10（新增 references/evaluation-protocol.md 评测协议四件套、语义判据进 evaluation-rubric 细则、ADR-001 留出门候选转正、Iron Law / Delta-only 进 Non-Negotiables、行为夹具 19 case、repository allowlist 支持 ADR 前缀）
+  - `d5e4d89`（11-04）：钩子行为验证批次（replay）——留出门 E3 确认（old/new 对照）、F1 语义冲突修复（Compound Requests 限定句 + 夹具 expected 对齐）、映射表适用域注记（recipe E3 / backfire 限定 E2）；验证记录见 dao-skill ADR-003 验证节
 - **定位**：skill 改进/进化循环的唯一控制者（元设计器/生命周期管理），README 域 0 行
 - **同步**：本目录内 `git pull` 上游；若上游触及本地补丁段，按既有约定「以上游为准、重放本段」（ADR-002/003 内均有冲突预案）
 
