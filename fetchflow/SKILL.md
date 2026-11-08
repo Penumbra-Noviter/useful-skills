@@ -15,12 +15,10 @@ FetchFlow 是一个薄编排层：它**不重写**任何底层能力，而是把
 
 ## 边界与 Trust（用户约定，最高优先级）
 
-- **爬取**：一切从方法可行性出发**可以爬取**的数据都可以尝试采集——不因"看起来难"而预设放弃；能采到的就采。
-- **逆向**：一切**能力以内**可以逆向的目标都逆向——只要是能力所及，就推进分析。
-- **红线**：**不违背法律采集受法律保护的数据**。是否受法律保护由使用方自己判断并承担。
-  - 不做 DoS、不拉满并发、不刻意压垮目标；
-  - 采集数据的使用方式不侵犯他人的合法权利（隐私、著作权、商业机密等受法律保护的数据不得违规采集）。
-- 逆向侧沿用 reverse-flow 的沙箱约定：操作副本不碰原件，不执行未知样本。
+- **爬取**：方法可行性出发可以爬取的数据都尝试采集，不预设放弃。
+- **逆向**：能力以内的目标都逆向，不预设拒绝。
+- **红线**：不违背法律采集受法律保护的数据（不做 DoS/不压垮目标；数据使用不侵犯他人合法权利）。
+- 全部边界细节、预检衔接、沙箱约定与工程安全的**唯一权威源**：`references/trust-boundaries.md`（预检执行层见 `references/authorization-check.md`）。
 
 ## Resource Guide
 
@@ -29,17 +27,17 @@ FetchFlow 是一个薄编排层：它**不重写**任何底层能力，而是把
 - 边界细节：读 `references/trust-boundaries.md`。
 - 授权预检：任何采集/逆向前，读 `references/authorization-check.md` 并跑 `scripts/check_target.py`。
 - 任务级网络画像：离线样本/lab/授权目标四档分档与离线样本合法化标准，读 `references/network-profile.md`（吸收自 reverse-skill scope-contract）。
-- 本机工具检测与调用：任务启动时读 `references/local-toolchain.md`，跑 `python D:\Desktop\Craft\re-toolchain\check-tools.py --json` 确认已装工具；按 C1/C2 阶段直接 CLI/库调用，不让用户手动开工具。
+- 本机工具检测与调用：读 `references/local-toolchain.md`（唯一权威源，含检测命令、C1/C2 阶段调用映射与回退顺序）；任务启动时先检测本机工具，直接 CLI/库调用，不让用户手动开工具。
 - 爬取细节：进 `modules/crawl/`（含选型与反爬回退决策）。
 - 逆向细节：委托 `reverse-flow`，输出契约见 `modules/reverse/references/evidence-contract.md`。
 - 逆向目标在 reverse-flow 覆盖面之外（Electron/ASAR、打包应用、.NET、网络捕获文件、IL2CPP、模型文件）：读 `modules/reverse/references/rea-toolchain.md`，用 REA 工具链取证据。
 
 ## Workflow
 
-**Step 0 · 授权预检（自动化）**：对目标跑 `scripts/check_target.py <target>`，得 `ALLOW` / `CHECKPOINT` / `BLOCK`（见 `references/authorization-check.md`）：
+**Step 0 · 授权预检（自动化）**：对目标跑 `scripts/check_target.py <target>`（见 `references/authorization-check.md`）。脚本只产出两种判定：
 - `ALLOW` → 继续。
-- `CHECKPOINT`（登录墙 / 鉴权 / robots 禁止 / 样本缺失等）→ **停下把信号摆给用户确认**，确认后继续。
-- `BLOCK`（明确红线）→ 停止。
+- `CHECKPOINT`（登录墙 / 鉴权 / robots 禁止 / 样本缺失 / **探测失败不可观测**）→ **停下把信号摆给用户确认**，确认后继续。
+- `BLOCK` 不是脚本输出：由人工红线判定触发（受法律保护数据的定性），触发即停止。
 - 预检结果作为报告第一项证据。
 - 任务级网络画像（见 `references/network-profile.md`）：`offline` 的本地自持样本无需再确认；其余任务选定一档 `lab_only` / `authorized_target_only` / `unrestricted_lab`，网络行为超出所选档位时停下问用户。
 
@@ -61,20 +59,12 @@ FetchFlow 是一个薄编排层：它**不重写**任何底层能力，而是把
 
 ## Output Protocol
 
-每个任务统一产出如下结构（详情见 `references/shared-evidence-protocol.md`）：
+每个任务统一产出统一报告。**模板唯一权威源：`references/shared-evidence-protocol.md`**（此处只列字段，不重抄模板）：
 
-```md
-当前阶段 / Current phase:
-目标 / Target:
-授权预检 / Authorization pre-flight: ALLOW | CHECKPOINT(<signals>) | BLOCK(<reason>)
-网络画像 / Network profile: offline | lab_only | authorized_target_only | unrestricted_lab
-已路由模块 / Routed module: crawl | reverse | chain(→)
-已验证事实 / Verified facts:
-关键证据 / Key evidence: (url/offset/函数/字符串/哈希/status_code/提取结果)
-推断与置信度 / Inference and confidence: (High/Medium/Low + 理由)
-风险/边界提示 / Risk or boundary note: (授权/合规相关)
-建议下一步 / Suggested next steps: (编号菜单)
-```
+- 当前阶段 / 目标 / 授权预检（ALLOW·CHECKPOINT，BLOCK 为人工判定）/ 网络画像（四档之一）/ 已路由模块
+- 已验证事实（表格，含置信度）/ 关键证据 / 推断与置信度 / 风险与漏洞候选 / 边界提示 / 建议下一步
+
+各字段语义、置信度词汇表（High/Medium/Low）与证据绑定规则见权威源文件。
 
 ## Boundaries
 

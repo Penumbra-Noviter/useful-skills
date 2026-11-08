@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """fetchflow 授权预检：对采集/逆向目标做可观测信号的机械判定。
 
-判定输出（见 references/authorization-check.md）：
+判定输出（见 references/authorization-check.md）——脚本只产出两种：
     ALLOW        无风险信号，可进入 crawl/reverse
-    CHECKPOINT   命中风险信号（登录墙/鉴权/robots 禁止/样本缺失等），需用户确认
-    BLOCK        明确红线，停止
+    CHECKPOINT   命中风险信号（登录墙/鉴权/robots 禁止/样本缺失/探测失败不可观测），需用户确认
+    BLOCK        不是脚本输出：由人工红线判定触发（受法律保护数据的定性），触发即停止
 
 只做可观测信号的机械判定，判不了的一律升 CHECKPOINT，不静默放行。
 
@@ -37,15 +37,16 @@ def _classify(target: str) -> str:
     return "local"
 
 
-def _fetch_robots(origin: str) -> Optional[str]:
+def _fetch_robots(origin: str) -> Tuple[Optional[str], bool]:
+    """抓取 robots.txt。返回 (文本或 None, 探测是否成功)；ok=True 且 None 表示无 robots.txt（非 200）。"""
     if requests is None:
-        return None
+        return None, False
     try:
         r = requests.get(f"{origin}/robots.txt", timeout=TIMEOUT, allow_redirects=True,
                          headers={"User-Agent": UA})
-        return r.text if r.status_code == 200 else None
+        return (r.text if r.status_code == 200 else None), True
     except Exception:
-        return None
+        return None, False
 
 
 def _robots_disallows(robots: Optional[str], path: str) -> bool:
@@ -67,25 +68,25 @@ def _robots_disallows(robots: Optional[str], path: str) -> bool:
     return False
 
 
-def _probe_url(url: str) -> Tuple[Optional[int], Optional[str]]:
-    """无凭证轻量 GET，探测是否登录墙 / 鉴权重定向。"""
+def _probe_url(url: str) -> Tuple[Optional[int], Optional[str], bool]:
+    """无凭证轻量 GET，探测是否登录墙 / 鉴权重定向。ok=False 表示探测本身失败（目标不可观测）。"""
     if requests is None:
-        return None, None
+        return None, None, False
     try:
         r = requests.get(url, timeout=TIMEOUT, allow_redirects=False,
                          headers={"User-Agent": UA})
-        return r.status_code, r.headers.get("location")
+        return r.status_code, r.headers.get("location"), True
     except Exception:
-        return None, None
+        return None, None, False
 
 
 def check_url(url: str) -> Tuple[str, List[str]]:
     u = urlparse(url)
     origin = f"{u.scheme}://{u.netloc}"
     path = u.path or "/"
-    robots = _fetch_robots(origin)
+    robots, robots_ok = _fetch_robots(origin)
     disallowed = _robots_disallows(robots, path)
-    code, loc = _probe_url(url)
+    code, loc, probe_ok = _probe_url(url)
 
     signals: List[str] = []
     if disallowed:
@@ -96,9 +97,16 @@ def check_url(url: str) -> Tuple[str, List[str]]:
         signals.append(f"redirects to login ({loc})")
     if requests is None:
         signals.append("requests unavailable; probe skipped")
+    if not robots_ok and requests is not None:
+        signals.append("robots.txt probe failed (network unreachable?)")
+    if not probe_ok:
+        signals.append("target probe failed (network unreachable?)")
 
+    # 探测失败 = 目标不可观测：判不了的一律 CHECKPOINT，不静默放行（见 authorization-check.md）
+    if requests is None or not robots_ok or not probe_ok:
+        return "CHECKPOINT", signals
     if code in (401, 403) or (loc and "login" in (loc or "").lower()):
-        return "CHECKPOINT", signals or ["auth/protected-content signal"]
+        return "CHECKPOINT", signals
     if disallowed:
         return "CHECKPOINT", signals  # 方法可行仍可采，但需用户确认
     return "ALLOW", signals
@@ -125,7 +133,7 @@ def main() -> None:
         "target": args.target,
         "verdict": verdict,
         "signals": signals,
-        "note": "CHECKPOINT/BLOCK 需用户确认后再继续；ALLOW 按方法可行即可采推进",
+        "note": "脚本只产出 ALLOW/CHECKPOINT；BLOCK 由人工红线判定触发。CHECKPOINT 需用户确认后再继续",
     }
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))

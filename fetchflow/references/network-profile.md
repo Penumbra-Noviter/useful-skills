@@ -29,7 +29,7 @@
 
 ```text
 任务进入
-  → check_target.py <target>       # 目标级：ALLOW / CHECKPOINT / BLOCK
+  → check_target.py <target>       # 目标级：ALLOW / CHECKPOINT（BLOCK 为人工判定，脚本不产出）
   → 选定 network_profile 一档      # 任务级：本任务允许的网络行为边界
   → offline + 本地自持样本 → 直接推进
   → 网络行为超出所选档位 → 停下问用户
@@ -38,7 +38,7 @@
 预检结果与所选档位一并写入 `shared-evidence-protocol` 报告首项：
 
 ```md
-授权预检 / Authorization pre-flight: ALLOW | CHECKPOINT(<signals>) | BLOCK(<reason>)
+授权预检 / Authorization pre-flight: ALLOW | CHECKPOINT(<signals>)
 网络画像 / Network profile: offline | lab_only | authorized_target_only | unrestricted_lab
 ```
 

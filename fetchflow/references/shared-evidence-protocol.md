@@ -14,7 +14,10 @@ fetchflow 两个模块的共同输出语言。核心原则：**事实与推断�
 （url / 文件路径 / 样本哈希 / 目标描述）
 
 ## 授权预检 / Authorization pre-flight
-（ALLOW | CHECKPOINT(<signals>) | BLOCK(<reason>)；由 `scripts/check_target.py` 产出，见 `references/authorization-check.md`）
+（ALLOW | CHECKPOINT(<signals>)；脚本只产出这两种，BLOCK 由人工红线判定触发——见 `references/authorization-check.md`）
+
+## 网络画像 / Network profile
+（offline | lab_only | authorized_target_only | unrestricted_lab；任务开始时选定一档，见 `references/network-profile.md`）
 
 ## 已路由模块 / Routed module
 crawl | reverse | chain(→)

@@ -42,9 +42,8 @@
 ### 期望输出（节选）
 
 ```md
-chain 线索（reverse → crawl）:
-- 接口: POST https://api.example.com/v2/search
-- 参数: {q, page, ts, sig}; 签名 HMAC-SHA256(secret, q|page|ts)，secret 在客户端资源
+chain 线索（reverse → crawl）: 接口 / 参数 / 签名 / 待办 四要素，格式与完整示例
+见 modules/reverse/references/evidence-contract.md（不在此重复）
 已路由模块: chain(reverse→crawl)
 已验证事实: reverse 在 DEX 中定位到上述端点与签名；crawl 带签名请求 status_code=200，返回 20 条结果
 关键证据: DEX 字符串 "v2/search" + secret 常量；crawl status_code=200
