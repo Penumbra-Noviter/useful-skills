@@ -384,6 +384,15 @@
 - **来源**：无上游信息、无 git 历史——推断为 .cc-switch 侧独立维护的机器特定 skill；原符号链接已实体化（.cc-switch 侧存有 `universal-exam-cram-coach.real-backup-20260920` 佐证）
 - **待办**：来源/许可待补——实为某上游蒸馏则补登记，自研则在 .cc-switch 侧立档（见「已知缺口」）
 
+### 28. fetchflow 内 REA 工具链引用（部分吸收 morluto/rea，2026-11-09）
+
+- **形态**：非独立 skill；rea 的可移植机制以参考文件吸收进 fetchflow 逆向模块（`fetchflow/modules/reverse/references/rea-toolchain.md`，新增）+ 三处指针（fetchflow/SKILL.md Resource Guide、modules/reverse/SKILL.md 工具链分层节、references/tool-matrix.md 路由表/工具并集/防重复检查）
+- **来源**：https://github.com/morluto/rea ，v6.8.0（server.json），MIT license；本地快照 `F:\downloads\rea-main`
+- **吸收范围**：仅决策层——覆盖面路由表（reverse-flow 工具目录之外的目标类型）、接入探针三档（MCP→CLI→回落）、Evidence 纪律 5 条、连接/恢复阶梯；不复制上游 552 行 SKILL.md 本体
+- **许可**：MIT，允许引用吸收；详情指向上游文档，单一权威源不双维护
+- **本机状态**（2026-11-09 更新）：已安装 rea-agents 6.7.0（npm 全局 `F:\tools\npm-global`）；`rea setup --yes --client zcode --client dsh` 完成 MCP 注册（`~/.zcode/cli/config.json` 的 `mcp.servers.rea` + `D:\Deepseek harness\.dsh\cordis.patch.yml`，各自带 `.rea.backup`），stdio 握手实测 207 工具
+- **bundled skill 落点处置**：`rea setup` 将 `reverse-engineer-anything`（552 行 SKILL.md + 7 references）装进本仓库物理目录（`~/.zcode/skills/` 为软链）——**gitignore 不入库**（setup 自管、随 npm 上游升级覆盖，提交受管副本必漂移；比照 universal-exam-cram-coach 机器特定外部 skill 先例），fetchflow 侧 rea-toolchain.md 指向该已装副本为工具细节权威源
+
 ---
 
 1. **查本文件**对应条目 → 拿到上游 URL、本地版本、本地改动点

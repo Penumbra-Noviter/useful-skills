@@ -32,6 +32,7 @@ FetchFlow 是一个薄编排层：它**不重写**任何底层能力，而是把
 - 本机工具检测与调用：任务启动时读 `references/local-toolchain.md`，跑 `python D:\Desktop\Craft\re-toolchain\check-tools.py --json` 确认已装工具；按 C1/C2 阶段直接 CLI/库调用，不让用户手动开工具。
 - 爬取细节：进 `modules/crawl/`（含选型与反爬回退决策）。
 - 逆向细节：委托 `reverse-flow`，输出契约见 `modules/reverse/references/evidence-contract.md`。
+- 逆向目标在 reverse-flow 覆盖面之外（Electron/ASAR、打包应用、.NET、网络捕获文件、IL2CPP、模型文件）：读 `modules/reverse/references/rea-toolchain.md`，用 REA 工具链取证据。
 
 ## Workflow
 

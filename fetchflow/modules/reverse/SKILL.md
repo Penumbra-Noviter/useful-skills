@@ -20,6 +20,10 @@ description: fetchflow 的逆向模块。委托 reverse-flow-skill 分析二进�
 - 脚本：`triage_artifact.py`、`create_case.py`、`report_from_triage.py`、`tool_audit.py`。
 - CTF 口语归一化：把「解锁/去除/绕过/拿 flag」归一化为具体逆向目标。
 
+## 工具链分层（REA 加速器）
+
+目标类型落在 reverse-flow 工具目录**之外**（Electron/ASAR、PyInstaller/Bun 打包应用、.NET managed、网络捕获文件 HAR/SAZ/PCAP、IL2CPP、模型文件等）→ 用 REA 取 Evidence，再套 reverse-flow 流程与统一报告。接入探针（MCP → CLI → 回落）与 Evidence 纪律见 `references/rea-toolchain.md`。常规 native/APK/固件不走 REA，仍用 reverse-flow profile。
+
 ## Workflow
 
 1. **确认委托可用**：检查 `reverse-flow` skill 存在；缺失则提示安装，不自行降级重写。

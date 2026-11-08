@@ -12,6 +12,7 @@
 | 二进制（PE/ELF/Mach-O） | 本地文件 | **reverse** | reverse-flow native profile：Ghidra/radare2/DIE/capa/FLOSS/x64dbg/GDB |
 | Android APK/DEX | 本地文件 | **reverse** | reverse-flow android profile：jadx/Apktool/Frida/Ghidra(native) |
 | 固件 | 固件镜像 | **reverse** | reverse-flow firmware profile：Binwalk/Qiling/Unicorn |
+| Electron/ASAR、打包应用（PyInstaller/Bun）、.NET managed、网络捕获文件（HAR/SAZ/PCAP/qlog）、IL2CPP、模型文件 | 本地文件/捕获 | **reverse** | REA 工具链（`modules/reverse/references/rea-toolchain.md`）+ reverse-flow 流程 |
 | 脚本/文档样本 | .py/.js/ps1/doc | **reverse** | reverse-flow 静态 + 沙箱 |
 | 客户端私有 API / 签名 / 加密 | 逆向产物是接口/算法 | **chain(reverse→crawl)** | 先 reverse 出协议，再 crawl 采接口 |
 | 采集被反爬挡住 | crawl 层 L0-L4 无效 | **chain(crawl→reverse)** | 先 reverse 反爬机制，再带方案回 crawl |
@@ -33,6 +34,7 @@
 | dynamic | x64dbg、WinDbg、GDB、lldb、Frida、Procmon/strace/tcpdump/Wireshark |
 | vulnerability | AFL++、sanitizers、Ghidra、debuggers |
 | 脚本/文档 | 对应运行时静态 + 沙箱 |
+| REA 加速器（覆盖面之外的类型） | `analyze_javascript_application`、`inspect_artifact`、`inspect_managed_artifact`、`inspect_web_network_capture`、`inspect_apk_signature`、`inspect_il2cpp_metadata`、`inspect_model_artifact` 等；接入探针见 rea-toolchain.md |
 
 ## 选型规则
 
@@ -46,4 +48,5 @@
 若你在做以下任何事，停手并改回复用：
 - 自己写 HTML 解析器 / 反爬检测正则 / 隐匿 JS（→ 用 crawl4ai）。
 - 自己编二进制分诊 / 反调试绕过 / 工具清单（→ 用 reverse-flow）。
+- 自己写 ASAR 解包 / HAR·PCAP 解析 / IL2CPP metadata 解析 / 打包格式 carving（→ 用 REA，见 rea-toolchain.md）。
 - 自己的报告格式发明一套新的（→ 用 shared-evidence-protocol）。
