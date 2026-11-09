@@ -100,7 +100,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `writing-fragments` | 写作探索：挖原始素材碎片 |
 | `writing-shape` | 写作收束：素材线性排成文章 |
 | `writing-beats` | 写作叙事：素材排成节拍旅程 |
-| `writing-humanizer` | 去 AI 味润色，让文本像人写的 |
+| `writing-humanizer` | 去 AI 味润色：默认一次改稿，按需走检测报告闸门（脚本指标 + 语义判读 + 前后复测） |
 | `diagram-design` | 45 种示意图 → 内联 SVG HTML，可导入 draw.io/Mermaid/Excalidraw |
 | `obsidian-vault` | Obsidian 笔记搜索/创建/整理（wikilink + 索引） |
 
@@ -149,7 +149,8 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
   - `cangjie-skill` — MIT（v2.5.0 起，上游 [kangarooking/cangjie-skill](https://github.com/kangarooking/cangjie-skill)）
   - `zine-ui` — personal non-commercial（商业使用需作者书面许可，上游 [Zeejay0/gathered-scenes-zine-skill](https://github.com/Zeejay0/gathered-scenes-zine-skill)）
   - `diagram-design` — MIT（上游 [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)）
-  - `simplify-codebase` / `vibehub` / `writing-humanizer` — MIT 等（上游见 `PROVENANCE.md` §13/§3/§15）
+  - `simplify-codebase` / `vibehub` — MIT 等（上游见 `PROVENANCE.md` §13/§3）
+  - `writing-humanizer` — 混合许可：本地 31 条模式层为 MIT 谱系（§15）；**2026-11-10 吸收的实测层（`scripts/` 与 `references/measured-rules.md`、`research-basis.md`、`semantic-criteria.md`）为 CC BY-NC 4.0 非商用**（上游 lieflat-less-ai-tone，商用需上游作者许可，见 §29）
   - `agent-reach` — 上游 [Panniantong/Agent-Reach](https://github.com/Panniantong/Agent-Reach)（本地 skill 文档层，CLI 需独立安装）
   - mattpocock 批次 ~46 个 — 见上游 https://github.com/mattpocock/skills
 - `PROVENANCE.md` 是全库来源登记（vendored / distilled / 自研 / 封装判定、上游 URL、本地改动点、同步流程），更新 skill 前先查它。

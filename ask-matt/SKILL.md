@@ -108,7 +108,7 @@ Beyond the engineering flow. Ask here when the work isn't shipping application c
 ### Content & design
 
 - **`/writing`**: the orchestration entry for long-form writing. It checks which piece already exists and routes to the right stage: `/writing-fragments` (explore, mine raw material), `/writing-shape` (exploit, linear paragraphs), `/writing-beats` (exploit, narrative beats). Long article/essay/story → start here.
-- **`/writing-humanizer`**: the polish stage after the writing three-piece — strip the AI fingerprint from finished prose (去 AI 味): rewrite stiff passages to read human. It only does post-draft humanizing; explore/exploit stay with the three-piece.
+- **`/writing-humanizer`**: the polish stage after the writing three-piece — strip the AI fingerprint from finished prose (去 AI 味): rewrite stiff passages to read human. Two entries: default one-pass rewrite; when the user asks for detection/metrics/a report it runs the gated flow (script detection → semantic judgment → before-report → confirmed minimal edits → retest diff). It only does post-draft humanizing; explore/exploit stay with the three-piece.
 - **`/finesse-ui`**: high-craft web interfaces — brand surfaces, product UI, workflow UI, AI-assistant UI. Anti-slop; routes diagram requests to `/diagram-design`.
 - **`/zine-ui`**: paper-zine visual language for photo/poetic briefs (拾景纸刊): photo collage, image distillation, abstract memory panels. "把这张照片做成页面" → here.
 - **`/diagram-design`**: 45 diagram types (architecture, flow, sequence, ER, timeline, swimlane, quadrant, sankey, fishbone, Wardley, service blueprint, architecture delta, exploded, axonometric plan…) rendered as inline-SVG HTML, importable to draw.io/Mermaid/Excalidraw.

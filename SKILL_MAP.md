@@ -114,7 +114,7 @@
 | **writing-fragments** | 写作·**探索**：访谈式挖原始素材碎片，尚无结构（只 append 不删改） |
 | **writing-shape** | 写作·**收束**：把素材线性排成文章，逐段成文 |
 | **writing-beats** | 写作·**叙事**：把素材排成"节拍"旅程，叙事成文（与 shape 二选一，不接力） |
-| **writing-humanizer** | **去掉文本里的 AI 味**（中文 AI 味），成文后润色；不接管 explore/exploit |
+| **writing-humanizer** | **去掉文本里的 AI 味**（中文 AI 味），成文后润色；默认一次改稿，要检测/指标/报告时走脚本检测 + 语义判读 + 前后复测闸门；不接管 explore/exploit |
 | **diagram-design** | **45 种示意图**（架构/架构增量/流程/时序/状态机/ER/泳道/甘特/象限/雷达/桑基/鱼骨/Wardley/服务蓝图/故事地图…）→ 内联 SVG 的独立 HTML；可导入并重绘 draw.io / Mermaid / Excalidraw |
 | **obsidian-vault** | **Obsidian 笔记**：搜索/创建/整理，带 wikilink 和索引笔记 |
 

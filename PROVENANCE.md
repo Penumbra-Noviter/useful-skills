@@ -393,6 +393,22 @@
 - **本机状态**（2026-11-09 更新）：已安装 rea-agents 6.7.0（npm 全局 `F:\tools\npm-global`）；`rea setup --yes --client zcode --client dsh` 完成 MCP 注册（`~/.zcode/cli/config.json` 的 `mcp.servers.rea` + `D:\Deepseek harness\.dsh\cordis.patch.yml`，各自带 `.rea.backup`），stdio 握手实测 207 工具
 - **bundled skill 落点处置**：`rea setup` 将 `reverse-engineer-anything`（552 行 SKILL.md + 7 references）装进本仓库物理目录（`~/.zcode/skills/` 为软链）——**gitignore 不入库**（setup 自管、随 npm 上游升级覆盖，提交受管副本必漂移；比照 universal-exam-cram-coach 机器特定外部 skill 先例），fetchflow 侧 rea-toolchain.md 指向该已装副本为工具细节权威源
 
+### 29. writing-humanizer 吸收 lieflat-less-ai-tone 实测层（部分吸收，2026-11-10）
+
+- **形态**：非独立 skill；上游可移植机制并入既有 `writing-humanizer`（合并而非新建，避免去 AI 味出现重复路由）
+- **来源**：https://github.com/larashero3-dotcom/lieflat-less-ai-tone ，快照 commit `53160078`（2026-11-05），**CC BY-NC 4.0（© 2026 shiujan）**
+- **吸收范围**：
+  - 新增 `writing-humanizer/scripts/detect.py`（546 行）+ `scripts/report.py`（490 行）——纯 stdlib，原样 vendor，本地未改逻辑
+  - 新增 `references/semantic-criteria.md`（语义层四类封闭判据，原样）
+  - 新增 `references/measured-rules.md`（规则 1–13 / F 级指纹 / X 级永不改清单 / 改写原则 / 人审区）
+  - 新增 `references/research-basis.md`（两轮实验设计、判定门槛、六次测量失误、局限、参考值出处——压缩转录非原文）
+  - `SKILL.md` 重构为双入口：默认一次润色（保留原有行为）+ 报告闸门（脚本检测 → 语义层判读 → 改前报告 → 确认 → 最小改写 → 复测对比）
+  - 原有 31 条模式清单（A–F，Humanizer-zh 谱系，见 §15）移入 `references/patterns-31.md`，与实测规则集交叉标注
+- **本地改动点**：双入口编排（上游只有报告闸门单一流程）；规则集与 31 条清单的冲突裁决（规则集优先，X 级表是否决权）；31 条中与 X 级冲突的条目加注；不复制上游 `RESEARCH.md` 全文（348 行）与示例目录（5.9MB 含图片）
+- **许可边界（重要）**：上游为 **CC BY-NC 4.0 非商用**，本仓库根 `LICENSE` 是 MIT——vendor 的两个脚本与规则文本**不随本仓库 MIT 授权**，商业使用需上游作者书面许可。新增文件均保留上游署名；重新分发前按 CC BY-NC 条款核对。比照 §（拾景纸刊）非商用先例，已在 README「来源与许可」单列
+- **证据边界**：上游语料不入库（版权/隐私），研究数字本地不可复算；本地只复用方法、口径与脚本。skill 内已明确「不得据研究语料显著断言单篇或作者/模型」
+- **同步方式**：上游新增或改判据时按本文件「同步流程」对账；`detect.py` / `report.py` 的上游改动优先原样合入，本地只允许改文档层（双入口与交叉标注）
+
 ---
 
 1. **查本文件**对应条目 → 拿到上游 URL、本地版本、本地改动点
