@@ -7,7 +7,7 @@ Claude Code / zcode 的个人技能库：**67 个可执行 skill（本仓库）+
 ```bash
 git clone https://github.com/Penumbra-Noviter/useful-skills.git
 # 把各 skill 目录放进你的 agent skills 目录（如 ~/.claude/skills/），或用符号链接
-# zcode 环境的实际指向：D:\Desktop\cc\.claude\skills
+# zcode 环境的实际指向：D:\Deepseek harness\.dsh\skills
 ```
 
 > **克隆可用 64 个**：67 个 skill 中 3 个经 `.gitignore` 有意排除、不随 git 分发——`project-kickoff`（§12）、`universal-exam-cram-coach`（§27，均为 .cc-switch 机器特定镜像）与 `dao-skill`（§26，外部实装，上游 [gnipbao/dao-skill](https://github.com/gnipbao/dao-skill) 自带 .git）。补齐方式见 `PROVENANCE.md` 对应条目。

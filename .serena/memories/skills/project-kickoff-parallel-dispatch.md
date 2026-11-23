@@ -13,7 +13,7 @@
 8. **波内后台派发 + 空返回立即重开（2026-08-13 Q 批次）**：波内所有 Agent 调用（并行组 + 串行链 + 波末增量审核）统一 `run_in_background: true` 同消息启动，完成通知**逐个处理**——成功暂存摘要；失败（含空返回 `Model returned no text…`）**立即重开**（同 prompt + 前次现场核查指令：worktree/分支已存在去 -b 复用 + git status），不等同波其他子智能体完成；**重开上限**：同一工单同波内累计失败 ≥ 3 次（重开 ≤ 2）→ 停止该工单报用户人工裁决，不阻塞其余工单。动机：同步派发整批返回被最慢兄弟阻塞——model-fingerprint 批次 20 波 3 实证 T-465 空返回后空转 ~30 分钟（T-466 未完成前无法重开）。遥测加「空返回重开次数」。：本工单范围测试（本工单新增/改动测试 + 受影响模块既有测试，**不做全量**）；覆盖率 ≥ 90% 按本工单文件范围（`--cov=<本工单源文件> --cov-fail-under=90`）；全局覆盖率 ≥ 90% 是期末全量测试的唯一全局口径验收点。
 
 ## 环境事实
-- `C:\Users\Administrator\.zcode\skills`、`C:\Users\Administrator\.cc-switch\skills` 与 `D:\Desktop\cc\.claude\skills` 三处同源（2026-08-10 复核 md5 一致），改一处即生效；每次编辑后 md5/`ls -li` 复查防漂移。
+- `C:\Users\Administrator\.zcode\skills`、`C:\Users\Administrator\.cc-switch\skills` 与 `D:\Deepseek harness\.dsh\skills` 三处同源（2026-08-10 复核 md5 一致），改一处即生效；每次编辑后 md5/`ls -li` 复查防漂移。
 - project-kickoff 真身在 `C:\Users\Administrator\.cc-switch\skills\project-kickoff\`（**非 git 仓库**，含 SKILL.md + TO-TICKETS.md + REVISIONS.md）；`.zcode/skills` 与 repo 中为符号链接，git 无法追踪其内容——该 skill 无 git 历史，provenance 用会话记录 + TO-TICKETS.md 归档（2026-08-10 复核，勿再尝试 commit）。
 - project-kickoff 修订日志存同目录 `REVISIONS.md`（独立于 SKILL.md 防膨胀，运行流程无需读取），维护者改 skill 后补一行（日期+来源+动机）；`validate_skills.py` 已含正文软检查（计数式表述漂移、「（见X）」引用完整性，仅 WARNING）。
 - plan-tickets 是 harness 内置 agentType，无 SKILL.md 可改；其输出风格与 to-tickets 一致（Blocked by 边）。

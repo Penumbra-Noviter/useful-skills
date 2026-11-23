@@ -1,6 +1,6 @@
 # Skill 生态分工记录（2026-08-27 建档，2026-10-23 对齐）
 
-> 整个用户 skill 库实际是一个 git 仓库目录 `D:\Desktop\cc\.claude\skills`（branch `main`）。
+> 整个用户 skill 库实际是一个 git 仓库目录 `D:\Deepseek harness\.dsh\skills`（branch `main`）。
 > `C:\Users\Administrator\.zcode\skills` 是指向它的 **Junction（目录联接）**，不是副本、不是软链符号——所以「zcode 侧路径」与「真实仓库路径」指的是同一份文件，改哪边都是改这里。
 > dao 三件套与下面的同构 skill 同处一库，无物理分仓。
 > 本文与 `SKILL_MAP.md`（功能反向检索）、`README.md`（对外介绍 + 9 域表）、`ask-matt`（动态路由表）四者互为校验；冲突时以 `ask-matt` SKILL.md 为准。
@@ -40,7 +40,7 @@ dao-skill（元设计器/生命周期管理层）
 
 ### 安装位置
 
-三个都在库根，直接用路径 `D:\Desktop\cc\.claude\skills\<name>`：
+三个都在库根，直接用路径 `D:\Deepseek harness\.dsh\skills\<name>`：
 
 - `dao-skill` — 外部实装，自带 `.git`、可独立 `git pull --ff-only`（源码零改动），因此被 `.gitignore` 排除，**不入本库版本治理**
 - `skill-authoring` — 整合版（含 ADR-001），入库
@@ -139,8 +139,8 @@ dao-skill（元设计器/生命周期管理层）
 
 | 项 | 旧记录 | 现事实 |
 |---|---|---|
-| 库路径表述 | `~/.zcode/skills` → 符号链接 | Junction（目录联接）→ `D:\Desktop\cc\.claude\skills`，同一份文件 |
-| dao 三件套安装位置 | 写作 `C:\...\.zcode\skills\<name>` | 写作真实路径 `D:\Desktop\cc\.claude\skills\<name>`（Junction 侧等价但易误判为独立副本） |
+| 库路径表述 | `~/.zcode/skills` → 符号链接 | Junction（目录联接）→ `D:\Deepseek harness\.dsh\skills`，同一份文件 |
+| dao 三件套安装位置 | 写作 `C:\...\.zcode\skills\<name>` | 写作真实路径 `D:\Deepseek harness\.dsh\skills\<name>`（Junction 侧等价但易误判为独立副本） |
 | 库规模 | 70 个 skill（含 4 条已失效条目） | 67 个仓库内 skill + 9 个插件族条目 |
 | diagram-design | 27 图型 | 45 图型 |
 | code-review 轴 | Standards / Spec / Falsify 三子智能体并行 | Standards+Spec 并行、Falsify 按需第三轴、Architecture 入 kickoff 期末；支持单轴增量 |
