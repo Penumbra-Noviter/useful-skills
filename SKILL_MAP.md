@@ -75,7 +75,7 @@
 | **simplify-codebase** | **简化审计**：基于证据删死代码、去重、拆冗余抽象、回收熵（不做通用评审与性能调优） |
 | **code-review** | **评审定点以来的改动**：Standards + Spec 并行两轴，Falsify（构造崩溃输入）按编排方请求作第三轴，Architecture（模块结构）在 kickoff 期末审核语境加入；支持单轴增量 |
 | **diagnosing-bugs** | **疑难 bug / 性能回归**诊断闭环：必须先建「已对这条 bug 变红的反馈环」，再根因、修、加回归测试 |
-| **retro** | **会话复盘**：回看这次编码会话，改的是 agent 的**环境**（导航指针/自动检查/编码标准/steering 文件），不是代码 |
+| **retro** | **会话复盘**：回看这次编码会话， 复盘"AI 的环境"，产出是给 AGENTS.md / 钩子 / 文档结构的改进建议 |
 | **resolving-merge-conflicts** | **解决进行中的 git merge/rebase 冲突**：按意图追到双方一手来源，逐 hunk 解，从不 `--abort` |
 | **git-guardrails-claude-code** | **给 Claude Code 装 git 安全钩子**，拦 push / reset --hard / clean / branch -D 等危险命令 |
 | **triage** | **把 issue/外部 PR 走状态机**：分类、验证、必要时 grill、写 agent-ready 简报（自己产出的工单不 triage） |
