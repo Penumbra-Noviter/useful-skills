@@ -1,9 +1,9 @@
-# Skill 库功能图谱（67 个顶层 skill + 2 个 fetchflow 子模块 + 9 个插件条目）
+# Skill 库功能图谱（68 个顶层 skill + 2 个 fetchflow 子模块 + 9 个插件条目）
 
-> 条数与目录对得上：67 = 库根下每个 skill 目录一个 `SKILL.md`；`fetchflow-crawl` / `fetchflow-reverse` 是 `fetchflow/modules/*` 下的子模块 skill（也有独立 `name`，可被直接调用）；9 个插件条目由宿主插件提供、不在本仓库。
+> 条数与目录对得上：68 = 库根下每个 skill 目录一个 `SKILL.md`（含 4 个 gitignore 不入库者：project-kickoff / universal-exam-cram-coach / dao-skill / reverse-engineer-anything）；`fetchflow-crawl` / `fetchflow-reverse` 是 `fetchflow/modules/*` 下的子模块 skill（也有独立 `name`，可被直接调用）；9 个插件条目由宿主插件提供、不在本仓库。
 > 用途：按「要做的事 → 该用哪个 skill」反向检索。每个域一句话说清管什么，每条 skill 一句话说清何时用。
 > 记忆线索：每个 skill 的用途里都含触发词（加粗部分），看到对应场景就能想起它。
-> 库状态基线：2026-10-23（commit `c2db7a6`）。与 `README.md` 的 9 域划分、`ask-matt` 的路由表互为校验；三者漂移时以 `ask-matt` SKILL.md 为准。
+> 库状态基线：2026-11-24（上游同步批次后）。与 `README.md` 的 9 域划分、`ask-matt` 的路由表互为校验；三者漂移时以 `ask-matt` SKILL.md 为准。
 > 文末「相对旧版的变更」列出本次对齐的增删改名，旧版（70 条，含已移除条目）不再维护。
 
 ---
@@ -98,13 +98,14 @@
 | **fetchflow-crawl** | fetchflow 的**采集子模块**：委托 crawl4ai 采集网页/接口/SPA/批量页，必要时对抗反爬（不重写 crawl4ai 能力） |
 | **fetchflow-reverse** | fetchflow 的**逆向子模块**：委托 reverse-flow 分析二进制/固件/APK/脚本/协议/校验/加密（不重写其阶段与证据协议） |
 | **reverse-flow** | **纯逆向工作流**：二进制/固件/移动 app/脚本/文档样本/协议抓包，静态+动态分析、补丁对比、可利用性评估 |
+| **reverse-engineer-anything** | **REA 工具链入口**（`rea setup` 自管安装，gitignore 不入库）：原生/托管/Electron/打包应用/固件/浏览器目标的产物级逆向，207 个工具 + 覆盖面路由；决策层机制另见 fetchflow 的 `rea-toolchain.md` |
 | **museon-cli** | **社媒研究/运营**：内容、账号、排期、发布、自动化、数据复盘（装并操作 Museon CLI） |
 
 ---
 
 ## 域 5｜文档与内容生产 —— 输出文档、PPT、文章、图、笔记
 
-> 演示文稿 / Office 文档 / 长篇写作三件套 + 去 AI 味 / 45 图型 / Obsidian 笔记。
+> 演示文稿 / Office 文档 / 长篇写作三件套 + 去 AI 味 / 52 图型 / Obsidian 笔记。
 
 | Skill | 一句话用途（含触发词） |
 |---|---|
@@ -115,7 +116,7 @@
 | **writing-shape** | 写作·**收束**：把素材线性排成文章，逐段成文 |
 | **writing-beats** | 写作·**叙事**：把素材排成"节拍"旅程，叙事成文（与 shape 二选一，不接力） |
 | **writing-humanizer** | **去掉文本里的 AI 味**（中文 AI 味），成文后润色；默认一次改稿，要检测/指标/报告时走脚本检测 + 语义判读 + 前后复测闸门；不接管 explore/exploit |
-| **diagram-design** | **45 种示意图**（架构/架构增量/流程/时序/状态机/ER/泳道/甘特/象限/雷达/桑基/鱼骨/Wardley/服务蓝图/故事地图…）→ 内联 SVG 的独立 HTML；可导入并重绘 draw.io / Mermaid / Excalidraw |
+| **diagram-design** | **52 种示意图**（架构/架构增量/流程/时序/状态机/ER/步骤/泳道/甘特/象限/雷达/桑基/鱼骨/Wardley/服务蓝图/故事地图/事件建模/需求追溯/进度网络…）→ 内联 SVG 的独立 HTML；可导入并重绘 draw.io / Mermaid / Excalidraw / PlantUML |
 | **obsidian-vault** | **Obsidian 笔记**：搜索/创建/整理，带 wikilink 和索引笔记 |
 
 ---
@@ -186,7 +187,7 @@
 事后 retro 复盘环境，收尾 neat-freak，沉淀 distill-lesson，写码前查经验 kb-search，issue 走 triage；
 查资料 agent-reach / research，爬+逆 fetchflow（crawl / reverse 子模块），纯逆向 reverse-flow，社媒 museon-cli；
 文档 to-ppt + officecli（插件族 docx / pdf / pptx / xlsx），长文 writing（fragments→shape/beats，完稿 humanizer 去 AI 味），
-图示 diagram-design（45 型），笔记 obsidian-vault；
+图示 diagram-design（52 型），笔记 obsidian-vault；
 界面 finesse-ui / zine-ui；
 手机 android-dev，浏览器 control-browser / web-gui-tester，桌面 computer-use，向导 wizard，看图 vision，网盘 quarkclouddrive；
 交接 handoff / claude-handoff，没说清 wait-what，教学 teach，考前 cram-coach，人生决策 life-decision-guide。
@@ -209,6 +210,6 @@
 | 新增 **life-decision-guide** | 《高性价比人生指南》决策咨询 |
 | 新增 **fetchflow-crawl / fetchflow-reverse** | 原只列 fetchflow 一个名字，其子模块也是可调用 skill |
 | 补全 **universal-exam-cram-coach** 子 skill | 9 个子 skill 名列出 |
-| 图型 **27 → 45** | diagram-design 扩到 45 型，新增架构增量/轴测/桑基/鱼骨/Wardley/服务蓝图/故事地图等 |
+| 图型 **27 → 52** | diagram-design 扩到 52 型（2026-11-24 同步 2.6.174），新增步骤/Git 分支图/单位格/箱线/SBGN/需求追溯/事件建模/进度网络/PlantUML 导入等 |
 | 评审轴表述更新 | code-review 现为 Standards + Spec 并行、Falsify 按编排方请求、Architecture 入 kickoff 期末审核 |
 | 新增 **域 9 插件族表** | computer-use / plugin-creator 等 9 条目单列，不混进仓库内统计 |

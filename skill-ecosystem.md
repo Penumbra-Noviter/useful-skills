@@ -141,7 +141,7 @@ dao-skill（元设计器/生命周期管理层）
 |---|---|---|
 | 库路径表述 | `~/.zcode/skills` → 符号链接 | Junction（目录联接）→ `D:\Deepseek harness\.dsh\skills`，同一份文件 |
 | dao 三件套安装位置 | 写作 `C:\...\.zcode\skills\<name>` | 写作真实路径 `D:\Deepseek harness\.dsh\skills\<name>`（Junction 侧等价但易误判为独立副本） |
-| 库规模 | 70 个 skill（含 4 条已失效条目） | 67 个仓库内 skill + 9 个插件族条目 |
+| 库规模 | 70 个 skill（含 4 条已失效条目） | 68 个仓库内 skill（含 4 个 gitignore 不入库）+ 9 个插件族条目 |
 | diagram-design | 27 图型 | 45 图型 |
 | code-review 轴 | Standards / Spec / Falsify 三子智能体并行 | Standards+Spec 并行、Falsify 按需第三轴、Architecture 入 kickoff 期末；支持单轴增量 |
 | 实现侧 | 只有 implement | 增 implement-spec（任务图 + frontier 并行 + 单集成分支）、pr（PR 正文） |

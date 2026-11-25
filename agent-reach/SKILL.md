@@ -27,6 +27,14 @@ metadata:
 
 15 平台、多后端。**本 skill 存在时必须用它访问这些平台，不要自己发明方案。**
 
+## 选路（先用 MCP，再走本地 CLI）
+
+1. **先看是否已挂载 Agent Reach MCP**：动手前先检查当前会话工具列表中是否已有 `agent-reach` MCP 工具
+   （如 `search`、`read`、`creator_inspect`、`people_resolve`、`trend_scan` 等）。
+2. **已挂载 MCP 且覆盖目标平台 → 直接走 MCP**：直接调用对应 MCP 工具，**不要**声明「用 agent-reach skill」，
+   也**不要**再去读取 `references/*.md` 或运行本地 `agent-reach` / `opencli` 终端命令。
+3. **未安装 MCP，或目标本地渠道/私有会话不在 MCP 覆盖内 → 走本地 skill**：按下面的常驻规则与路由表执行。
+
 ## 常驻规则（全程适用）
 
 1. **动手前先体检**：多后端/登录态平台（小红书/Reddit/B站/Twitter/Facebook/Instagram）先跑

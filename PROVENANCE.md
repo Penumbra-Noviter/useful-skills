@@ -4,7 +4,7 @@
 
 判定口径：**vendored** = 直接复制上游文件；**distilled** = 蒸馏/改写，非逐字复制；**自研** = 无上游，本地原创；**封装** = 本地写的外壳 + 调用第三方工具。
 
-**入库范围（2026-11-04 核对注记）**：磁盘 67 个 skill 中 3 个经 `.gitignore` 有意排除、不随 git 分发——`project-kickoff`（§12）、`dao-skill`（§26，外部实装自带 .git）、`universal-exam-cram-coach`（§27，机器特定）；git 实际跟踪 64 个顶层 skill（另含 fetchflow 2 个嵌套模块文档）。
+**入库范围（2026-11-24 复核注记）**：磁盘 68 个 skill 中 4 个经 `.gitignore` 有意排除、不随 git 分发——`project-kickoff`（§12）、`dao-skill`（§26，外部实装自带 .git）、`universal-exam-cram-coach`（§27，机器特定）、`reverse-engineer-anything`（§28，`rea setup` 自管）；git 实际跟踪 64 个顶层 skill（另含 fetchflow 2 个嵌套模块文档）。
 
 ---
 
@@ -159,6 +159,7 @@
 - **2026-09-16 更新**：wheel pin v0.5.9 → **v0.6.0**（上游 2026-09-12 release，asset `museoncli-0.6.0-py3-none-any.whl`）
 - **2026-09-27 更新**：wheel pin v0.6.0 → **v0.7.2**（上游 09-21/09-22 releases：staff 运营读工具、Actor 批量复制/移动、campaign 周期快照；SKILL.md 仅改安装 URL，操作契约靠 `museoncli schema` 动态发现，无需改指南）
 - **2026-10-23 更新**：wheel pin v0.7.2 → **v0.14.0**（上游 10-10~10-17 五个 release：publish 域大扩展——排程发布已完成视频、TikTok 图集、复用帖内声音作 BGM，另有 schedule/账号批量操作等；SKILL.md 仍仅改安装 URL，操作契约靠 `museoncli schema` 动态发现）
+- **2026-11-24 更新**：wheel pin v0.14.0 → **v3.3.0**（上游版本号跳到 3.x；本次 release `8f34c2c`，wheel `museoncli-3.3.0-py3-none-any.whl` 已实测 HTTP 200 / 528992 字节）。期间 3.1.0~3.3.0 集中在 ugc sourcing（创作者检索）、campaign staff 权限模型（operator → PM）与 command contract revision；`operator-user-id`/`--no-operators` 已退役，但本地 references 未硬编码任何 CLI flag（`grep operator-user-id` 零命中），SKILL.md 一行 URL 改完即闭合
 
 ### 7. vision — vendored + 改造
 
@@ -166,6 +167,7 @@
 - **本地改动**：`9b36024`（2026-08-11）精简脚本与 SKILL 文档
 - **导入**：`77430e9`（2026-08-06）
 - **2026-09-16 核对**：上游 head `fa5ca17`（2026-08-11，PR #9 剪贴板读取）——本地改造版无该能力，评估后**暂不合入**（本地已有截屏/文件路径通道，剪贴板路径收益低）
+- **2026-11-24 核对**：上游 head `1780387`（2026-10-22，PR #6 新增 `vision.py` Python 版 + portable 修复）——上游走 Python 单文件路线，本地是 node `vision.js` + 多模型回退链 + `DASHSCOPE_*` 配置面（本地能力是上游的超集），**不合入**；剪贴板通道维持 9-16 判定不合入
 
 ### 8. finesse-ui — 自研 + 部分派生
 
@@ -204,6 +206,11 @@
   - 2026-08-13 补齐缺失的 4 个 reference + audit-inventory.sh，正文 6 处引用已验证闭合（注意：SKILL.md 为 CRLF 行尾，校验引用需 `tr -d '\r'`）
 - **导入**：`fdc181e`（2026-08-11，移除旧 `neat/` 目录并改名）。旧 `neat/` 目录（77430e9 导入时 name 已是 neat-freak）推断同为 khazix-skills 来源的早期引入
 - **2026-09-16 核对**：上游 `neat-freak/` 路径自 2026-08-13 后**零提交**（上游 9-16 的 aihot v1.7.1 更新是另一 skill），无需更新
+- **2026-11-24 同步**：上游 neat-freak 已升至 **4.0.0**（仓库 HEAD `76fc0f8`，2026-11-18），正文是一次整体重写（202 行 → 129 行，从「六事实面合同 + 完整矩阵」改为「先列全 → 找差异 → 改 → 记忆 → 核对汇报」单一流程）：
+  - **合入的规则改进**：① 「编辑，不是记录员」（追加式更新判为失败信号，收尾后文件应变短或持平）；② 可信度顺序明确为 代码/运行态 > 用户当场决定 > 文档 > 记忆；③ 「合并了不等于部署了，部署了不等于用户看到」三档发布证据口径；④ 删除授权分档（「清工作区」≠「收拾文档」，后者先列候选）+「文件旧/体积大/被 ignore/会话已结束都不构成可删证据」；⑤ 只读请求与「别人的未提交改动」边界；⑥ 交接写进接手者必读的现有文档，不为交接新造固定文件；⑦ 记忆删除前先保住仍有效的原因/踩过的坑/退役提醒。
+  - **保留本地内容**（本地已是上游 v3 之上的增强，v4 反而砍掉）：六事实面完成合同与状态词表、权限四档、轻量/完整双路径、真相矩阵 8 字段、发布状态机 12 态、两阶段汇报模板、最终自检 10 条。**v4 把这些压成隐含流程，本机项目需要显式状态词与清场 gate，故不跟随。**
+  - `references/agent-paths.md` 跟随上游更新平台事实（Claude Code 2.1.277 读 AGENTS.md 的优先级、`@路径` 导入四层、Skills 插件命名、Codex `~/.agents/skills` 与 `$CODEX_HOME/plugins/cache`、旧 `$CODEX_HOME/skills` 按遗留副本处理、官方复核入口换域名）；**本地 references 保留**（v4 正文瘦身后的核心细节仍在 references，本地四篇只做了事实更新，未删本地独有表格）。
+  - 版本号本地改为 **4.0.0-zh**（跟内容，不跟上游 SKILL.md 的删减）。
 - **更新提示**：正文为中文改写版，同步上游时人工合入；若上游更新 references，优先把缺失的 4 个 reference 文件补齐而非只更新 SKILL.md
 
 ### 11. context-monitor — 自研（推断）· 2026-09-20 已移除
@@ -227,9 +234,15 @@
   2. description 尾部加路由边界：模块加深→improve-codebase-architecture，变更评审→code-review
   3. 5 处 reference 链接文本改为完整路径反引号标记 `` `references/x.md` ``（dao-skill 检索约定）
   4. 证明记录 9 字段精简为 7 字段（去 Finding ID/Locus/Topology，留 Candidate/Burden/Reachability/Rationale/Cut/Consequence/Confidence/Proof/Net effect 中与本地工作流契合的 7 个）；新增墓碑代码段落（`references/tombstone-code.md`，本地独有）
+     - **2026-11-24 撤销该精简**：视觉伴随层的 `visualization/cleanup-map.schema.json` 与 `references/visual-reporting.md` 均要求稳定 Finding ID（Finding 导航/深链接按 ID 索引），去 ID 会与已引入的渲染器冲突。已合入上游的 Finding ID / Locus / Topology 三字段，本地定制 4 项减为 3 项。
 - **放置决策**：独立 skill（不路由进 ask-matt / improve-codebase-architecture 等），model-invoked 触发，接线方式与库内 diagram-design 同构
 - **2026-09-16 同步**：上游 9-04 新增「可视化 companion」能力——合入 `references/visual-reporting.md`、`visualization/`（29 文件：render-cleanup-map.mjs + archify-core 渲染器 + schema + examples + tests）、`docs/visual-report-example.md`；SKILL.md 并入 visual companion 段落（保留本地 7 字段体系，不引入冲突的 Finding ID 条款）。`.github/workflows`（CI）与 `PRODUCT.md`（产品说明）不引入
-- **更新提示**：上游更新时逐文件对账；SKILL.md 需保留上述本地改动，其余文件可整体覆盖
+- **2026-11-24 同步**（上游 main @`5da55ef`，2026-09-04；本地此前停在 9-16 快照，SKILL.md 落后上游一段）：
+  - SKILL.md 合入上游三处：证明记录补 Finding ID / Locus / Topology 三字段 + 「Finding ID 在单次运行内保持稳定、不臆造行号/owner/关系、未知事实标 unresolved」段；「Deliver the result」补 scan-friendly 交付纪律（先给结果、不复述搜索过程、不重复同一证据、不留空小节）+ 「Change 回执不得被 Cleanup Map 替代」句
+  - `PRODUCT.md` 本次引入（可视化产品定位与渐进披露原则，本地 README 现在引用它的目录树；上轮判定「不引入」的依据是该文件当时未被任何本地文档引用，本次 README 结构树已对齐上游、引用它才成闭环）
+  - `README.md` / `README.en.md` / `docs/validation.md` 对齐上游：证明记录补「所有权边界/符号/文件/行号」项、Cleanup Map 内置说明（无需另装 Archify，Node.js ≥18、无 npm 依赖、不外链字体）、「生成可视化伴随报告」用例、可视化是 proof record 的视觉伴随物而非替代、仓库结构树补 PRODUCT.md / visual-reporting.md / visualization/ / visual-report-example.md、validation.md 补 renderer 的 15+30 测试与已知边界三条
+  - **未引入**：`.github/workflows/cleanup-map.yml`（CI，本仓库不跑上游 CI）
+- **更新提示**：上游更新时逐文件对账；SKILL.md 需保留上述本地改动（现 3 项），其余文件可整体覆盖
 
 ### 14. reverse-skill（选择性吸收）— vendored + distilled
 
@@ -287,6 +300,7 @@
 - **本地改动**：SKILL.md 双语触发词 + 路由表 + 零配置命令 + check-update 提醒；references 为上游 docs 的精简适配
 - **2026-09-16 核对**：上游 head `a19a171`（2026-09-15）新增 **Boss直聘 channel（#627）**，平台数 15→16，career 分类需更新（`channels/boss.py` + `references/career.md` 增补 + SKILL 平台数/路由）。**用户 2026-09-16 未选、2026-09-27 复核仍稳定但继续挂起，待下轮执行**
 - **2026-10-23 核对**：上游 10-07 四个提交（SKILL.md conda env 泄漏修复 / 删仓库 CLAUDE.md / 停止推荐无关 PyPI 包）——本地 SKILL.md 系改写版、grep 无 conda/私有路径泄漏，均无交集；**Boss直聘 channel 用户于 2026-10-23 仍未选，继续挂起**（本次批次未执行）
+- **2026-11-24 核对**（上游 main @`8d9ecc1`，2026-11-24；已到 v3.x）：上游对 `agent_reach/skill/` 做了**结构性重写**——SKILL.md 换成 `agent-reach` CLI 单一入口（`agent-reach channels` / `<渠道> <动作>` / `read <链接>`，含 error.code 处置表、专用浏览器登录契约、并发额度）、references 由 7 个分类文档改为 capabilities/maintenance/sessions 三篇、frontmatter 去掉本地依赖的触发词块。本地版是 MCP 优先 + 已装 CLI（opencli/bili/yt-dlp/gh/mcporter）混合路由，**用户 2026-11-24 拍板维持本地版**：跟上游需先 pip 装 `agent-reach`、重配 15 平台登录态，且本地 7 篇 references 全废，收益不抵。**本地唯一吸收**：SKILL.md 补「选路（先用 MCP，再走本地 CLI）」小节（上游此机制本地此前只有零散约定）。Boss直聘 channel 随之继续挂起。
 - **更新提示**：合入时对账上游 `agent_reach/skill/` 的 SKILL.md 与 career.md，保留本地路由表/触发词结构
 
 ### 18. simple-logic — distilled（cangjie-tools v2.5.0 生成）
@@ -307,6 +321,7 @@
 - **本地改动**：规则化改写（按 AGENTS.md 执行期交互协议风格组织执行流程/边界/验证）+ 新增 `examples/retest-prompts.md` 反测集
 - **验证**：frontmatter 结构合规（仅 name+description）；正测应能答出并指回「第 x 节第 y 条」，反测应触发第 0 步止损或明确说「书里没写」
 - **更新提示**：上游只更新正文（README + book/）时本文件无需改动；仅当上游改 `skills/life-decision-guide/SKILL.md` 的规则本身时才需对账
+- **2026-11-24 核对**（上游 main @`49fceab`，2026-11-16）：上游改了两处规则面，**均未引入**——① 「随包自带 `references/book/`」离线打包模式（上游新增的可分发形态，本机没有该包，本地走「本地仓库 / 远程浅克隆 / curl 单文件」三条既有路径，引入会指向不存在的目录）；② `index.tsv` 预计算性价比档（上游打包产物，本机无该文件，本地仍按仓库根 `index.html` 现算并在缺索引时降级为列原始标签）。另有 `人群=` 成本标签、法定审限措辞、`第 x 步` 标题层级等小修，属正文取用面（本 skill 不内联正文），无需改本地。**本地 `第 0 步止损 / 五步流程 / 验证节` 与 `examples/retest-prompts.md` 保持不变。**
 
 ### 20. v1.3 毕业三件（implement-spec / pr / retro）— vendored + 本地化改写
 

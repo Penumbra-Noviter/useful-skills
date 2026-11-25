@@ -47,7 +47,10 @@ Use repository-native search, compiler and linter output, dependency metadata, a
 For every in-scope lead that reaches consumer-map evidence or could retire a meaningful contract, record:
 
 ```text
+Finding ID: a stable report-local identifier such as S1 or S2
 Candidate: the exact contract, representation, or layer to remove or merge
+Locus: the ownership boundary, symbols, and exact paths or lines when verified
+Topology: confirmed node and relationship IDs, primary locus, related nodes, route, and cut set when useful; otherwise not applicable
 Burden: the concepts, synchronization, publication, or testing cost it creates
 Reachability: production, non-production, dynamic, external, and persisted consumers
 Rationale: why it exists and whether that reason remains current
@@ -59,6 +62,8 @@ Net effect: maintenance concepts removed minus replacement or migration machiner
 ```
 
 Prove cut boundaries below file granularity when the candidate shares an artifact with surviving consumers. Account for candidate-exclusive selectors, members, fields, keys, registry entries, generated fragments, and fixtures without disturbing the surviving owners.
+
+Keep Finding IDs stable within the run so the summary, proof record, source links, and any visual companion refer to the same candidate. Do not invent a line number, owner, relationship, or route to fill the location fields. Mark unknown facts as unresolved.
 
 Keep or downgrade the candidate when a real consumer exists, dynamic reachability remains unresolved, a current decision still owns the design, the change merely relocates complexity, the result is outside scope or retires no meaningful obligation, or the available check cannot distinguish success from accidental breakage.
 
@@ -80,6 +85,13 @@ Generate a visual companion only when the user explicitly requests one or confir
 
 ## Deliver the result
 
-For a survey, report coverage, ranked proof records, rejected or unresolved high-value leads, and the next fact needed for each uncertainty. When a visual companion was requested or confirmed, report its status and cleanup-map deep links separately.
+For a survey, report coverage, ranked proof records, rejected or unresolved high-value leads, and the next fact needed for each uncertainty. When a visual companion was requested or confirmed, report its status and cleanup-map Finding deep links separately.
 
-For a change, complete the validation and operation receipt defined in [`references/execution-and-recovery.md`](references/execution-and-recovery.md). Report each validation layer separately; a narrow green check does not establish broader runtime, deployment, or user acceptance.
+Keep the handoff scan-friendly. Lead with the result, then include only the
+proof records, decision-relevant uncertainty, visual links, and validation that
+the user needs. Do not narrate the search process, repeat the same evidence
+under several labels, append generic advice, or keep empty sections. Concision
+does not remove required proof fields: write each field once, in the shortest
+form that preserves its subject, evidence strength, consequence, and boundary.
+
+For a change, complete the validation and operation receipt defined in [`references/execution-and-recovery.md`](references/execution-and-recovery.md). A Before/Cut/After/Verify cleanup map may explain a structural change, but it never replaces the operation receipt. Report each validation layer separately; a narrow green check does not establish broader runtime, deployment, or user acceptance.

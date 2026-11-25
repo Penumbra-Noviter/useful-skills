@@ -1,6 +1,6 @@
 # useful-skills
 
-Claude Code / zcode 的个人技能库：**67 个可执行 skill（本仓库）+ 9 个插件族条目**，覆盖从立项、编码、质量到情报、内容生产、UI 设计、设备自动化的完整工程流。每个 skill 是一个自包含目录（`SKILL.md` + 可选 `references/` / `scripts/` / `examples/`），按触发词被模型自动调用或由用户显式 `/` 唤起。
+Claude Code / zcode 的个人技能库：**68 个可执行 skill（本仓库）+ 9 个插件族条目**，覆盖从立项、编码、质量到情报、内容生产、UI 设计、设备自动化的完整工程流。每个 skill 是一个自包含目录（`SKILL.md` + 可选 `references/` / `scripts/` / `examples/`），按触发词被模型自动调用或由用户显式 `/` 唤起。
 
 ## 快速开始
 
@@ -10,13 +10,13 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 # zcode 环境的实际指向：D:\Deepseek harness\.dsh\skills
 ```
 
-> **克隆可用 64 个**：67 个 skill 中 3 个经 `.gitignore` 有意排除、不随 git 分发——`project-kickoff`（§12）、`universal-exam-cram-coach`（§27，均为 .cc-switch 机器特定镜像）与 `dao-skill`（§26，外部实装，上游 [gnipbao/dao-skill](https://github.com/gnipbao/dao-skill) 自带 .git）。补齐方式见 `PROVENANCE.md` 对应条目。
+> **克隆可用 64 个**：68 个 skill 中 4 个经 `.gitignore` 有意排除、不随 git 分发——`project-kickoff`（§12）、`universal-exam-cram-coach`（§27，均为 .cc-switch 机器特定镜像）、`dao-skill`（§26，外部实装，上游 [gnipbao/dao-skill](https://github.com/gnipbao/dao-skill) 自带 .git）与 `reverse-engineer-anything`（§28，由 `rea setup` 自管安装，版本随 npm 上游）。补齐方式见 `PROVENANCE.md` 对应条目。
 
 不知道怎么用哪个技能时，直接问 **`/ask-matt`** ——它是全库的动态路由器（`disable-model-invocation`，用户手动触发），按「要做的事」路由到正确 skill 或流程。
 
 ## 生态总览（9 域）
 
-本仓库 67 个 skill 按功能分成 9 个域（其中 3 个经 `.gitignore` 有意排除、不随 git 分发，见「快速开始」与 `PROVENANCE.md` 入库范围注记）；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
+本仓库 68 个 skill 按功能分成 9 个域（其中 4 个经 `.gitignore` 有意排除、不随 git 分发，见「快速开始」与 `PROVENANCE.md` 入库范围注记）；另有 9 个插件族条目（`documents:docx` / `pdf:pdf` / `presentations:pptx` / `spreadsheets:xlsx`、`android-emulator:android-dev`、`browser-use` 两件套、`computer-use`、`plugin-creator`）随宿主环境提供，不在此仓库。
 
 ### 域 0 · Skill 生态自治
 
@@ -88,6 +88,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `research` | 对高信任一手来源做调研，结果存为仓库内 markdown |
 | `fetchflow` | 采集 + 逆向编排（爬取/反爬对抗/接口逆向，可组合） |
 | `reverse-flow` | 纯逆向工作流（二进制/固件/APK/脚本/协议/样本） |
+| `reverse-engineer-anything` | REA 工具链入口（`rea setup` 自管安装，不入库）：产物级逆向，207 工具 + 覆盖面路由 |
 | `museon-cli` | 社媒研究/运营：内容、账号、排期、发布、复盘 |
 
 ### 域 5 · 文档与内容生产
@@ -101,7 +102,7 @@ git clone https://github.com/Penumbra-Noviter/useful-skills.git
 | `writing-shape` | 写作收束：素材线性排成文章 |
 | `writing-beats` | 写作叙事：素材排成节拍旅程 |
 | `writing-humanizer` | 去 AI 味润色：默认一次改稿，按需走检测报告闸门（脚本指标 + 语义判读 + 前后复测） |
-| `diagram-design` | 45 种示意图 → 内联 SVG HTML，可导入 draw.io/Mermaid/Excalidraw |
+| `diagram-design` | 52 种示意图 → 内联 SVG HTML，可导入 draw.io/Mermaid/Excalidraw/PlantUML |
 | `obsidian-vault` | Obsidian 笔记搜索/创建/整理（wikilink + 索引） |
 
 ### 域 6 · UI 设计

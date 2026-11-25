@@ -11,7 +11,7 @@ Multi-axis review of the diff between `HEAD` and a fixed point the user supplies
 
 Beyond the axes, this flow enforces **review-process disciplines** every axis shares: a deterministic file manifest (step 1), mandatory per-file coverage accounting, verbatim line anchoring, and a post-draft remove pass. They exist because an LLM reviewer's most common failures are silent — skipped files, drifted line numbers, and manufactured findings — and none of them shows up in the findings you do get.
 
-The Standards and Spec axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings. Falsify runs as a third parallel sub-agent when the orchestrator requests it (see axis selection in the invocation prompt).
+The Standards and Spec axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings. Start every sub-agent with a fresh context window. Falsify runs as a third parallel sub-agent when the orchestrator requests it (see axis selection in the invocation prompt).
 
 ## Resource Guide
 
